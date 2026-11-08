@@ -1,0 +1,1352 @@
+{
+ "schemaVersion": 1,
+ "source": "Fixture de tests (subconjunto de seed.json)",
+ "setFormat": "[tipo, peso, reps, marca?, repsAntesDePausa?]. tipo: A=aproximación, W=efectiva. peso en la unidad del ejercicio (per_side/per_hand/total/bricks). reps=null si no se registró. marca: rp=rest-pause (reps = totales, 5to elemento = reps antes de la primera pausa, si se sabe), drop=bajada de peso, rebote=serie con rebote o apuro, asist=con ayuda de spotter.",
+ "units": {
+  "per_side": "kg en discos de cada lado, sin contar la barra/carro",
+  "per_hand": "kg por mancuerna",
+  "total": "kg de la polea/pila",
+  "bricks": "ladrillos de la máquina (aprox 4.2 kg c/u, editable)"
+ },
+ "muscles": [
+  "chest",
+  "lats",
+  "upper_back",
+  "delt_front",
+  "delt_side",
+  "delt_rear",
+  "biceps",
+  "triceps",
+  "quads",
+  "hamstrings",
+  "glutes",
+  "calves",
+  "lower_back"
+ ],
+ "exercises": [
+  {
+   "id": "bench_flat_barbell",
+   "name": "Press banca plano (barra)",
+   "family": "press_horizontal",
+   "unit": "per_side",
+   "barKg": 20,
+   "primary": [
+    "chest"
+   ],
+   "secondary": [
+    "triceps",
+    "delt_front"
+   ],
+   "range": [
+    8,
+    10
+   ],
+   "increment": 2.5,
+   "restSec": 150,
+   "warmup": "heavy",
+   "safetyNote": "Entreno solo, sin pines ni spotter: no ir al fallo ni hacer drops sin pines."
+  },
+  {
+   "id": "incline_db_press",
+   "name": "Press inclinado (mancuernas)",
+   "family": "press_inclinado",
+   "unit": "per_hand",
+   "primary": [
+    "chest"
+   ],
+   "secondary": [
+    "delt_front",
+    "triceps"
+   ],
+   "range": [
+    7,
+    10
+   ],
+   "increment": 2.5,
+   "restSec": 150,
+   "warmup": "heavy"
+  },
+  {
+   "id": "ohp_barbell",
+   "name": "Press militar (barra)",
+   "family": "press_vertical",
+   "unit": "per_side",
+   "barKg": 20,
+   "primary": [
+    "delt_front"
+   ],
+   "secondary": [
+    "triceps",
+    "delt_side"
+   ],
+   "range": [
+    8,
+    10
+   ],
+   "increment": 2.5,
+   "restSec": 150,
+   "warmup": "heavy"
+  },
+  {
+   "id": "ohp_machine",
+   "name": "Press militar (máquina)",
+   "family": "press_vertical",
+   "unit": "per_side",
+   "primary": [
+    "delt_front"
+   ],
+   "secondary": [
+    "triceps",
+    "delt_side"
+   ],
+   "range": [
+    8,
+    10
+   ],
+   "increment": 2.5,
+   "restSec": 120,
+   "warmup": "light",
+   "note": "Confirmar si el peso es por lado o pila."
+  },
+  {
+   "id": "row_low_cable",
+   "name": "Remo bajo (polea)",
+   "family": "remo",
+   "unit": "total",
+   "primary": [
+    "upper_back"
+   ],
+   "secondary": [
+    "lats",
+    "biceps",
+    "delt_rear"
+   ],
+   "range": [
+    8,
+    12
+   ],
+   "increment": 5,
+   "restSec": 120,
+   "warmup": "light"
+  },
+  {
+   "id": "row_chest_supported_45",
+   "name": "Remo esternal 45° (camilla)",
+   "family": "remo",
+   "unit": "total",
+   "primary": [
+    "upper_back"
+   ],
+   "secondary": [
+    "lats",
+    "biceps",
+    "delt_rear"
+   ],
+   "range": [
+    8,
+    10
+   ],
+   "increment": 5,
+   "restSec": 120,
+   "warmup": "light"
+  },
+  {
+   "id": "pulldown_pronated_wide",
+   "name": "Jalón prono ancho",
+   "family": "jalon_vertical",
+   "unit": "total",
+   "primary": [
+    "lats"
+   ],
+   "secondary": [
+    "biceps",
+    "upper_back"
+   ],
+   "range": [
+    8,
+    10
+   ],
+   "increment": 5,
+   "restSec": 120,
+   "warmup": "light"
+  },
+  {
+   "id": "pulldown_neutral",
+   "name": "Jalón agarre neutro",
+   "family": "jalon_vertical",
+   "unit": "total",
+   "primary": [
+    "lats"
+   ],
+   "secondary": [
+    "biceps",
+    "upper_back"
+   ],
+   "range": [
+    8,
+    10
+   ],
+   "increment": 5,
+   "restSec": 120,
+   "warmup": "light"
+  },
+  {
+   "id": "pulldown_supine_close",
+   "name": "Jalón supino cerrado (máquina vertical)",
+   "family": "jalon_vertical",
+   "unit": "total",
+   "primary": [
+    "lats"
+   ],
+   "secondary": [
+    "biceps",
+    "upper_back"
+   ],
+   "range": [
+    8,
+    10
+   ],
+   "increment": 5,
+   "restSec": 120,
+   "warmup": "light"
+  },
+  {
+   "id": "lateral_raise_db",
+   "name": "Vuelos laterales (mancuernas)",
+   "family": "vuelo_lateral",
+   "unit": "per_hand",
+   "primary": [
+    "delt_side"
+   ],
+   "secondary": [],
+   "range": [
+    10,
+    15
+   ],
+   "increment": 2.5,
+   "restSec": 75,
+   "warmup": "light"
+  },
+  {
+   "id": "rear_delt_machine",
+   "name": "Deltoide posterior (máquina)",
+   "family": "delt_posterior",
+   "unit": "per_side",
+   "primary": [
+    "delt_rear"
+   ],
+   "secondary": [],
+   "range": [
+    12,
+    15
+   ],
+   "increment": 2.5,
+   "restSec": 75,
+   "warmup": "none",
+   "note": "Confirmar si el peso es por lado o pila."
+  },
+  {
+   "id": "triceps_pushdown_cable",
+   "name": "Tríceps polea (cuerda/barra)",
+   "family": "triceps",
+   "unit": "total",
+   "primary": [
+    "triceps"
+   ],
+   "secondary": [],
+   "range": [
+    8,
+    12
+   ],
+   "increment": 2.5,
+   "restSec": 90,
+   "warmup": "none"
+  },
+  {
+   "id": "curl_incline_db",
+   "name": "Curl inclinado (mancuernas)",
+   "family": "biceps",
+   "unit": "per_hand",
+   "primary": [
+    "biceps"
+   ],
+   "secondary": [],
+   "range": [
+    8,
+    12
+   ],
+   "increment": 2.5,
+   "restSec": 90,
+   "warmup": "none"
+  },
+  {
+   "id": "curl_cable_low",
+   "name": "Curl polea baja",
+   "family": "biceps",
+   "unit": "total",
+   "primary": [
+    "biceps"
+   ],
+   "secondary": [],
+   "range": [
+    8,
+    12
+   ],
+   "increment": 2.5,
+   "restSec": 90,
+   "warmup": "none"
+  },
+  {
+   "id": "hack_squat",
+   "name": "Sentadilla hack (profunda)",
+   "family": "sentadilla",
+   "unit": "per_side",
+   "sledKg": null,
+   "primary": [
+    "quads"
+   ],
+   "secondary": [
+    "glutes"
+   ],
+   "range": [
+    10,
+    12
+   ],
+   "increment": 2.5,
+   "restSec": 150,
+   "warmup": "heavy",
+   "note": "Peso del carro sin medir; per_side no lo incluye."
+  },
+  {
+   "id": "leg_press_45",
+   "name": "Prensa 45°",
+   "family": "prensa",
+   "unit": "per_side",
+   "primary": [
+    "quads"
+   ],
+   "secondary": [
+    "glutes"
+   ],
+   "range": [
+    10,
+    15
+   ],
+   "increment": 2.5,
+   "restSec": 150,
+   "warmup": "light",
+   "safetyNote": "Cortar la serie si la pelvis se despega del respaldo."
+  },
+  {
+   "id": "leg_curl_seated",
+   "name": "Camilla femoral sentado",
+   "family": "curl_femoral",
+   "unit": "bricks",
+   "primary": [
+    "hamstrings"
+   ],
+   "secondary": [],
+   "range": [
+    10,
+    15
+   ],
+   "increment": 1,
+   "restSec": 120,
+   "warmup": "none"
+  },
+  {
+   "id": "leg_extension",
+   "name": "Sillón extensor",
+   "family": "extension_cuadriceps",
+   "unit": "bricks",
+   "primary": [
+    "quads"
+   ],
+   "secondary": [],
+   "range": [
+    10,
+    15
+   ],
+   "increment": 1,
+   "restSec": 90,
+   "warmup": "light"
+  },
+  {
+   "id": "calf_press",
+   "name": "Gemelos (máquina/prensa)",
+   "family": "gemelos",
+   "unit": "per_side",
+   "primary": [
+    "calves"
+   ],
+   "secondary": [],
+   "range": [
+    10,
+    15
+   ],
+   "increment": 2.5,
+   "restSec": 75,
+   "warmup": "light"
+  },
+  {
+   "id": "rdl_barbell",
+   "name": "Peso muerto rumano (barra)",
+   "family": "bisagra_cadera",
+   "unit": "per_side",
+   "barKg": 20,
+   "primary": [
+    "hamstrings"
+   ],
+   "secondary": [
+    "glutes",
+    "lower_back"
+   ],
+   "range": [
+    8,
+    12
+   ],
+   "increment": 2.5,
+   "restSec": 150,
+   "warmup": "heavy",
+   "safetyNote": "Cortar la serie si la lumbar se redondea."
+  },
+  {
+   "id": "walking_lunge_db",
+   "name": "Zancadas (mancuernas)",
+   "family": "unilateral_pierna",
+   "unit": "per_hand",
+   "repsPerLeg": true,
+   "primary": [
+    "quads"
+   ],
+   "secondary": [
+    "glutes"
+   ],
+   "range": [
+    8,
+    10
+   ],
+   "increment": 2.5,
+   "restSec": 120,
+   "warmup": "none"
+  },
+  {
+   "id": "stair_climber",
+   "name": "Escalador",
+   "family": "cardio",
+   "unit": "minutes",
+   "cardio": true,
+   "primary": [],
+   "secondary": [],
+   "range": [
+    20,
+    30
+   ],
+   "increment": 5,
+   "restSec": 0,
+   "warmup": "none"
+  }
+ ],
+ "planTemplate": {
+  "lunes_torso": [
+   {
+    "ex": "bench_flat_barbell",
+    "sets": 3
+   },
+   {
+    "ex": "row_chest_supported_45",
+    "sets": 3,
+    "alt": [
+     "row_low_cable"
+    ]
+   },
+   {
+    "ex": "pulldown_supine_close",
+    "sets": 3,
+    "alt": [
+     "pulldown_neutral",
+     "pulldown_pronated_wide"
+    ]
+   },
+   {
+    "ex": "ohp_machine",
+    "sets": 3,
+    "alt": [
+     "ohp_barbell"
+    ]
+   },
+   {
+    "ex": "lateral_raise_db",
+    "sets": 4
+   },
+   {
+    "ex": "rear_delt_machine",
+    "sets": 3
+   },
+   {
+    "ex": "triceps_pushdown_cable",
+    "sets": 3
+   },
+   {
+    "ex": "curl_incline_db",
+    "sets": 3
+   }
+  ],
+  "martes_pierna_a": [
+   {
+    "ex": "hack_squat",
+    "sets": 3
+   },
+   {
+    "ex": "leg_press_45",
+    "sets": 3
+   },
+   {
+    "ex": "leg_curl_seated",
+    "sets": 3
+   },
+   {
+    "ex": "leg_extension",
+    "sets": 3
+   },
+   {
+    "ex": "calf_press",
+    "sets": 3
+   },
+   {
+    "ex": "stair_climber",
+    "sets": 1,
+    "optional": true
+   }
+  ],
+  "jueves_full_body": [
+   {
+    "ex": "rdl_barbell",
+    "sets": 3
+   },
+   {
+    "ex": "incline_db_press",
+    "sets": 3
+   },
+   {
+    "ex": "pulldown_supine_close",
+    "sets": 3,
+    "alt": [
+     "pulldown_neutral"
+    ]
+   },
+   {
+    "ex": "lateral_raise_db",
+    "sets": 4
+   },
+   {
+    "ex": "rear_delt_machine",
+    "sets": 3
+   },
+   {
+    "ex": "curl_incline_db",
+    "sets": 3,
+    "alt": [
+     "curl_cable_low"
+    ]
+   },
+   {
+    "ex": "triceps_pushdown_cable",
+    "sets": 3
+   },
+   {
+    "ex": "walking_lunge_db",
+    "sets": 3
+   }
+  ]
+ },
+ "sessions": [
+  {
+   "date": "2026-10-20",
+   "day": "martes_pierna_a",
+   "items": [
+    {
+     "ex": "hack_squat",
+     "sets": [
+      [
+       "W",
+       30,
+       10
+      ],
+      [
+       "W",
+       30,
+       10
+      ],
+      [
+       "W",
+       30,
+       10
+      ]
+     ],
+     "note": "Profunda (ass to grass). Reps y peso inferidos del plan: el usuario solo confirmó que las series salieron.",
+     "confidence": "media"
+    },
+    {
+     "ex": "leg_press_45",
+     "sets": [
+      [
+       "W",
+       45,
+       10
+      ],
+      [
+       "W",
+       45,
+       10
+      ],
+      [
+       "W",
+       45,
+       15
+      ]
+     ]
+    },
+    {
+     "ex": "leg_curl_seated",
+     "sets": [
+      [
+       "W",
+       13,
+       10
+      ],
+      [
+       "W",
+       14,
+       10
+      ],
+      [
+       "W",
+       15,
+       15
+      ]
+     ]
+    },
+    {
+     "ex": "leg_extension",
+     "sets": [
+      [
+       "W",
+       12,
+       null
+      ],
+      [
+       "W",
+       12,
+       null
+      ],
+      [
+       "W",
+       12,
+       null,
+       "rp"
+      ]
+     ],
+     "note": "Peso del plan; reps sin dato.",
+     "confidence": "baja"
+    },
+    {
+     "ex": "calf_press",
+     "sets": [
+      [
+       "W",
+       50,
+       10
+      ],
+      [
+       "W",
+       50,
+       9
+      ],
+      [
+       "W",
+       50,
+       null
+      ]
+     ],
+     "note": "Tercera al fallo, reps sin dato."
+    },
+    {
+     "ex": "stair_climber",
+     "minutes": 33
+    }
+   ]
+  },
+  {
+   "date": "2026-10-22",
+   "day": "jueves_full_body",
+   "note": "Sin escalador.",
+   "items": [
+    {
+     "ex": "rdl_barbell",
+     "sets": [
+      [
+       "W",
+       30,
+       10
+      ],
+      [
+       "W",
+       30,
+       10
+      ],
+      [
+       "W",
+       30,
+       10,
+       "rp",
+       8
+      ]
+     ]
+    },
+    {
+     "ex": "incline_db_press",
+     "sets": [
+      [
+       "W",
+       25,
+       7
+      ],
+      [
+       "W",
+       25,
+       6
+      ],
+      [
+       "W",
+       25,
+       6,
+       "rp",
+       5
+      ]
+     ]
+    },
+    {
+     "ex": "pulldown_neutral",
+     "sets": [
+      [
+       "W",
+       50,
+       10
+      ],
+      [
+       "W",
+       50,
+       10
+      ],
+      [
+       "W",
+       50,
+       10
+      ]
+     ]
+    },
+    {
+     "ex": "lateral_raise_db",
+     "sets": [],
+     "note": "Hechos sentado con 12.5 por mano, sin series registradas.",
+     "confidence": "baja"
+    },
+    {
+     "ex": "curl_cable_low",
+     "sets": [
+      [
+       "A",
+       35,
+       null
+      ],
+      [
+       "W",
+       45,
+       10
+      ],
+      [
+       "W",
+       45,
+       10
+      ],
+      [
+       "W",
+       45,
+       10
+      ]
+     ]
+    },
+    {
+     "ex": "triceps_pushdown_cable",
+     "sets": [
+      [
+       "W",
+       40,
+       10
+      ],
+      [
+       "W",
+       45,
+       10
+      ],
+      [
+       "W",
+       50,
+       10
+      ],
+      [
+       "W",
+       55,
+       10
+      ]
+     ],
+     "note": "Después, bajada al fallo: 2-3 reps por cada 5 kg."
+    },
+    {
+     "ex": "walking_lunge_db",
+     "sets": [
+      [
+       "W",
+       12.5,
+       10
+      ],
+      [
+       "W",
+       12.5,
+       10
+      ],
+      [
+       "W",
+       12.5,
+       10
+      ]
+     ],
+     "note": "Última al fallo. No se confirmó si las reps eran por pierna.",
+     "confidence": "media"
+    }
+   ]
+  },
+  {
+   "date": "2026-10-29",
+   "day": "jueves_full_body",
+   "note": "Solo se registró hasta el jalón.",
+   "items": [
+    {
+     "ex": "rdl_barbell",
+     "sets": [
+      [
+       "W",
+       30,
+       null,
+       "rp"
+      ],
+      [
+       "W",
+       30,
+       null,
+       "rp"
+      ],
+      [
+       "W",
+       30,
+       14,
+       "rp"
+      ]
+     ],
+     "note": "Rest-pause desde la primera serie; en la última, 14 reps totales con pausas de duración variable.",
+     "confidence": "media"
+    },
+    {
+     "ex": "incline_db_press",
+     "sets": [
+      [
+       "W",
+       25,
+       10
+      ],
+      [
+       "W",
+       25,
+       8
+      ],
+      [
+       "W",
+       25,
+       8
+      ]
+     ]
+    },
+    {
+     "ex": "pulldown_supine_close",
+     "sets": [
+      [
+       "A",
+       35,
+       null
+      ],
+      [
+       "A",
+       45,
+       null
+      ],
+      [
+       "W",
+       60,
+       8
+      ],
+      [
+       "W",
+       60,
+       8
+      ],
+      [
+       "W",
+       60,
+       8
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "date": "2026-11-02",
+   "day": "lunes_torso",
+   "items": [
+    {
+     "ex": "bench_flat_barbell",
+     "sets": [
+      [
+       "W",
+       25,
+       9,
+       "rebote"
+      ],
+      [
+       "W",
+       25,
+       9,
+       "rebote"
+      ],
+      [
+       "W",
+       25,
+       8,
+       "asist"
+      ]
+     ],
+     "note": "Hubo spotter. El usuario dijo '8 estrictas las últimas dos con ayuda': ambiguo, revisar.",
+     "confidence": "baja"
+    },
+    {
+     "ex": "row_chest_supported_45",
+     "sets": [
+      [
+       "A",
+       20,
+       null
+      ],
+      [
+       "A",
+       30,
+       null
+      ],
+      [
+       "W",
+       50,
+       8
+      ],
+      [
+       "W",
+       50,
+       7
+      ],
+      [
+       "W",
+       50,
+       8,
+       "rp"
+      ]
+     ],
+     "note": "Reps antes de la pausa en la tercera: sin dato."
+    },
+    {
+     "ex": "pulldown_supine_close",
+     "sets": [
+      [
+       "W",
+       60,
+       10
+      ],
+      [
+       "W",
+       60,
+       9
+      ],
+      [
+       "W",
+       60,
+       9,
+       "rp"
+      ]
+     ],
+     "note": "Peso asumido en 60. El rest-pause no se aclaró en qué serie fue.",
+     "confidence": "media"
+    },
+    {
+     "ex": "ohp_machine",
+     "sets": [
+      [
+       "W",
+       25,
+       null
+      ]
+     ],
+     "note": "Reps '6-8', sin desglose por serie.",
+     "confidence": "baja"
+    },
+    {
+     "ex": "rear_delt_machine",
+     "sets": [
+      [
+       "W",
+       15,
+       null
+      ]
+     ],
+     "confidence": "baja"
+    },
+    {
+     "ex": "triceps_pushdown_cable",
+     "sets": [
+      [
+       "W",
+       55,
+       null
+      ]
+     ],
+     "confidence": "baja"
+    },
+    {
+     "ex": "curl_incline_db",
+     "sets": [
+      [
+       "W",
+       15,
+       null
+      ]
+     ],
+     "confidence": "baja"
+    }
+   ]
+  },
+  {
+   "date": "2026-11-03",
+   "day": "martes_pierna_a",
+   "note": "Gemelos y escalador hechos, sin datos.",
+   "items": [
+    {
+     "ex": "hack_squat",
+     "sets": [
+      [
+       "A",
+       10,
+       null
+      ],
+      [
+       "A",
+       20,
+       null
+      ],
+      [
+       "W",
+       30,
+       10
+      ],
+      [
+       "W",
+       35,
+       10
+      ],
+      [
+       "W",
+       35,
+       10
+      ]
+     ],
+     "note": "Con mini pausas entre reps."
+    },
+    {
+     "ex": "leg_press_45",
+     "sets": [
+      [
+       "A",
+       40,
+       null
+      ],
+      [
+       "W",
+       50,
+       12
+      ],
+      [
+       "W",
+       50,
+       null
+      ],
+      [
+       "W",
+       50,
+       null
+      ]
+     ],
+     "note": "Series 2 y 3: entre 12 y 15 reps con pausa abajo, sin desglose."
+    },
+    {
+     "ex": "leg_extension",
+     "sets": [
+      [
+       "A",
+       6.5,
+       null
+      ],
+      [
+       "W",
+       12,
+       10
+      ],
+      [
+       "W",
+       12,
+       15,
+       "rp",
+       8
+      ]
+     ],
+     "note": "Tercera serie sin registrar."
+    },
+    {
+     "ex": "leg_curl_seated",
+     "sets": [
+      [
+       "W",
+       14,
+       10
+      ],
+      [
+       "W",
+       15,
+       12
+      ],
+      [
+       "W",
+       16,
+       15,
+       "rp"
+      ]
+     ],
+     "note": "Registro original confuso; pesos de las series 2 y 3 parcialmente inferidos.",
+     "confidence": "baja"
+    }
+   ]
+  },
+  {
+   "date": "2026-11-05",
+   "day": "jueves_full_body",
+   "note": "Triceps polea hecho, sin datos.",
+   "items": [
+    {
+     "ex": "rdl_barbell",
+     "sets": [
+      [
+       "A",
+       0,
+       10
+      ],
+      [
+       "A",
+       10,
+       10
+      ],
+      [
+       "A",
+       20,
+       10
+      ],
+      [
+       "W",
+       30,
+       10
+      ],
+      [
+       "W",
+       30,
+       10
+      ],
+      [
+       "W",
+       30,
+       10
+      ]
+     ],
+     "note": "Aproximación 1: barra sola."
+    },
+    {
+     "ex": "incline_db_press",
+     "sets": [
+      [
+       "W",
+       25,
+       7
+      ],
+      [
+       "W",
+       25,
+       8,
+       "rp",
+       7
+      ],
+      [
+       "W",
+       25,
+       6
+      ],
+      [
+       "W",
+       22.5,
+       4,
+       "drop"
+      ]
+     ],
+     "note": "Tercera: 6 con 25 y bajó a 22.5 para completar 10 en total."
+    },
+    {
+     "ex": "pulldown_supine_close",
+     "sets": [
+      [
+       "A",
+       35,
+       null
+      ],
+      [
+       "A",
+       45,
+       null
+      ],
+      [
+       "W",
+       60,
+       null
+      ],
+      [
+       "W",
+       60,
+       null
+      ],
+      [
+       "W",
+       70,
+       10
+      ]
+     ]
+    },
+    {
+     "ex": "lateral_raise_db",
+     "sets": [
+      [
+       "W",
+       12.5,
+       null
+      ],
+      [
+       "W",
+       12.5,
+       null
+      ],
+      [
+       "W",
+       12.5,
+       null
+      ]
+     ],
+     "note": "Reps no registradas (plan: 10)."
+    },
+    {
+     "ex": "rear_delt_machine",
+     "sets": [
+      [
+       "W",
+       15,
+       10
+      ],
+      [
+       "W",
+       17.5,
+       10
+      ],
+      [
+       "W",
+       17.5,
+       10
+      ]
+     ]
+    },
+    {
+     "ex": "curl_incline_db",
+     "sets": [
+      [
+       "W",
+       15,
+       10
+      ],
+      [
+       "W",
+       17.5,
+       10
+      ],
+      [
+       "W",
+       17.5,
+       10
+      ]
+     ]
+    },
+    {
+     "ex": "walking_lunge_db",
+     "sets": [
+      [
+       "W",
+       12.5,
+       10
+      ],
+      [
+       "W",
+       17.5,
+       8
+      ],
+      [
+       "W",
+       17.5,
+       8
+      ],
+      [
+       "W",
+       17.5,
+       10
+      ]
+     ],
+     "note": "Reps por pierna, pasos cortos. Cuatro series; la última se asumió con 17.5.",
+     "confidence": "media"
+    }
+   ]
+  }
+ ],
+ "dataQualityNotes": [
+  "Las semanas anteriores al 19/10 (8 al 15 de octubre) no están incluidas. Se pueden cargar aparte.",
+  "Las aproximaciones solo figuran si el usuario las confirmó; las sugeridas por el chat se omitieron.",
+  "El 26/10 viene de un resumen pegado, no de reportes serie por serie.",
+  "Ladrillos de máquina: equivalencia en kg estimada, no medida.",
+  "Peso 'por lado' en máquinas (militar, deltoide posterior) sin confirmar.",
+  "Zancadas: reps por pierna confirmadas solo el 5/11."
+ ]
+}

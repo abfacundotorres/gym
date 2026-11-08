@@ -2,11 +2,11 @@
 
 App personal (un usuario, Facu) para registrar series de hipertrofia y recibir
 recomendaciones de carga con reglas determinísticas. 100% offline, sin backend.
-Spec original: ver `docs/DECISIONES.md` (decisiones tomadas) y el prompt inicial.
+Spec original: el prompt inicial. Decisiones tomadas: `docs/DECISIONES.md`.
 
 ## Stack
 Vite 8 + React 19 + TypeScript (strict) + Tailwind 4 + vite-plugin-pwa (Workbox)
-+ react-router (HashRouter) + Vitest. A partir de H1: Dexie + dexie-react-hooks + zod.
++ react-router (HashRouter) + Vitest + Dexie + dexie-react-hooks + zod (fake-indexeddb en tests).
 E2E offline con Playwright en H5. Deploy estático en GitHub Pages por Actions.
 
 ## Comandos
@@ -20,7 +20,10 @@ E2E offline con Playwright en H5. Deploy estático en GitHub Pages por Actions.
 ## Estructura
 - `src/engine/` — lógica de negocio, **funciones puras de TS sin dependencias**
   (ESLint prohíbe imports que no sean relativos). Tests en `src/engine/__tests__/`.
-- `src/data/` — Dexie, migraciones, zod, import del seed, backup (H1).
+- `src/data/` — Dexie (`db.ts`, migraciones: agregar `db.version(n)`, nunca editar las viejas),
+  zod (`schemas.ts`), conversión del seed (`seedImport.ts`), backup/CSV (`backup.ts`).
+  Fixture de tests: `src/data/__fixtures__/seed.fixture.json`.
+- Tipos de dominio: `src/engine/types.ts`.
 - `src/features/<pantalla>/` — pantallas.
 - `src/ui/` — componentes reutilizables (Stepper, Chip, gráficos SVG propios).
 - `src/lib/` — integración con el navegador (PWA, timer, wake lock, clipboard).
@@ -37,7 +40,7 @@ E2E offline con Playwright en H5. Deploy estático en GitHub Pages por Actions.
 
 ## Hitos
 - [x] H0 Esqueleto PWA (build, offline, CI, deploy)
-- [ ] H1 Datos (Dexie, seed, export/import JSON+CSV)
+- [x] H1 Datos (Dexie, seed, export/import JSON+CSV)
 - [ ] H2 Registro de sesión
 - [ ] H3 Motor + Historial
 - [ ] H4 Volumen y periodización

@@ -55,3 +55,17 @@ el hosting estático no necesita reescrituras.
 
 **D-13. CSP.** Meta tag inyectada solo en build (en dev, Vite usa scripts inline y websocket).
 El SW se registra desde código (`injectRegister: null`) para no necesitar scripts inline.
+
+## H1
+
+**D-14. Fixture de tests.** Como `seed.json` no se commitea, los tests usan
+`src/data/__fixtures__/seed.fixture.json`: catálogo y plan completos + las 6 sesiones que necesitan
+los tests de H1/H3/H4. Si `seed.json` está en la raíz, un test extra valida el archivo real (solo local).
+
+**D-15. Import unificado.** Un solo botón acepta tanto `seed.json` como un backup; siempre valida con zod
+y muestra la vista previa (nuevos / cambian / se borran) antes de aplicar. Mezclar = upsert por id,
+gana el archivo, no borra nada. Reemplazar = borra todo y carga el archivo.
+
+**D-16. Último backup.** Se registra al exportar JSON (el CSV no cuenta como backup porque no se puede reimportar).
+El aviso aparece en Hoy si pasaron más de 7 días y hay sesiones registradas en la app después del último backup.
+Las sesiones del seed no disparan el aviso.
