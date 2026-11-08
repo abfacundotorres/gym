@@ -69,3 +69,23 @@ gana el archivo, no borra nada. Reemplazar = borra todo y carga el archivo.
 **D-16. Último backup.** Se registra al exportar JSON (el CSV no cuenta como backup porque no se puede reimportar).
 El aviso aparece en Hoy si pasaron más de 7 días y hay sesiones registradas en la app después del último backup.
 Las sesiones del seed no disparan el aviso.
+
+## H2
+
+**D-17. Prellenado provisorio.** Hasta H3, el objetivo de cada serie es "repetir la última vez"
+(serie efectiva i ↔ serie i, sin drops; en rest-pause, las reps antes de la pausa). H3 lo reemplaza
+por la doble progresión. Sin historial: peso vacío, reps = mínimo del rango.
+
+**D-18. Orden de la sesión.** Los ejercicios opcionales (escalador) van al final. Se puede empezar
+cualquier día del plan desde "Hacer otro día"; la fecha de la sesión es la del dispositivo.
+
+**D-19. Temporizador.** Arranca solo con series efectivas (no con aproximaciones ni cardio) y usa
+`restSec` del ejercicio (override por ejercicio en Ajustes). El estado vive en `localStorage`
+(conveniencia por dispositivo): sobrevive a bloqueo y recarga. Con la pantalla bloqueada el navegador
+congela la página: la vibración/beep/notificación suenan al volver, no exactamente a tiempo. Una alarma
+puntual con pantalla bloqueada necesitaría push desde un servidor (fuera de alcance).
+
+**D-20. Rest-pause en el editor.** Al marcar rest-pause, "reps antes de la pausa" arranca igual a
+las reps cargadas; se ajusta para abajo.
+
+**D-21. Saltear** solo está disponible si el ejercicio no tiene series registradas.
