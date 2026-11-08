@@ -18,20 +18,6 @@ export function lastExposure(sessions: Session[], exerciseId: string, beforeDate
   return best
 }
 
-export interface Target { weight: number | null; reps: number | null }
-
-/**
- * H2: objetivo = repetir la última vez (serie i ↔ serie efectiva i, sin drops).
- * En H3 lo reemplaza la doble progresión.
- */
-export function repeatLastTargets(ex: Exercise, plannedSets: number, last: Exposure | null): Target[] {
-  const work = last?.item.sets.filter((s) => s.type === 'W' && s.flag !== 'drop') ?? []
-  return Array.from({ length: plannedSets }, (_, i) => {
-    const src = work[i] ?? work.at(-1)
-    return { weight: src?.weight ?? null, reps: src?.flag === 'rp' ? (src.repsBeforePause ?? src.reps) : (src?.reps ?? ex.range[0]) }
-  })
-}
-
 /** "25×8", "25×12 rp(8)", "20×4 drop", "12,5×—". Aproximaciones con prefijo "A ". */
 export function formatSet(set: SetEntry): string {
   if (set.minutes != null) return `${num(set.minutes)} min`

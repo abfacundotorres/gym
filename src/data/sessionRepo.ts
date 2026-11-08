@@ -49,7 +49,7 @@ async function mutateItem(db: GymDB, sessionId: string, index: number, fn: (it: 
 export function addSet(db: GymDB, sessionId: string, index: number, set: Omit<SetEntry, 'id'>): Promise<void> {
   return mutateItem(db, sessionId, index, (it) => {
     const { skipped: _skipped, ...rest } = it
-    return { ...rest, sets: [...it.sets, { ...set, id: newId() }] }
+    return { ...rest, sets: [...it.sets, { ...set, id: newId(), doneAt: set.doneAt ?? Date.now() }] }
   })
 }
 

@@ -24,7 +24,7 @@ describe('sessionRepo', () => {
     const second = cur.items[0]!.sets[1]!
     await updateSet(db, s.id, 0, second.id, { flag: undefined, repsBeforePause: undefined, reps: 9 })
     cur = (await db.sessions.get(s.id))!
-    expect(cur.items[0]!.sets[1]).toEqual({ id: second.id, type: 'W', weight: 25, reps: 9 })
+    expect(cur.items[0]!.sets[1]).toEqual({ id: second.id, type: 'W', weight: 25, reps: 9, doneAt: expect.any(Number) })
 
     await deleteSet(db, s.id, 0, cur.items[0]!.sets[0]!.id)
     await setSkipped(db, s.id, 1, true)
