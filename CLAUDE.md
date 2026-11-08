@@ -41,7 +41,7 @@ E2E offline con Playwright en H5. Deploy estático en GitHub Pages por Actions.
 ## Hitos
 - [x] H0 Esqueleto PWA (build, offline, CI, deploy)
 - [x] H1 Datos (Dexie, seed, export/import JSON+CSV)
-- [ ] H2 Registro de sesión
+- [x] H2 Registro de sesión
 - [ ] H3 Motor + Historial
 - [ ] H4 Volumen y periodización
 - [ ] H5 Variantes, pulido, e2e offline
