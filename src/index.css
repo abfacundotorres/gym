@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+/* Tema por clase en <html> (oscuro por defecto; el toggle llega en Ajustes). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-bg: #0b0f14;
+  --color-surface: #141a22;
+  --color-line: #232c38;
+  --color-accent: #34d399;
+}
+
+html, body, #root { height: 100%; }
+body {
+  @apply bg-white text-slate-900 dark:bg-bg dark:text-slate-100 antialiased;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}

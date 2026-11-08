@@ -1,0 +1,8 @@
+node_modules
+dist
+dev-dist
+*.tsbuildinfo
+test-results
+playwright-report
+# Datos personales: no se commitean ni se empaquetan (ver docs/DECISIONES.md, D-06)
+seed.json
