@@ -1,4 +1,10 @@
+import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
+import { getDB } from '../../data/db'
+import { useSettings } from '../../data/hooks'
+import { exposuresOf } from '../../engine/history'
+import { findPRs } from '../../engine/prs'
+import { formatSet } from '../../engine/session'
 import { Link, useParams } from 'react-router'
 import { useExerciseMap } from '../../data/hooks'
 import { formatDDMM } from '../../engine/dates'
@@ -14,12 +20,23 @@ export function SummaryPage() {
   const { id } = useParams()
   const data = useSessionData(id)
   const exercises = useExerciseMap()
+  const settings = useSettings()
   const [copied, setCopied] = useState<boolean | null>(null)
-  if (!data || !exercises) return null
+  const history = useLiveQuery(
+    async () => (data ? getDB().sessions.where('exerciseIds').anyOf(data.session.exerciseIds).toArray() : []),
+    [data?.session.id, data?.session.exerciseIds.join()],
+  )
+  if (!data || !exercises || !history) return null
   const { session, plan } = data
   const stats = sessionStats(session, plan)
   const volume = Object.entries(volumeByMuscle(session.items, exercises)).sort((a, b) => b[1].total - a[1].total)
-  const text = summaryText(session, plan, exercises)
+  const prs = session.items.flatMap((it) => {
+    const ex = exercises.get(it.exerciseId)
+    if (!ex) return []
+    const prev = exposuresOf(history, ex.id, { before: session.date, excludeSessionId: session.id })
+    return findPRs(ex, { item: it }, prev, settings.kgPerBrick).map((p) => ({ ...p, name: ex.name }))
+  })
+  const text = summaryText(session, plan, exercises) + (prs.length ? `\nPRs: ${prs.map((p) => `${p.name} ${formatSet(p.set)}`).join('; ')}` : '')
 
   return (
     <section className="space-y-4">
@@ -47,7 +64,19 @@ export function SummaryPage() {
           </ul>
         </Card>
       )}
-      <p className="text-xs text-slate-400">Los PRs se muestran desde el hito H3.</p>
+      {prs.length > 0 && (
+        <Card>
+          <p className="mb-2 text-xs text-slate-400">PRs</p>
+          <ul className="space-y-1 text-sm">
+            {prs.map((p) => (
+              <li key={p.setId} className="flex justify-between gap-3">
+                <span className="truncate">{p.name}</span>
+                <span className="tabular-nums text-accent">{formatSet(p.set)} · {p.kind === 'e1rm' ? 'e1RM' : 'reps'}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
       <pre className="whitespace-pre-wrap break-words rounded-xl bg-surface p-3 text-xs ring-1 ring-line">{text}</pre>
       <Button variant="primary" className="w-full" onClick={async () => setCopied(await copyText(text))}>
         {copied ? 'Copiado ✓' : 'Copiar resumen como texto'}

@@ -8,6 +8,8 @@
   --color-surface: #141a22;
   --color-line: #232c38;
   --color-accent: #34d399;
+  /* Serie de gráficos: validada contra la superficie oscura (lightness band + contraste). */
+  --color-chart: #0ea371;
 }
 
 html, body, #root { height: 100%; }

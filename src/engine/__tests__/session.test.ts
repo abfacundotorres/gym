@@ -3,7 +3,7 @@ import fixture from '../../data/__fixtures__/seed.fixture.json'
 import { seedSchema } from '../../data/schemas'
 import { seedToData } from '../../data/seedImport'
 import { comparableKg, formatLoad } from '../load'
-import { formatSet, lastExposure, mesocycleWeek, repeatLastTargets, sessionStats, summaryText } from '../session'
+import { formatSet, lastExposure, mesocycleWeek, sessionStats, summaryText } from '../session'
 import type { Exercise } from '../types'
 import { volumeByMuscle } from '../volume'
 import { weekStart } from '../dates'
@@ -28,16 +28,6 @@ describe('sesión', () => {
     expect(last?.date).toBe('2026-10-29')
     expect(lastExposure(data.sessions, 'incline_db_press', '2026-11-09')?.date).toBe('2026-11-05')
     expect(lastExposure(data.sessions, 'ohp_barbell', '2026-11-09')).toBeNull()
-  })
-
-  it('repetir la última vez: rp usa reps antes de la pausa, sin drops', () => {
-    const last = lastExposure(data.sessions, 'incline_db_press', '2026-11-09')
-    expect(repeatLastTargets(E('incline_db_press'), 3, last)).toEqual([
-      { weight: 25, reps: 7 }, { weight: 25, reps: 7 }, { weight: 25, reps: 6 },
-    ])
-    expect(repeatLastTargets(E('ohp_barbell'), 2, null)).toEqual([
-      { weight: null, reps: 8 }, { weight: null, reps: 8 },
-    ])
   })
 
   it('formatea series', () => {

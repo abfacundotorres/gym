@@ -89,3 +89,33 @@ puntual con pantalla bloqueada necesitaría push desde un servidor (fuera de alc
 las reps cargadas; se ajusta para abajo.
 
 **D-21. Saltear** solo está disponible si el ejercicio no tiene series registradas.
+
+## H3
+
+**D-22. "La última vez" para progresión** es la exposición más reciente de la variante, sin buscar
+hacia atrás otra "mejor" si esa no sirve. Si la última no tiene `targetSets` series válidas al peso de
+trabajo → "Sin datos suficientes": se prellena el peso de trabajo (o el más alto registrado, como
+referencia) y no se sugiere subir. Por eso el press plano hoy dice "sin datos suficientes" (2/11 = rebote/asistida).
+
+**D-23. Objetivo con pocas series.** Si la última vez hubo menos series que las planificadas, las que
+faltan toman el objetivo de la última serie disponible.
+
+**D-24. Aviso de fatiga** (≥2 series válidas bajo el mínimo en dos exposiciones seguidas): se muestra
+como texto, no cambia el peso sugerido. Bajar 5-10 % lo decidís vos.
+
+**D-25. PRs.** Por variante, solo sobre series válidas, contra todas las exposiciones anteriores.
+e1RM: mejor que cualquier serie previa. Reps: más reps que nunca a ese peso exacto. La primera
+exposición nunca es PR.
+
+**D-26. Estancamiento.** Hacen falta ≥4 exposiciones con datos válidos (una base + 3). Una exposición
+"mejora" si supera el mejor e1RM previo o las reps al peso de trabajo superan la mejor previa a ese mismo
+peso. Volver a un número ya hecho no cuenta como mejora. Regresión: e1RM bajó en cada una de las últimas 2.
+
+**D-27. Aproximaciones.** heavy con barra: barra sola ×12, ~50 % ×8, ~70 % ×5, ~85 % ×3 (se muestra
+"2-3"), porcentajes sobre la carga total y convertidos a "por lado". Sin barra: la primera es ~30 %
+(mínimo un incremento). Se descartan duplicadas y las ≥ peso de trabajo. Si la última vez hubo
+aproximaciones, se reusan escaladas por la relación de cargas totales; la barra sola sigue siendo barra
+sola. Se registran con un toque.
+
+**D-28. Gráficos.** Dos gráficos separados (e1RM y reps totales), sin eje doble. e1RM en kg comparables
+(D-07). Color de serie validado contra la superficie oscura.

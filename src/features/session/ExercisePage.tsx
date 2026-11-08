@@ -6,7 +6,13 @@ import { useSettings } from '../../data/hooks'
 import { addSet, deleteSet, setItemNote, setSkipped, updateSet } from '../../data/sessionRepo'
 import { formatDDMM } from '../../engine/dates'
 import { formatLoad, UNIT_SHORT } from '../../engine/load'
-import { formatSet, lastExposure, repeatLastTargets, type Target } from '../../engine/session'
+import { formatSet, lastExposure } from '../../engine/session'
+import { exposuresOf } from '../../engine/history'
+import { recommend, type Recommendation } from '../../engine/progression'
+import { findPRs } from '../../engine/prs'
+import { validSets, workingWeight } from '../../engine/validity'
+import { warmupSets } from '../../engine/warmup'
+import { SetBadges } from '../../ui/SetBadges'
 import { SET_FLAGS, type Exercise, type SetEntry, type SetFlag } from '../../engine/types'
 import { startRest } from '../../lib/restTimer'
 import { useWakeLock } from '../../lib/wakeLock'
@@ -33,7 +39,8 @@ export function ExercisePage() {
   const [editing, setEditing] = useState<string | null>(null)
   useWakeLock(data?.session.status === 'in_progress')
 
-  if (!data || !ctx?.ex) return null
+  // useLiveQuery devuelve el valor anterior hasta resolver el nuevo: no mezclar ejercicios.
+  if (!data || !ctx?.ex || ctx.ex.id !== exerciseId) return null
   const { session, plan } = data
   const item = session.items[idx]!
   const ex = ctx.ex
@@ -41,18 +48,30 @@ export function ExercisePage() {
   const plannedSets = planItem?.sets ?? 3
   const last = lastExposure(ctx.history, ex.id, session.date, session.id)
   const lastW = last?.item.sets.filter((s) => s.type === 'W') ?? []
-  const targets = repeatLastTargets(ex, plannedSets, last)
+  const previous = exposuresOf(ctx.history, ex.id, { before: session.date, excludeSessionId: session.id })
+  const rec = recommend(ex, plannedSets, previous, { kgPerBrick: settings.kgPerBrick, range: planItem?.rangeOverride })
+  const targets = rec.targets
   const done = item.sets
   const doneW = done.filter((s) => s.type === 'W')
   const lastDone = done.at(-1)
-  const next: Target = targets[doneW.length] ?? { weight: lastDone?.weight ?? null, reps: lastDone?.reps ?? ex.range[0] }
+  const lastDoneW = doneW.at(-1)
+  const prs = new Map(findPRs(ex, { item }, previous, settings.kgPerBrick).map((p) => [p.setId, p.kind]))
+  const next = {
+    weight: lastDoneW?.weight ?? rec.weight ?? lastDone?.weight ?? null,
+    reps: targets[doneW.length] ?? lastDoneW?.reps ?? rec.repCap,
+  }
+  const lastItem = previous.at(-1)?.item
+  const warmups = doneW.length === 0
+    ? warmupSets(ex, next.weight, settings.kgPerBrick, lastItem ? { sets: lastItem.sets, workingWeight: workingWeight(validSets(lastItem)) } : undefined)
+        .filter((w) => !done.some((d) => d.type === 'A' && d.weight === w.weight))
+    : []
   const restSec = settings.restSecOverrides[ex.id] ?? ex.restSec
   const isCardio = ex.unit === 'minutes'
   const prevIdx = idx > 0 ? idx - 1 : null
   const nextIdx = idx < session.items.length - 1 ? idx + 1 : null
 
   async function log(d: Draft) {
-    await addSet(db, session.id, idx, { ...d, doneAt: Date.now() })
+    await addSet(db, session.id, idx, d)
     if (d.type === 'W' && restSec > 0 && !isCardio) startRest(restSec, ex.name)
   }
 
@@ -85,6 +104,8 @@ export function ExercisePage() {
           <span className="text-slate-400">Sin historial para esta variante.</span>
         )}
       </div>
+
+      {!isCardio && <RecBanner rec={rec} ex={ex} kgPerBrick={settings.kgPerBrick} />}
 
       {item.skipped ? (
         <div className="space-y-3 text-center">
@@ -124,6 +145,7 @@ export function ExercisePage() {
                   >
                     <span className="w-6 text-xs text-slate-400">{s.type === 'A' ? 'A' : wIndex + 1}</span>
                     <span className="flex-1 text-lg tabular-nums">{formatSet(s).replace(/^A /, '')}</span>
+                    <SetBadges set={s} item={item} pr={prs.get(s.id)} />
                     {prev && <span className="text-xs text-slate-500 tabular-nums">antes {formatSet(prev)}</span>}
                     <span className="text-accent">✓</span>
                   </button>
@@ -132,9 +154,30 @@ export function ExercisePage() {
             })}
           </ol>
 
+          {editing == null && warmups.length > 0 && (
+            <ol className="space-y-1" aria-label="Aproximaciones sugeridas">
+              {warmups.map((w) => (
+                <li key={w.weight}>
+                  <button
+                    onClick={() => void log({ type: 'A', weight: w.weight, reps: w.reps })}
+                    aria-label={`Registrar aproximación ${formatLoad(ex, w.weight, settings.kgPerBrick)} por ${w.reps}`}
+                    className="flex w-full items-center gap-3 rounded-xl border border-dashed border-line px-3 py-2 text-left text-slate-400"
+                  >
+                    <span className="w-6 text-xs">A</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block tabular-nums">{formatLoad(ex, w.weight, settings.kgPerBrick)} × {w.reps}</span>
+                      <span className="block text-[11px] text-slate-500">{w.label}</span>
+                    </span>
+                    <span className="text-lg">✓</span>
+                  </button>
+                </li>
+              ))}
+            </ol>
+          )}
+
           {editing == null && (
             <SetEditor
-              key={`${done.length}`}
+              key={`${ex.id}-${done.length}`}
               ex={ex}
               kgPerBrick={settings.kgPerBrick}
               initial={{ type: 'W', weight: next.weight, reps: isCardio ? null : next.reps, ...(isCardio ? { minutes: lastW.at(-1)?.minutes ?? ex.range[0] } : {}) }}
@@ -150,7 +193,7 @@ export function ExercisePage() {
               {targets.slice(doneW.length + 1).map((t, i) => (
                 <li key={i} className="flex justify-between px-3">
                   <span>Serie {doneW.length + 2 + i}</span>
-                  <span className="tabular-nums">{t.weight == null ? '—' : formatLoad(ex, t.weight, settings.kgPerBrick)} × {t.reps ?? '—'}</span>
+                  <span className="tabular-nums">{next.weight == null ? '—' : formatLoad(ex, next.weight, settings.kgPerBrick)} × {t}</span>
                 </li>
               ))}
             </ol>
@@ -286,5 +329,33 @@ function ItemNote({ initial, onSave }: { initial: string; onSave: (n: string) =>
       <summary className="cursor-pointer py-2 text-slate-400">Nota del ejercicio</summary>
       <textarea value={v} onChange={(e) => setV(e.target.value)} onBlur={() => v !== initial && onSave(v)} rows={2} className="w-full rounded-lg bg-bg p-2 ring-1 ring-line" />
     </details>
+  )
+}
+
+function RecBanner({ rec, ex, kgPerBrick }: { rec: Recommendation; ex: Exercise; kgPerBrick: number }) {
+  const tone =
+    rec.status === 'increase' || rec.status === 'ready_big_jump'
+      ? 'bg-accent/10 text-accent ring-accent/40'
+      : rec.status === 'insufficient' || rec.status === 'no_history'
+        ? 'bg-surface text-slate-300 ring-line'
+        : 'bg-surface text-slate-200 ring-line'
+  const text =
+    rec.status === 'increase'
+      ? `Subí a ${formatLoad(ex, rec.weight, kgPerBrick)}, objetivo ${rec.targets.join('/')}`
+      : rec.status === 'same'
+        ? `Mismo peso${rec.weight != null ? ` (${formatLoad(ex, rec.weight, kgPerBrick)})` : ''}, objetivo ${rec.targets.join('/')}`
+        : rec.message
+  return (
+    <div className={`rounded-xl p-3 text-sm ring-1 ${tone}`} role="status">
+      <p>{text}</p>
+      {rec.status === 'ready_big_jump' && (
+        <p className="mt-1 text-xs text-slate-400">El siguiente peso es {formatLoad(ex, (rec.weight ?? 0) + ex.increment, kgPerBrick)}. Si subís, el objetivo vuelve a {ex.range[0]} reps.</p>
+      )}
+      {rec.status === 'same' && rec.bigJumpPct != null && (
+        <p className="mt-1 text-xs text-slate-400">El incremento es de +{rec.bigJumpPct} %: progresá con reps hasta {rec.repCap}.</p>
+      )}
+      {rec.status === 'insufficient' && <p className="mt-1 text-xs text-slate-400">No sugiero subir hasta tener {rec.targets.length} series válidas al mismo peso.</p>}
+      {rec.fatigue && rec.status !== 'same' && <p className="mt-1 text-xs text-amber-300">Dos sesiones flojas seguidas: considerá bajar 5-10 % o revisar la fatiga.</p>}
+    </div>
   )
 }
