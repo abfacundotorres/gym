@@ -7,7 +7,7 @@ Spec original: el prompt inicial. Decisiones tomadas: `docs/DECISIONES.md`.
 ## Stack
 Vite 8 + React 19 + TypeScript (strict) + Tailwind 4 + vite-plugin-pwa (Workbox)
 + react-router (HashRouter) + Vitest + Dexie + dexie-react-hooks + zod (fake-indexeddb en tests).
-E2E offline con Playwright en H5. Deploy estático en GitHub Pages por Actions.
+E2E offline con @playwright/test (`e2e/`). Deploy estático en GitHub Pages por Actions.
 
 ## Comandos
 - `npm run dev` — servidor de desarrollo (sin CSP, sin SW)
@@ -15,6 +15,7 @@ E2E offline con Playwright en H5. Deploy estático en GitHub Pages por Actions.
 - `npm run lint` — ESLint (incluye la regla de motor sin dependencias)
 - `npm run build` — typecheck + build + service worker
 - `BASE=/gym/ npm run build && npx vite preview --base /gym/` — probar como en Pages
+- `BASE=/gym/ npm run build && npm run e2e` — test e2e offline (Playwright, contra el build)
 - `node scripts/gen-icons.mjs` — regenerar PNG de íconos desde `public/icons/icon.svg`
 
 ## Estructura
@@ -26,7 +27,7 @@ E2E offline con Playwright en H5. Deploy estático en GitHub Pages por Actions.
 - Tipos de dominio: `src/engine/types.ts`.
 - Motor (`src/engine/`): `validity` (qué cuenta para progresión), `progression` (doble progresión),
   `warmup`, `e1rm`, `prs`, `stagnation`, `volume`, `load` (unidades y carga comparable), `history`, `session`,
-  `periodization` (semanas, deload, sugerencias, revisión de mesociclo).
+  `periodization` (semanas, deload, sugerencias, revisión de mesociclo), `variants`.
 - `src/features/<pantalla>/` — pantallas.
 - `src/ui/` — componentes reutilizables (Stepper, Chip, gráficos SVG propios).
 - `src/lib/` — integración con el navegador (PWA, timer, wake lock, clipboard).
@@ -47,4 +48,4 @@ E2E offline con Playwright en H5. Deploy estático en GitHub Pages por Actions.
 - [x] H2 Registro de sesión
 - [x] H3 Motor + Historial
 - [x] H4 Volumen y periodización
-- [ ] H5 Variantes, pulido, e2e offline
+- [x] H5 Variantes, pulido, e2e offline

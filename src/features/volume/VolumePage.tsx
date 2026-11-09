@@ -39,7 +39,7 @@ export function VolumePage() {
         <Button aria-label="Semana siguiente" disabled={monday >= thisMonday} onClick={() => setMonday(addDays(monday, 7))}>→</Button>
       </div>
       <p className="text-xs text-slate-400">
-        Series efectivas por músculo: 1 por primario, ½ por secundario, drop = ½. La franja gris es el rango objetivo; la línea blanca y el número chico, la semana anterior.
+        Series efectivas por músculo: 1 por primario, ½ por secundario, drop = ½. La franja gris es el rango objetivo; la línea fina y el número chico, la semana anterior.
       </p>
       <ul className="space-y-1">
         {MUSCLES.map((m) => {

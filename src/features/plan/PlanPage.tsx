@@ -25,7 +25,10 @@ export function PlanPage() {
 
   return (
     <section className="space-y-6">
-      <h1 className="text-2xl font-bold">Plan</h1>
+      <div className="flex items-baseline justify-between">
+        <h1 className="text-2xl font-bold">Plan</h1>
+        <Link to="/ejercicios" className="py-2 text-sm text-slate-300">Ejercicios →</Link>
+      </div>
 
       <div className="space-y-2">
         <h2 className="text-lg font-semibold">Mesociclo</h2>

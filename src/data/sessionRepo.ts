@@ -92,3 +92,26 @@ export async function finishSession(db: GymDB, sessionId: string, note: string, 
 export async function discardSession(db: GymDB, sessionId: string): Promise<void> {
   await db.sessions.delete(sessionId)
 }
+
+/**
+ * "Ocupado → alternativa" (§6.5): si el ejercicio no tiene series, se reemplaza por la variante;
+ * si ya tiene, se agrega la variante a continuación. Devuelve el índice a abrir.
+ */
+export async function swapExercise(db: GymDB, sessionId: string, index: number, toId: string): Promise<number> {
+  let target = index
+  await db.transaction('rw', db.sessions, async () => {
+    const s = await db.sessions.get(sessionId)
+    const it = s?.items[index]
+    if (!s || !it) throw new Error('Sesión o ejercicio inexistente')
+    const origin = it.swappedFrom ?? it.exerciseId
+    const fresh: SessionItem = { exerciseId: toId, sets: [], ...(origin !== toId ? { swappedFrom: origin } : {}) }
+    const items = [...s.items]
+    if (it.sets.length === 0) items[index] = fresh
+    else {
+      items.splice(index + 1, 0, fresh)
+      target = index + 1
+    }
+    await db.sessions.put({ ...s, items, exerciseIds: [...new Set(items.map((i) => i.exerciseId))] })
+  })
+  return target
+}

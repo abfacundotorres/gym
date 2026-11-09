@@ -110,7 +110,7 @@ export function weekVolume(sessions: Session[], monday: ISODate, exercises: Map<
 // ---------- Revisión de fin de mesociclo ----------
 
 export type Proposal =
-  | { kind: 'rotate'; planDayId: string; exerciseId: string; to: string; reason: string }
+  | { kind: 'rotate'; planDayId: string; exerciseId: string; to: string; reason: string; optional?: boolean }
   | { kind: 'sets'; planDayId: string; exerciseId: string; from: number; to: number; muscle: Muscle; reason: string }
 
 export interface MesoReview {
@@ -177,6 +177,15 @@ export function reviewMesocycle(
       const ex = exercises.get(it.exerciseId)!
       const to = it.alt.find((a) => exercises.get(a)?.family === ex.family && !exercises.get(a)?.archived)
       if (to) proposals.push({ kind: 'rotate', planDayId: day.id, exerciseId: it.exerciseId, to, reason: 'estancado: rotar variante' })
+    }
+  }
+  // Rotación opcional (§6.5): el resto de los ejercicios con alternativa de la misma familia. Destildada por defecto.
+  for (const day of planDays) {
+    for (const it of day.items) {
+      if (stalled.includes(it.exerciseId) || it.optional) continue
+      const ex = exercises.get(it.exerciseId)
+      const to = ex && it.alt.find((a) => exercises.get(a)?.family === ex.family && !exercises.get(a)?.archived)
+      if (to) proposals.push({ kind: 'rotate', planDayId: day.id, exerciseId: it.exerciseId, to, reason: 'rotación opcional de variante', optional: true })
     }
   }
   if (weeks.length) {

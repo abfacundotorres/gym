@@ -1,5 +1,6 @@
 import { HashRouter, Route, Routes } from 'react-router'
 import { Layout } from './ui/Layout'
+import { useTheme } from './lib/theme'
 import { TodayPage } from './features/today/TodayPage'
 import { Placeholder } from './features/Placeholder'
 import { SettingsPage } from './features/settings/SettingsPage'
@@ -11,8 +12,11 @@ import { ExerciseHistoryPage } from './features/history/ExerciseHistoryPage'
 import { VolumePage } from './features/volume/VolumePage'
 import { PlanPage } from './features/plan/PlanPage'
 import { ReviewPage } from './features/plan/ReviewPage'
+import { ExercisesPage } from './features/exercises/ExercisesPage'
+import { ExerciseEditPage } from './features/exercises/ExerciseEditPage'
 
 export function App() {
+  useTheme()
   return (
     <HashRouter>
       <Routes>
@@ -26,6 +30,8 @@ export function App() {
           <Route path="volumen" element={<VolumePage />} />
           <Route path="plan" element={<PlanPage />} />
           <Route path="plan/revision" element={<ReviewPage />} />
+          <Route path="ejercicios" element={<ExercisesPage />} />
+          <Route path="ejercicios/:exId" element={<ExerciseEditPage />} />
           <Route path="ajustes" element={<SettingsPage />} />
           <Route path="*" element={<Placeholder title="No encontrado" milestone="—" />} />
         </Route>

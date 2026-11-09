@@ -22,14 +22,15 @@ export function ReviewPage() {
     sessions: await db.sessions.toArray(),
     planDays: await db.planDays.orderBy('weekday').toArray(),
   }))
-  const [rejected, setRejected] = useState<Set<number>>(new Set())
+  const [toggled, setToggled] = useState<Set<number>>(new Set())
   if (!data || !exercises) return null
   if (!data.meso) return <p className="text-slate-400">No hay un mesociclo activo.</p>
   const { meso } = data
   const review = reviewMesocycle(meso, data.sessions, exercises, data.planDays, settings)
   const name = (id: string) => exercises.get(id)?.name ?? id
   const week = mesocycleWeek(meso, today)
-  const accepted = review.proposals.filter((_, i) => !rejected.has(i))
+  const isOn = (p: Proposal, i: number) => (p.kind === 'rotate' && p.optional ? toggled.has(i) : !toggled.has(i))
+  const accepted = review.proposals.filter((p, i) => isOn(p, i))
   const start = nextMesocycleStart(meso, today)
 
   async function begin() {
@@ -94,8 +95,8 @@ export function ReviewPage() {
                   <input
                     type="checkbox"
                     className="mt-1 size-5 accent-[--color-accent]"
-                    checked={!rejected.has(i)}
-                    onChange={() => setRejected((r) => { const n = new Set(r); if (n.has(i)) n.delete(i); else n.add(i); return n })}
+                    checked={isOn(p, i)}
+                    onChange={() => setToggled((r) => { const n = new Set(r); if (n.has(i)) n.delete(i); else n.add(i); return n })}
                   />
                   <span className="text-sm">
                     {describe(p, name)}

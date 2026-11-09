@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { getDB } from '../../data/db'
 import { useSettings } from '../../data/hooks'
-import { addSet, deleteSet, setItemNote, setSkipped, updateSet } from '../../data/sessionRepo'
+import { addSet, deleteSet, setItemNote, setSkipped, swapExercise, updateSet } from '../../data/sessionRepo'
+import { familyReference, variantOptions } from '../../engine/variants'
 import { formatDDMM } from '../../engine/dates'
 import { formatLoad, UNIT_SHORT } from '../../engine/load'
 import { formatSet, lastExposure } from '../../engine/session'
@@ -34,10 +35,13 @@ export function ExercisePage() {
   const exerciseId = data?.session.items[idx]?.exerciseId
   const ctx = useLiveQuery(async () => {
     if (!exerciseId) return null
-    const [ex, history] = await Promise.all([db.exercises.get(exerciseId), db.sessions.where('exerciseIds').equals(exerciseId).toArray()])
-    return { ex, history }
+    const ex = await db.exercises.get(exerciseId)
+    const family = ex ? await db.exercises.where('family').equals(ex.family).toArray() : []
+    const history = await db.sessions.where('exerciseIds').anyOf(family.map((f) => f.id).concat(exerciseId)).toArray()
+    return { ex, history, family }
   }, [exerciseId])
   const [editing, setEditing] = useState<string | null>(null)
+  const [swapping, setSwapping] = useState(false)
   useWakeLock(data?.session.status === 'in_progress')
 
   // useLiveQuery devuelve el valor anterior hasta resolver el nuevo: no mezclar ejercicios.
@@ -72,6 +76,8 @@ export function ExercisePage() {
     : []
   const restSec = settings.restSecOverrides[ex.id] ?? ex.restSec
   const isCardio = ex.unit === 'minutes'
+  const options = variantOptions(ex, planItem, ctx.family)
+  const famRef = rec.status === 'no_history' ? familyReference(ex, ctx.family, ctx.history, session.date) : null
   const prevIdx = idx > 0 ? idx - 1 : null
   const nextIdx = idx < session.items.length - 1 ? idx + 1 : null
 
@@ -94,6 +100,33 @@ export function ExercisePage() {
         </p>
       </header>
 
+      {item.swappedFrom && <p className="text-xs text-slate-400">En lugar de {ctx.family.find((f) => f.id === item.swappedFrom)?.name ?? item.swappedFrom}</p>}
+      {options.length > 0 && session.status === 'in_progress' && (
+        swapping ? (
+          <div className="space-y-2 rounded-xl bg-surface p-3 ring-1 ring-line">
+            <p className="text-sm text-slate-400">Cambiar por:</p>
+            {options.map((o) => (
+              <Button
+                key={o.id}
+                className="w-full text-left"
+                onClick={async () => {
+                  const to = await swapExercise(db, session.id, idx, o.id)
+                  setSwapping(false)
+                  navigate(`/sesion/${session.id}/${to}`, { replace: true })
+                }}
+              >
+                {o.name}
+              </Button>
+            ))}
+            <Button variant="ghost" className="w-full" onClick={() => setSwapping(false)}>Cancelar</Button>
+          </div>
+        ) : (
+          <button className="min-h-11 text-sm text-slate-300 underline-offset-4 hover:underline" onClick={() => setSwapping(true)}>
+            Ocupado → alternativa
+          </button>
+        )
+      )}
+
       {ex.safetyNote && <SafetyNote sessionId={session.id} ex={ex} />}
       {ex.note && <p className="text-xs text-slate-400">{ex.note}</p>}
 
@@ -106,7 +139,14 @@ export function ExercisePage() {
             {last.item.note && <p className="mt-1 text-xs text-slate-400">{last.item.note}</p>}
           </>
         ) : (
-          <span className="text-slate-400">Sin historial para esta variante.</span>
+          <>
+            <span className="text-slate-400">Sin historial para esta variante.</span>
+            {famRef && (
+              <p className="mt-1 text-xs text-slate-400">
+                Referencia de familia, no equivalente: {ctx.family.find((f) => f.id === famRef.exerciseId)?.name} {formatLoad(ctx.family.find((f) => f.id === famRef.exerciseId)!, famRef.weight, settings.kgPerBrick)} ({formatDDMM(famRef.date)}).
+              </p>
+            )}
+          </>
         )}
       </div>
 

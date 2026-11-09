@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto'
 import { afterEach, describe, expect, it } from 'vitest'
 import { createDB, type GymDB } from '../db'
-import { activeSession, addSet, deleteSet, finishSession, setSkipped, startSession, updateSet } from '../sessionRepo'
+import { activeSession, addSet, deleteSet, finishSession, setSkipped, startSession, swapExercise, updateSet } from '../sessionRepo'
 import type { PlanDay } from '../../engine/types'
 
 const plan: PlanDay = {
@@ -34,5 +34,35 @@ describe('sessionRepo', () => {
     expect(cur.items[1]!.skipped).toBe(true)
     expect(cur).toMatchObject({ status: 'finished', finishedAt: 5000, note: 'bien' })
     expect(await activeSession(db)).toBeUndefined()
+  })
+})
+
+describe('swapExercise', () => {
+  it('reemplaza si no hay series; agrega después si ya hay', async () => {
+    db = createDB('swap-test')
+    const s = await startSession(db, plan, '2026-11-09', null)
+    expect(await swapExercise(db, s.id, 0, 'b2')).toBe(0)
+    let cur = (await db.sessions.get(s.id))!
+    expect(cur.items[0]).toEqual({ exerciseId: 'b2', sets: [], swappedFrom: 'b' })
+    await addSet(db, s.id, 0, { type: 'W', weight: 10, reps: 10 })
+    expect(await swapExercise(db, s.id, 0, 'b3')).toBe(1)
+    cur = (await db.sessions.get(s.id))!
+    expect(cur.items.map((i) => [i.exerciseId, i.swappedFrom])).toEqual([['b2', 'b'], ['b3', 'b'], ['a', undefined], ['c', undefined]])
+    expect(cur.exerciseIds).toEqual(['b2', 'b3', 'a', 'c'])
+  })
+})
+
+describe('exerciseRepo', () => {
+  it('crea variantes con id único y sin archivar', async () => {
+    const { createVariant, slugify } = await import('../exerciseRepo')
+    db = createDB('ex-test')
+    const base = { id: 'a', name: 'A', family: 'f', unit: 'total', primary: [], secondary: [], range: [8, 10], increment: 5, restSec: 90, warmup: 'none', archived: true } as const
+    await db.exercises.add({ ...base, primary: [], secondary: [], range: [8, 10] })
+    expect(slugify('Jalón con agarre en V')).toBe('jalon_con_agarre_en_v')
+    const v1 = await createVariant(db, { ...base, primary: [], secondary: [], range: [8, 10] }, 'Jalón V')
+    const v2 = await createVariant(db, { ...base, primary: [], secondary: [], range: [8, 10] }, 'Jalón V')
+    expect([v1.id, v2.id]).toEqual(['jalon_v', 'jalon_v_2'])
+    expect(v1.archived).toBeUndefined()
+    expect(v1.family).toBe('f')
   })
 })
