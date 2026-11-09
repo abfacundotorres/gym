@@ -235,3 +235,10 @@ sesión. La semana en curso nunca se considera pausada y se deja de contar cuand
 deload adelantado (`deloadFrom`) la fecha del deload queda fija. Es un cálculo derivado de las sesiones, no se guarda: si
 después cargás una sesión de esa semana, la pausa desaparece. No hay botón de pausa manual; para cambiar el calendario se
 edita el inicio del mesociclo.
+
+**D-51. RIR en la progresión.** Solo se pregunta en la última serie efectiva de cada ejercicio (en las demás hay un
+"+ RIR" opcional). El motor usa el RIR de la última serie efectiva al peso de trabajo de la última vez; sin dato, nada
+cambia. Reglas: (a) todas las series al tope de reps y la última con RIR 0 **la primera vez** → mismo peso, repetí para
+llegar con 1 en reserva; si ya lo repetiste al tope, se sube (nunca bloquea más de una vez); (b) RIR 3+ sin llegar al tope →
+hasta +2 reps en vez de +1, sin pasar el tope; (c) con día bajo (D-49) manda el día bajo. Las series excluidas no cuentan.
+Además, las sesiones del mismo día se ordenan por hora de inicio y no por id.

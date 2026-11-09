@@ -20,6 +20,8 @@ export interface Recommendation {
   basedOn: string | null
   /** Día de sueño/energía bajos: se mantiene el peso y no se suma rep ni carga (D-49). */
   held?: boolean
+  /** Uso del RIR (D-51): repetir porque llegaste al tope sin reservas, o sumar hasta 2 reps porque te sobró. */
+  note?: 'rir_defer' | 'rir_fast'
 }
 
 export const MAX_AUTO_JUMP = 0.1
@@ -62,6 +64,10 @@ function baseRecommend(
   const repsFor = (i: number) => work[i]?.reps ?? work.at(-1)?.reps
 
   const prev = history.at(-2)
+  // RIR de la última serie efectiva al peso de trabajo (D-51); sin dato = sin efecto.
+  const lastRir = work.at(-1)?.set.rir
+  const prevWork = prev ? validSets(prev.item).filter((v) => v.weight === ww) : []
+  const prevAtCap = prevWork.length >= targetSets && prevWork.slice(0, targetSets).every((v) => v.reps >= cap)
   const fatigue = belowMin(valid, min) >= 2 && !!prev && belowMin(validSets(prev.item), min) >= 2
 
   if (work.length < targetSets) {
@@ -82,6 +88,19 @@ function baseRecommend(
   }
 
   const allAtCap = work.slice(0, targetSets).every((v) => v.reps >= cap)
+  if (allAtCap && !extended && lastRir === 0 && !prevAtCap) {
+    // Primera vez que llegás al tope y fue al fallo: repetí para llegar con margen. Si lo repetís, se sube.
+    return {
+      status: 'same',
+      weight: ww,
+      targets: Array(targetSets).fill(cap),
+      fatigue: false,
+      repCap: cap,
+      note: 'rir_defer',
+      message: 'Mismo peso: llegaste al tope sin reservas',
+      basedOn: last.date,
+    }
+  }
   if (allAtCap && !extended) {
     return {
       status: 'increase',
@@ -106,14 +125,20 @@ function baseRecommend(
       basedOn: last.date,
     }
   }
+  const fast = !fatigue && lastRir != null && lastRir >= 3
   return {
     status: 'same',
     weight: ww,
-    targets: Array.from({ length: targetSets }, (_, i) => Math.min(cap, repsFor(i)! + 1)),
+    targets: Array.from({ length: targetSets }, (_, i) => Math.min(cap, repsFor(i)! + (fast ? 2 : 1))),
     fatigue,
     ...(extended ? { bigJumpPct: Math.round(big * 100) } : {}),
+    ...(fast ? { note: 'rir_fast' as const } : {}),
     repCap: cap,
-    message: fatigue ? 'Mismo peso. Dos sesiones flojas: considerá bajar 5-10 % o revisar la fatiga.' : 'Mismo peso, sumá una rep',
+    message: fatigue
+      ? 'Mismo peso. Dos sesiones flojas: considerá bajar 5-10 % o revisar la fatiga.'
+      : fast
+        ? 'Mismo peso, sumá hasta 2 reps'
+        : 'Mismo peso, sumá una rep',
     basedOn: last.date,
   }
 }
@@ -141,7 +166,7 @@ export function recommend(
   if (ww == null) return rec
   const reps = valid.filter((v) => v.weight === ww).map((v) => Math.min(rec.repCap, v.reps))
   if (reps.length < targetSets) return rec
-  const { bigJumpPct: _b, ...rest } = rec
+  const { bigJumpPct: _b, note: _n, ...rest } = rec
   return {
     ...rest,
     status: 'same',
