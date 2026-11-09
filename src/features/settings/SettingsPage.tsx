@@ -8,6 +8,7 @@ import { fileStamp, formatTimestamp } from '../../lib/format'
 import { Button, Card } from '../../ui/Button'
 import { ImportFlow } from './ImportFlow'
 import { VolumeTargets } from './VolumeTargets'
+import { About } from './About'
 import { Preferences } from './Preferences'
 import { Link } from 'react-router'
 
@@ -96,6 +97,11 @@ export function SettingsPage() {
             )}
           </>
         )}
+      </div>
+
+      <div className="space-y-2">
+        <h2 className="text-lg font-semibold">Acerca de</h2>
+        <About />
       </div>
     </section>
   )
