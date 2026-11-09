@@ -209,7 +209,14 @@ Cada build cambia la hora, así que cada deploy genera una versión nueva aunque
 
 ## Ícono
 
-**D-47. Ícono.** Pesa con cara sonriente, placas de colores y degradé violeta→rosa (`public/icons/icon.svg`).
-Las versiones maskable y apple-touch son a sangre y la figura queda dentro de la zona segura central, para que
-la máscara circular de Android no corte nada. Los PNG se regeneran con `node scripts/gen-icons.mjs`.
-El color de fondo de la pantalla de arranque (manifest) sigue siendo el oscuro de la app.
+**D-47. Ícono.** Pesa negra sobre fondo amarillo (`public/icons/icon.svg`), inclinada y con sombra suave. Las
+versiones maskable y apple-touch son a sangre y la pesa queda dentro de la zona segura central, para que la máscara
+circular de Android no corte nada; las de uso normal (192/512) tienen esquinas redondeadas transparentes. Los PNG
+se regeneran con `node scripts/gen-icons.mjs`. El fondo de la pantalla de arranque (manifest) sigue siendo el oscuro
+de la app.
+
+**D-48. Actualizar no toca los datos.** Los datos viven en IndexedDB del origen; el service worker solo reemplaza
+archivos de la app (caché). Verificado en Chromium: con datos cargados y una sesión a medias, se publicó un build con
+otro ícono, se actualizó desde el aviso y quedaron idénticas las 10 sesiones y los 22 ejercicios. No cambiar `start_url`
+ni el origen: cambiarlos sí crearía otra instalación sin los datos. El ícono de la pantalla de inicio lo gestiona
+Android/Chrome (WebAPK) y puede tardar en refrescarse.
