@@ -132,6 +132,7 @@ const setEntry = z.object({
   rir: z.number().int().min(0).max(3).optional(),
   note: z.string().optional(),
   doneAt: z.number().nullable().optional(),
+  restSec: z.number().int().nonnegative().optional(),
 })
 
 const session = z.object({

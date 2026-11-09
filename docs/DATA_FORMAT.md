@@ -68,7 +68,8 @@ Unidades: `per_side` = kg de discos por lado, sin barra/carro · `per_hand` = kg
 **SessionItem**: `{ exerciseId, note?, sets: SetEntry[], skipped?, swappedFrom?, confidence?: 'alta'|'media'|'baja' }`
 (sin `confidence` = alta).
 
-**SetEntry**: `{ id, type: 'A'|'W', weight: number|null, reps: number|null, minutes?, flag?: 'rp'|'drop'|'rebote'|'asist', repsBeforePause?, rir? (0-3), note?, doneAt?: number|null }`
+**SetEntry**: `{ id, type: 'A'|'W', weight: number|null, reps: number|null, minutes?, flag?: 'rp'|'drop'|'rebote'|'asist', repsBeforePause?, rir? (0-3), note?, doneAt?: number|null, restSec?: number }`
+- `restSec`: descanso real en segundos desde la serie anterior del mismo ejercicio (D-44). Solo en series cargadas con la app.
 - `A` = aproximación, `W` = efectiva. `weight` en la unidad del ejercicio.
 - Con `flag: 'rp'`, `reps` son las totales y `repsBeforePause` las previas a la primera pausa.
 - `reps: null` = no se registró (nunca se usa en cálculos de progresión).
@@ -83,7 +84,7 @@ Unidades: `per_side` = kg de discos por lado, sin barra/carro · `per_hand` = kg
 
 Solo exportación (para planillas). Una fila por serie, UTF-8, separador `,`, comillas dobles si hace falta.
 
-`fecha, dia, sesion_id, ejercicio_id, ejercicio, unidad, serie, tipo, peso, reps, minutos, marca, reps_antes_pausa, rir, confianza, nota`
+`fecha, dia, sesion_id, ejercicio_id, ejercicio, unidad, serie, tipo, peso, reps, minutos, marca, reps_antes_pausa, rir, descanso_s, confianza, nota`
 
 ## seed.json
 

@@ -1,4 +1,5 @@
 import { newSessionItems } from '../engine/session'
+import { restBetween } from '../engine/rest'
 import type { PlanDay, Readiness, Session, SessionItem, SetEntry } from '../engine/types'
 import type { ISODate } from '../engine/dates'
 import type { GymDB } from './db'
@@ -48,10 +49,14 @@ async function mutateItem(db: GymDB, sessionId: string, index: number, fn: (it: 
   })
 }
 
-export function addSet(db: GymDB, sessionId: string, index: number, set: Omit<SetEntry, 'id'>): Promise<void> {
+export function addSet(db: GymDB, sessionId: string, index: number, set: Omit<SetEntry, 'id'>, now = Date.now()): Promise<void> {
   return mutateItem(db, sessionId, index, (it) => {
     const { skipped: _skipped, ...rest } = it
-    return { ...rest, sets: [...it.sets, { ...set, id: newId(), doneAt: set.doneAt ?? Date.now() }] }
+    const doneAt = set.doneAt ?? now
+    // Descanso = tiempo desde la serie anterior de este mismo ejercicio (D-44).
+    const rest_ = set.restSec ?? restBetween(it.sets.at(-1)?.doneAt, doneAt)
+    const entry: SetEntry = { ...set, id: newId(), doneAt, ...(rest_ != null ? { restSec: rest_ } : {}) }
+    return { ...rest, sets: [...it.sets, entry] }
   })
 }
 

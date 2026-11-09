@@ -183,3 +183,19 @@ resumen e historial, y que no hubo requests externas. Corre en CI (job `e2e`).
 
 **Nota sobre D-02 con poleas.** Con incremento de 5 kg, el jalón prono a 45 kg (+11 %) pasa a
 progresión por reps extendida (hasta 13). Si la pila tiene placas de 2,5, bajá el incremento en Ejercicios.
+
+## Auditoría (09/11)
+
+**D-43. Aproximaciones en vivo.** Mientras no haya series efectivas, las aproximaciones se calculan con el
+peso que tengas en el stepper de la serie efectiva (no solo con el sugerido por el motor). Ese peso
+tipeado se conserva al registrar aproximaciones. Con la primera efectiva registrada, las aproximaciones
+dejan de mostrarse.
+
+**D-44. Descanso real.** Se guarda en cada serie (`restSec`) al registrarla: segundos desde la serie
+anterior **del mismo ejercicio** (aproximaciones incluidas), sin contar el traslado entre ejercicios.
+No se registra si pasaron menos de 10 s (carga seguida o series anotadas de memoria) ni más de 30 min
+(pausa larga). Editar una serie no lo recalcula. Se muestra en cada serie, como promedio de las
+efectivas en el resumen de texto y en el historial por ejercicio, y se exporta en el CSV (`descanso_s`).
+Las series importadas del seed no tienen descanso.
+
+**D-45. Seguridad.** Ver `docs/SEGURIDAD.md`. CI con permisos mínimos (`contents: read`).
