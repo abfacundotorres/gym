@@ -220,3 +220,18 @@ archivos de la app (caché). Verificado en Chromium: con datos cargados y una se
 otro ícono, se actualizó desde el aviso y quedaron idénticas las 10 sesiones y los 22 ejercicios. No cambiar `start_url`
 ni el origen: cambiarlos sí crearía otra instalación sin los datos. El ícono de la pantalla de inicio lo gestiona
 Android/Chrome (WebAPK) y puede tardar en refrescarse.
+
+## Autorregulación (PR 1)
+
+**D-49. Sueño y energía del día.** Día "bajo" = promedio de sueño y energía ≤ 2 (por ejemplo 2 y 2, o 1 y 3). Solo
+afecta a esa sesión y siempre como sugerencia: (a) no se sube carga ni se suma una rep, se mantiene el peso de trabajo y
+se repite lo de la última vez; (b) se sugiere una serie menos por ejercicio, mínimo 2. No se impone nada: podés subir igual.
+No aplica en semana de deload (ya baja la carga) ni si no respondiste las preguntas. Sin historial suficiente tampoco cambia
+nada. Es independiente de la sugerencia de deload (promedio de las últimas 3 sesiones ≤ 2,5, D-32).
+
+**D-50. El mesociclo se pausa.** Una semana (lunes a domingo) del mesociclo ya cerrada y sin ninguna sesión terminada no
+cuenta: el número de semana y el deload se corren una semana por cada una. Marcar un día como salteado no cuenta como
+sesión. La semana en curso nunca se considera pausada y se deja de contar cuando el mesociclo ya habría terminado. Con
+deload adelantado (`deloadFrom`) la fecha del deload queda fija. Es un cálculo derivado de las sesiones, no se guarda: si
+después cargás una sesión de esa semana, la pausa desaparece. No hay botón de pausa manual; para cambiar el calendario se
+edita el inicio del mesociclo.

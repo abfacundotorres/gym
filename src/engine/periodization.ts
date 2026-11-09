@@ -8,28 +8,59 @@ import { volumeByMuscle } from './volume'
 
 // ---------- Semanas ----------
 
-export interface MesoWeek { week: number; total: number; isDeload: boolean }
+export interface MesoWeek { week: number; total: number; isDeload: boolean; pausedWeeks?: number }
 
 const weekIndex = (meso: Mesocycle, d: ISODate) => Math.floor(daysBetween(weekStart(meso.startDate), weekStart(d)) / 7) + 1
+const pausedBefore = (paused: ISODate[], monday: ISODate) => paused.filter((p) => p < monday).length
 
-/** Semana N de M del mesociclo; null si la fecha cae fuera. */
-export function mesocycleWeek(meso: Mesocycle, date: ISODate): MesoWeek | null {
-  if (daysBetween(weekStart(meso.startDate), weekStart(date)) < 0) return null
-  const week = weekIndex(meso, date)
-  const deloadWeek = meso.deloadFrom ? weekIndex(meso, meso.deloadFrom) : meso.accumulationWeeks + 1
-  const total = deloadWeek - 1 + meso.deloadWeeks
-  if (week > Math.max(total, deloadWeek - 1)) return null
-  return { week, total, isDeload: week >= deloadWeek }
+/**
+ * Semanas pasadas del mesociclo sin ninguna sesión terminada (D-50): no cuentan, el mesociclo se corre.
+ * Solo mira semanas ya cerradas (la actual no) y deja de contar cuando el mesociclo ya habría terminado.
+ */
+export function pausedWeeks(meso: Mesocycle, sessions: Pick<Session, 'date' | 'status'>[], today: ISODate): ISODate[] {
+  const withSession = new Set(sessions.filter((s) => s.status === 'finished').map((s) => weekStart(s.date)))
+  const current = weekStart(today)
+  const out: ISODate[] = []
+  let active = 0
+  let activeDeload = 0
+  for (let w = weekStart(meso.startDate); w < current; w = addDays(w, 7)) {
+    const inDeload = meso.deloadFrom ? w >= meso.deloadFrom : active >= meso.accumulationWeeks
+    if (inDeload && activeDeload >= meso.deloadWeeks) break
+    if (withSession.has(w)) {
+      if (inDeload) activeDeload++
+      else active++
+    } else out.push(w)
+  }
+  return out
 }
 
-/** Lunes en que empieza el deload. */
-export function deloadStart(meso: Mesocycle): ISODate {
-  return meso.deloadFrom ?? addDays(weekStart(meso.startDate), meso.accumulationWeeks * 7)
+/** Semana N de M del mesociclo (sin contar las pausadas); null si la fecha cae fuera. */
+export function mesocycleWeek(meso: Mesocycle, date: ISODate, paused: ISODate[] = []): MesoWeek | null {
+  if (daysBetween(weekStart(meso.startDate), weekStart(date)) < 0) return null
+  const before = pausedBefore(paused, weekStart(date))
+  const week = weekIndex(meso, date) - before
+  const deloadWeek = meso.deloadFrom
+    ? weekIndex(meso, meso.deloadFrom) - pausedBefore(paused, weekStart(meso.deloadFrom))
+    : meso.accumulationWeeks + 1
+  const total = deloadWeek - 1 + meso.deloadWeeks
+  if (week > Math.max(total, deloadWeek - 1)) return null
+  return { week, total, isDeload: week >= deloadWeek, ...(before > 0 ? { pausedWeeks: before } : {}) }
+}
+
+/** Lunes en que empieza el deload (corrido por las semanas pausadas). */
+export function deloadStart(meso: Mesocycle, paused: ISODate[] = []): ISODate {
+  if (meso.deloadFrom) return meso.deloadFrom
+  let d = addDays(weekStart(meso.startDate), meso.accumulationWeeks * 7)
+  for (const p of [...paused].sort()) if (p <= d) d = addDays(d, 7)
+  return d
 }
 
 /** Lunes siguiente al final del mesociclo. */
-export function mesocycleEnd(meso: Mesocycle): ISODate {
-  return addDays(deloadStart(meso), meso.deloadWeeks * 7)
+export function mesocycleEnd(meso: Mesocycle, paused: ISODate[] = []): ISODate {
+  const ds = deloadStart(meso, paused)
+  let end = addDays(ds, meso.deloadWeeks * 7)
+  for (const p of [...paused].sort()) if (p >= ds && p < end) end = addDays(end, 7)
+  return end
 }
 
 // ---------- Deload (§8) ----------
@@ -126,11 +157,12 @@ export function reviewMesocycle(
   exercises: Map<string, Exercise>,
   planDays: PlanDay[],
   settings: Pick<Settings, 'kgPerBrick' | 'volumeTarget'>,
+  paused: ISODate[] = [],
 ): MesoReview {
   const K = settings.kgPerBrick
   const start = weekStart(meso.startDate)
-  const dStart = deloadStart(meso)
-  const inMeso = allSessions.filter((s) => s.status === 'finished' && s.date >= start && s.date < mesocycleEnd(meso))
+  const dStart = deloadStart(meso, paused)
+  const inMeso = allSessions.filter((s) => s.status === 'finished' && s.date >= start && s.date < mesocycleEnd(meso, paused))
   const accum = inMeso.filter((s) => s.date < dStart && !s.deload)
 
   // PRs dentro del mesociclo (contra todo lo anterior)
@@ -141,7 +173,7 @@ export function reviewMesocycle(
     if (!ex) continue
     const all = exposuresOf(allSessions.filter((s) => s.status === 'finished'), id)
     all.forEach((e, i) => {
-      if (e.date < start || e.date >= mesocycleEnd(meso)) return
+      if (e.date < start || e.date >= mesocycleEnd(meso, paused)) return
       for (const pr of findPRs(ex, e, all.slice(0, i), K)) prs.push({ ...pr, exerciseId: id, date: e.date })
     })
   }
@@ -165,7 +197,7 @@ export function reviewMesocycle(
   const stalled = planIds.filter((id) => {
     const ex = exercises.get(id)
     if (!ex || ex.cardio) return false
-    const t = trendOf(ex, exposuresOf(allSessions.filter((s) => s.status === 'finished' && s.date < mesocycleEnd(meso)), id), K).trend
+    const t = trendOf(ex, exposuresOf(allSessions.filter((s) => s.status === 'finished' && s.date < mesocycleEnd(meso, paused)), id), K).trend
     return t === 'stagnant' || t === 'regressing'
   })
 
@@ -223,7 +255,7 @@ export function applyProposals(planDays: PlanDay[], accepted: Proposal[]): PlanD
 }
 
 /** Inicio del próximo mesociclo: el lunes siguiente al final, o el lunes de esta semana si ya pasó. */
-export function nextMesocycleStart(meso: Mesocycle, today: ISODate): ISODate {
-  const end = mesocycleEnd(meso)
+export function nextMesocycleStart(meso: Mesocycle, today: ISODate, paused: ISODate[] = []): ISODate {
+  const end = mesocycleEnd(meso, paused)
   return today < end ? end : weekStart(today)
 }

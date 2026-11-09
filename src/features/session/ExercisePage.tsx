@@ -16,6 +16,7 @@ import { validSets, workingWeight } from '../../engine/validity'
 import { warmupSets } from '../../engine/warmup'
 import { SetBadges } from '../../ui/SetBadges'
 import { deloadSets, deloadWeight } from '../../engine/periodization'
+import { readinessLevel, reducedSets } from '../../engine/readiness'
 import { SET_FLAGS, type Exercise, type SetEntry, type SetFlag } from '../../engine/types'
 import { startRest } from '../../lib/restTimer'
 import { useWakeLock } from '../../lib/wakeLock'
@@ -53,11 +54,12 @@ export function ExercisePage() {
   const ex = ctx.ex
   const planItem = plan?.items.find((p) => p.exerciseId === item.exerciseId || p.exerciseId === item.swappedFrom)
   const deload = !!session.deload
+  const lowDay = !deload && readinessLevel(session.readiness) === 'low'
   const plannedSets = deload ? deloadSets(planItem?.sets ?? 3) : (planItem?.sets ?? 3)
   const last = lastExposure(ctx.history, ex.id, session.date, session.id)
   const lastW = last?.item.sets.filter((s) => s.type === 'W') ?? []
   const previous = exposuresOf(ctx.history, ex.id, { before: session.date, excludeSessionId: session.id })
-  const baseRec = recommend(ex, deload ? (planItem?.sets ?? 3) : plannedSets, previous, { kgPerBrick: settings.kgPerBrick, range: planItem?.rangeOverride })
+  const baseRec = recommend(ex, deload ? (planItem?.sets ?? 3) : plannedSets, previous, { kgPerBrick: settings.kgPerBrick, range: planItem?.rangeOverride, hold: lowDay })
   const rec: Recommendation = deload
     ? { ...baseRec, status: 'same', weight: deloadWeight(ex, baseRec.weight, settings.kgPerBrick), targets: baseRec.targets.slice(0, plannedSets), fatigue: false, message: 'Deload' }
     : baseRec
@@ -99,7 +101,7 @@ export function ExercisePage() {
       <header>
         <h1 className="text-2xl font-bold leading-tight">{ex.name}</h1>
         <p className="text-sm text-slate-400">
-          {plannedSets} series · {ex.range[0]}-{ex.range[1]} {isCardio ? 'min' : 'reps'}{ex.repsPerLeg && ' por pierna'}
+          {plannedSets} series{lowDay && plannedSets > reducedSets(plannedSets) ? ` (hoy podés dejarlo en ${reducedSets(plannedSets)})` : ''} · {ex.range[0]}-{ex.range[1]} {isCardio ? 'min' : 'reps'}{ex.repsPerLeg && ' por pierna'}
           {!isCardio && ` · descanso ${Math.round(restSec / 60 * 10) / 10} min`}
         </p>
       </header>
@@ -406,7 +408,9 @@ function RecBanner({ rec, ex, kgPerBrick }: { rec: Recommendation; ex: Exercise;
         ? 'bg-surface text-slate-300 ring-line'
         : 'bg-surface text-slate-200 ring-line'
   const text =
-    rec.status === 'increase'
+    rec.held
+      ? `Hoy mantené el peso${rec.weight != null ? ` (${formatLoad(ex, rec.weight, kgPerBrick)})` : ''}, repetí ${rec.targets.join('/')}`
+      : rec.status === 'increase'
       ? `Subí a ${formatLoad(ex, rec.weight, kgPerBrick)}, objetivo ${rec.targets.join('/')}`
       : rec.status === 'same'
         ? `Mismo peso${rec.weight != null ? ` (${formatLoad(ex, rec.weight, kgPerBrick)})` : ''}, objetivo ${rec.targets.join('/')}`
@@ -414,6 +418,7 @@ function RecBanner({ rec, ex, kgPerBrick }: { rec: Recommendation; ex: Exercise;
   return (
     <div className={`rounded-xl p-3 text-sm ring-1 ${tone}`} role="status">
       <p>{text}</p>
+      {rec.held && <p className="mt-1 text-xs text-slate-400">Sueño y energía bajos: hoy no se suben cargas. Si te sentís bien, podés subir igual.</p>}
       {rec.status === 'ready_big_jump' && (
         <p className="mt-1 text-xs text-slate-400">El siguiente peso es {formatLoad(ex, (rec.weight ?? 0) + ex.increment, kgPerBrick)}. Si subís, el objetivo vuelve a {ex.range[0]} reps.</p>
       )}

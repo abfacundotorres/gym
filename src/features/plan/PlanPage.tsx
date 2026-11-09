@@ -5,7 +5,7 @@ import { getDB } from '../../data/db'
 import { useExerciseMap } from '../../data/hooks'
 import { createFirstMesocycle, deloadThisWeek, saveMesocycle, setPlanItemSets } from '../../data/planRepo'
 import { formatDDMM, toISODate, weekStart } from '../../engine/dates'
-import { deloadStart, mesocycleEnd, mesocycleWeek } from '../../engine/periodization'
+import { deloadStart, mesocycleEnd, mesocycleWeek, pausedWeeks } from '../../engine/periodization'
 import type { Mesocycle } from '../../engine/types'
 import { Button, Card } from '../../ui/Button'
 import { Stepper } from '../../ui/Stepper'
@@ -17,11 +17,13 @@ export function PlanPage() {
   const data = useLiveQuery(async () => ({
     planDays: await db.planDays.orderBy('weekday').toArray(),
     meso: await db.mesocycles.where('status').equals('active').first(),
+    sessions: await db.sessions.toArray(),
   }))
   const [editing, setEditing] = useState(false)
   if (!data || !exercises) return null
   const { meso } = data
-  const week = meso ? mesocycleWeek(meso, today) : null
+  const paused = meso ? pausedWeeks(meso, data.sessions, today) : []
+  const week = meso ? mesocycleWeek(meso, today, paused) : null
 
   return (
     <section className="space-y-6">
@@ -45,8 +47,13 @@ export function PlanPage() {
             <p className="text-sm text-slate-400">
               Desde el {formatDDMM(meso.startDate)} · {meso.deloadFrom ? 'deload adelantado' : `${meso.accumulationWeeks} de acumulación + ${meso.deloadWeeks} de deload`}
               <br />
-              {week && !week.isDeload ? `Próximo deload: semana del ${formatDDMM(deloadStart(meso))}` : `Termina el ${formatDDMM(mesocycleEnd(meso))}`}
+              {week && !week.isDeload ? `Próximo deload: semana del ${formatDDMM(deloadStart(meso, paused))}` : `Termina el ${formatDDMM(mesocycleEnd(meso, paused))}`}
             </p>
+            {paused.length > 0 && (
+              <p className="text-xs text-slate-400">
+                {paused.length === 1 ? 'Pasó 1 semana' : `Pasaron ${paused.length} semanas`} sin entrenar: el mesociclo se corrió ({paused.map((p) => formatDDMM(p)).join(', ')}).
+              </p>
+            )}
             {meso.notes && <p className="text-xs text-slate-400">{meso.notes}</p>}
             <div className="grid grid-cols-2 gap-2">
               <Button onClick={() => setEditing(true)}>Editar</Button>

@@ -5,7 +5,7 @@ import { needsBackupReminder } from '../../data/backup'
 import { getDB, SETTINGS_KEY } from '../../data/db'
 import { activeSession, startSession } from '../../data/sessionRepo'
 import { addDays, formatDDMM, toISODate, weekStart, weekdayOf, WEEKDAYS_ES } from '../../engine/dates'
-import { deloadSuggestion, mesocycleEnd, mesocycleWeek, type DeloadReason } from '../../engine/periodization'
+import { deloadSuggestion, mesocycleEnd, mesocycleWeek, pausedWeeks, type DeloadReason } from '../../engine/periodization'
 import { deloadThisWeek, dismissDeloadSuggestion, META_DELOAD_DISMISSED, toggleSkipped } from '../../data/planRepo'
 import type { PlanDay, Readiness } from '../../engine/types'
 import { Button, Card } from '../../ui/Button'
@@ -59,8 +59,9 @@ export function TodayPage() {
 
   const scheduled = data.planDays.find((p) => p.weekday === wd)
   const plan = data.planDays.find((p) => p.id === pickedId) ?? scheduled
-  const week = data.meso ? mesocycleWeek(data.meso, today) : null
-  const mesoEnded = !!data.meso && !week && today >= mesocycleEnd(data.meso)
+  const paused = data.meso ? pausedWeeks(data.meso, data.allSessions, today) : []
+  const week = data.meso ? mesocycleWeek(data.meso, today, paused) : null
+  const mesoEnded = !!data.meso && !week && today >= mesocycleEnd(data.meso, paused)
   const finished = data.allSessions.filter((s) => s.status === 'finished')
   const suggestion = week && !week.isDeload
     ? deloadSuggestion(data.planDays.flatMap((p) => p.items.map((i) => i.exerciseId)), data.exMap, finished, data.kgPerBrick, burnedOut)
@@ -83,6 +84,7 @@ export function TodayPage() {
         <p className="text-sm text-slate-400">
           <span className="capitalize">{WEEKDAYS_ES[wd]}</span> {formatDDMM(today)}
           {week && ` · Semana ${week.week} de ${week.total}`}
+          {week?.pausedWeeks ? <span className="text-slate-500"> (pausa de {week.pausedWeeks} {week.pausedWeeks === 1 ? 'semana' : 'semanas'})</span> : null}
           {week?.isDeload && <span className="ml-2 rounded bg-sky-500/15 px-1.5 py-0.5 text-xs text-sky-300">deload</span>}
         </p>
         <h1 className="text-2xl font-bold">{plan?.name ?? 'Día libre'}</h1>

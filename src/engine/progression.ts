@@ -18,6 +18,8 @@ export interface Recommendation {
   repCap: number
   message: string
   basedOn: string | null
+  /** Día de sueño/energía bajos: se mantiene el peso y no se suma rep ni carga (D-49). */
+  held?: boolean
 }
 
 export const MAX_AUTO_JUMP = 0.1
@@ -39,7 +41,7 @@ function belowMin(valid: ValidSet[], min: number): number {
  * Solo mira la última exposición (más la anterior para el aviso de fatiga): no busca hacia atrás
  * una "buena" si la última no sirve.
  */
-export function recommend(
+function baseRecommend(
   ex: Pick<Exercise, 'unit' | 'barKg' | 'sledKg' | 'increment' | 'range'>,
   targetSets: number,
   history: ExerciseExposure[],
@@ -119,4 +121,34 @@ export function recommend(
 function maxWeight(ws: (number | null)[]): number | null {
   const xs = ws.filter((w): w is number => w != null)
   return xs.length ? Math.max(...xs) : null
+}
+
+/**
+ * Igual que la doble progresión, pero con `hold` (sueño/energía bajos) no se sube carga ni se suma una rep:
+ * se mantiene el peso de trabajo y se repite lo de la última vez. Sin historial suficiente no cambia nada.
+ */
+export function recommend(
+  ex: Pick<Exercise, 'unit' | 'barKg' | 'sledKg' | 'increment' | 'range'>,
+  targetSets: number,
+  history: ExerciseExposure[],
+  opts: { kgPerBrick: number; range?: [number, number]; hold?: boolean },
+): Recommendation {
+  const rec = baseRecommend(ex, targetSets, history, opts)
+  if (!opts.hold || (rec.status !== 'increase' && rec.status !== 'same' && rec.status !== 'ready_big_jump')) return rec
+  const last = history.at(-1)
+  const valid = last ? validSets(last.item) : []
+  const ww = workingWeight(valid)
+  if (ww == null) return rec
+  const reps = valid.filter((v) => v.weight === ww).map((v) => Math.min(rec.repCap, v.reps))
+  if (reps.length < targetSets) return rec
+  const { bigJumpPct: _b, ...rest } = rec
+  return {
+    ...rest,
+    status: 'same',
+    weight: ww,
+    targets: reps.slice(0, targetSets),
+    fatigue: false,
+    held: true,
+    message: 'Hoy mantené el peso: sueño y energía bajos',
+  }
 }
