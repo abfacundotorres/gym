@@ -6,7 +6,7 @@ import { useExerciseMap, useSettings } from '../../data/hooks'
 import { startNextMesocycle } from '../../data/planRepo'
 import { formatDDMM, toISODate } from '../../engine/dates'
 import { num } from '../../engine/format'
-import { applyProposals, mesocycleWeek, nextMesocycleStart, reviewMesocycle, type Proposal } from '../../engine/periodization'
+import { applyProposals, mesocycleWeek, nextMesocycleStart, pausedWeeks, reviewMesocycle, type Proposal } from '../../engine/periodization'
 import { formatSet } from '../../engine/session'
 import { MUSCLE_LABELS } from '../../engine/types'
 import { Button, Card } from '../../ui/Button'
@@ -26,12 +26,13 @@ export function ReviewPage() {
   if (!data || !exercises) return null
   if (!data.meso) return <p className="text-slate-400">No hay un mesociclo activo.</p>
   const { meso } = data
-  const review = reviewMesocycle(meso, data.sessions, exercises, data.planDays, settings)
+  const paused = pausedWeeks(meso, data.sessions, today)
+  const review = reviewMesocycle(meso, data.sessions, exercises, data.planDays, settings, paused)
   const name = (id: string) => exercises.get(id)?.name ?? id
-  const week = mesocycleWeek(meso, today)
+  const week = mesocycleWeek(meso, today, paused)
   const isOn = (p: Proposal, i: number) => (p.kind === 'rotate' && p.optional ? toggled.has(i) : !toggled.has(i))
   const accepted = review.proposals.filter((p, i) => isOn(p, i))
-  const start = nextMesocycleStart(meso, today)
+  const start = nextMesocycleStart(meso, today, paused)
 
   async function begin() {
     await startNextMesocycle(db, meso, start, applyProposals(data!.planDays, accepted), accepted.length ? `Cambios: ${accepted.map((p) => describe(p, name)).join('; ')}` : '')

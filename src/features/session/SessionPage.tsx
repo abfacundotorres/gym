@@ -7,6 +7,7 @@ import { discardSession, finishSession } from '../../data/sessionRepo'
 import { formatDDMM } from '../../engine/dates'
 import { formatSet, lastExposure } from '../../engine/session'
 import { useWakeLock } from '../../lib/wakeLock'
+import { readinessLevel } from '../../engine/readiness'
 import { Button } from '../../ui/Button'
 import { useSessionData } from './useSessionData'
 
@@ -31,6 +32,11 @@ export function SessionPage() {
         <p className="text-sm text-slate-400">{formatDDMM(session.date)}{session.status === 'finished' && ' · terminada'}</p>
         <h1 className="text-2xl font-bold">{plan?.name ?? session.planDayId}</h1>
       </header>
+      {session.status === 'in_progress' && !session.deload && readinessLevel(session.readiness) === 'low' && (
+        <p role="status" className="rounded-xl bg-amber-500/10 p-3 text-sm text-amber-100 ring-1 ring-amber-500/30">
+          Sueño y energía bajos hoy: mantené los pesos y, si querés, dejá cada ejercicio con una serie menos. Es una sugerencia, vos decidís.
+        </p>
+      )}
       <ol className="space-y-2">
         {session.items.map((it, idx) => {
           const ex = exercises.get(it.exerciseId)
