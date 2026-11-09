@@ -25,7 +25,8 @@ E2E offline con Playwright en H5. Deploy estático en GitHub Pages por Actions.
   Fixture de tests: `src/data/__fixtures__/seed.fixture.json`.
 - Tipos de dominio: `src/engine/types.ts`.
 - Motor (`src/engine/`): `validity` (qué cuenta para progresión), `progression` (doble progresión),
-  `warmup`, `e1rm`, `prs`, `stagnation`, `volume`, `load` (unidades y carga comparable), `history`, `session`.
+  `warmup`, `e1rm`, `prs`, `stagnation`, `volume`, `load` (unidades y carga comparable), `history`, `session`,
+  `periodization` (semanas, deload, sugerencias, revisión de mesociclo).
 - `src/features/<pantalla>/` — pantallas.
 - `src/ui/` — componentes reutilizables (Stepper, Chip, gráficos SVG propios).
 - `src/lib/` — integración con el navegador (PWA, timer, wake lock, clipboard).
@@ -45,5 +46,5 @@ E2E offline con Playwright en H5. Deploy estático en GitHub Pages por Actions.
 - [x] H1 Datos (Dexie, seed, export/import JSON+CSV)
 - [x] H2 Registro de sesión
 - [x] H3 Motor + Historial
-- [ ] H4 Volumen y periodización
+- [x] H4 Volumen y periodización
 - [ ] H5 Variantes, pulido, e2e offline

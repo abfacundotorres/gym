@@ -119,3 +119,35 @@ sola. Se registran con un toque.
 
 **D-28. Gráficos.** Dos gráficos separados (e1RM y reps totales), sin eje doble. e1RM en kg comparables
 (D-07). Color de serie validado contra la superficie oscura.
+
+## H4
+
+**D-29. Las sesiones de deload no son base de progresión.** Se excluyen de "la última vez" para el motor,
+de PRs, tendencias y del promedio de volumen de la revisión. Sí cuentan para el volumen semanal.
+Una sesión queda marcada `deload: true` si se empieza en semana de deload.
+
+**D-30. Deload.** Series = la mitad redondeada para arriba, mínimo 2 (3→2, 4→2, 5→3). Carga −10 % de
+la carga comparable, redondeada al incremento; si el redondeo no baja nada, baja un incremento. Objetivo
+de reps: el que daría la progresión normal. Sin chips de rest-pause ni drop. Se eligió "−10 %" y no
+"misma carga con RIR ≥3".
+
+**D-31. Deload adelantado.** "Deload esta semana" fija `deloadFrom` = lunes de la semana actual; el
+mesociclo termina al final del deload. Se puede deshacer desde Editar.
+
+**D-32. Deload sugerido.** Se evalúa solo en semanas de acumulación, sobre los ejercicios del plan (sin
+cardio) con tendencia evaluable. (a) ≥40 % estancados o en baja; (b) readiness promedio ≤2,5 en las
+últimas 3 sesiones que lo registraron; (c) botón "Me siento quemado". "Ahora no" lo oculta hasta el lunes
+siguiente (guardado en la base, viaja en el backup); (c) se puede volver a pedir igual.
+
+**D-33. Revisión de fin de mesociclo.** Disponible siempre (vista previa mientras dura). Propone:
+rotar a la primera alternativa de la misma familia los ejercicios estancados o en baja; ±1 serie por
+músculo fuera del rango (promedio semanal en acumulación), sobre el ejercicio del plan con ese músculo
+como primario y menos series (si falta) o más series (si sobra), entre 2 y 6. Cada propuesta se puede
+destildar. "Empezar el siguiente" cierra el mesociclo, aplica el plan y abre uno nuevo el lunes posterior
+al final (o el lunes de esta semana si ya pasó).
+
+**D-34. Calendario.** Tira semanal en Hoy (lun-dom). Un día planificado, sin sesión y no futuro se marca
+o desmarca como salteado con un toque. No corre el plan ni afecta cálculos.
+
+**D-35. Rangos de volumen.** Editables por músculo en Ajustes. Con los rangos por defecto (10-20) y el
+plan actual, casi todos los músculos quedan por debajo; ver nota en el resumen de H4.

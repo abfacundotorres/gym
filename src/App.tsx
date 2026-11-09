@@ -8,6 +8,9 @@ import { ExercisePage } from './features/session/ExercisePage'
 import { SummaryPage } from './features/session/SummaryPage'
 import { HistoryPage } from './features/history/HistoryPage'
 import { ExerciseHistoryPage } from './features/history/ExerciseHistoryPage'
+import { VolumePage } from './features/volume/VolumePage'
+import { PlanPage } from './features/plan/PlanPage'
+import { ReviewPage } from './features/plan/ReviewPage'
 
 export function App() {
   return (
@@ -20,8 +23,9 @@ export function App() {
           <Route path="sesion/:id/:idx" element={<ExercisePage />} />
           <Route path="historial" element={<HistoryPage />} />
           <Route path="historial/ej/:exId" element={<ExerciseHistoryPage />} />
-          <Route path="volumen" element={<Placeholder title="Volumen" milestone="H4" />} />
-          <Route path="plan" element={<Placeholder title="Plan" milestone="H4" />} />
+          <Route path="volumen" element={<VolumePage />} />
+          <Route path="plan" element={<PlanPage />} />
+          <Route path="plan/revision" element={<ReviewPage />} />
           <Route path="ajustes" element={<SettingsPage />} />
           <Route path="*" element={<Placeholder title="No encontrado" milestone="—" />} />
         </Route>

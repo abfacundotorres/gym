@@ -16,6 +16,7 @@ export async function startSession(
   mesocycleId: string | null,
   readiness?: Readiness,
   now = Date.now(),
+  deload = false,
 ): Promise<Session> {
   const items = newSessionItems(plan)
   const s: Session = {
@@ -31,6 +32,7 @@ export async function startSession(
     items,
     exerciseIds: items.map((i) => i.exerciseId),
     ...(readiness ? { readiness } : {}),
+    ...(deload ? { deload: true } : {}),
   }
   await db.sessions.add(s)
   return s

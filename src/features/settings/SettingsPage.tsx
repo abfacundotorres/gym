@@ -7,6 +7,7 @@ import { downloadText } from '../../lib/download'
 import { fileStamp, formatTimestamp } from '../../lib/format'
 import { Button, Card } from '../../ui/Button'
 import { ImportFlow } from './ImportFlow'
+import { VolumeTargets } from './VolumeTargets'
 
 export function SettingsPage() {
   const db = getDB()
@@ -48,6 +49,11 @@ export function SettingsPage() {
           <Button onClick={() => void exportCSV()}>Exportar CSV</Button>
         </div>
         <ImportFlow />
+      </div>
+
+      <div className="space-y-2">
+        <h2 className="text-lg font-semibold">Volumen</h2>
+        <VolumeTargets />
       </div>
 
       <div className="space-y-3">

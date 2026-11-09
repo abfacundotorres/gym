@@ -48,7 +48,7 @@ Unidades: `per_side` = kg de discos por lado, sin barra/carro · `per_hand` = kg
 `{ id, name, weekday (0=dom … 6=sáb), items: [{ exerciseId, sets, rangeOverride?, alt: [exerciseId], optional? }] }`
 
 ### Mesocycle
-`{ id, startDate, accumulationWeeks (3-8), deloadWeeks (0-2), status: 'active'|'finished', notes }`
+`{ id, startDate, accumulationWeeks (3-8), deloadWeeks (0-2), deloadFrom?: ISO date (lunes; deload adelantado), status: 'active'|'finished', notes }`
 
 ### Session
 | campo | tipo | notas |
@@ -57,6 +57,7 @@ Unidades: `per_side` = kg de discos por lado, sin barra/carro · `per_hand` = kg
 | `date` | ISO date | |
 | `planDayId`, `mesocycleId` | string, string\|null | |
 | `readiness?` | `{ sleep 1-5, energy 1-5 }` | |
+| `deload?` | boolean | la sesión se hizo en semana de deload |
 | `note` | string | |
 | `startedAt`, `finishedAt` | number\|null | null en datos importados |
 | `status` | `in_progress` \| `finished` | |
