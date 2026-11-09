@@ -8,6 +8,8 @@ import { fileStamp, formatTimestamp } from '../../lib/format'
 import { Button, Card } from '../../ui/Button'
 import { ImportFlow } from './ImportFlow'
 import { VolumeTargets } from './VolumeTargets'
+import { Preferences } from './Preferences'
+import { Link } from 'react-router'
 
 export function SettingsPage() {
   const db = getDB()
@@ -38,6 +40,12 @@ export function SettingsPage() {
   return (
     <section className="space-y-6">
       <h1 className="text-2xl font-bold">Ajustes</h1>
+
+      <div className="space-y-2">
+        <h2 className="text-lg font-semibold">Preferencias</h2>
+        <Preferences />
+        <Link to="/ejercicios" className="block py-2 text-sm text-slate-300">Ejercicios: unidades, rangos, incrementos y descansos →</Link>
+      </div>
 
       <div className="space-y-3">
         <h2 className="text-lg font-semibold">Backup</h2>

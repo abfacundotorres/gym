@@ -151,3 +151,35 @@ o desmarca como salteado con un toque. No corre el plan ni afecta cálculos.
 
 **D-35. Rangos de volumen.** Editables por músculo en Ajustes. Con los rangos por defecto (10-20) y el
 plan actual, casi todos los músculos quedan por debajo; ver nota en el resumen de H4.
+
+## H5
+
+**D-36. Ocupado → alternativa.** Opciones: primero las alternativas del plan, después el resto de la
+familia (sin archivadas). Si el ejercicio no tiene series, se reemplaza; si ya tiene, la variante se
+agrega a continuación. El registro queda bajo la variante nueva con `swappedFrom` (para el resumen y
+para contar contra el plan).
+
+**D-37. Variante sin historial.** No se prellena peso. Se muestra el último peso de trabajo de otra
+variante de la familia como "referencia de familia, no equivalente".
+
+**D-38. Rotación sugerida.** En la revisión de fin de mesociclo, además de rotar los estancados (tildado
+por defecto), se ofrece rotar cualquier ejercicio con alternativa de la misma familia, destildado: un
+toque para aceptar.
+
+**D-39. Ejercicios.** Se puede editar nombre, familia, unidad, barra/carro, rango, incremento, descanso,
+aproximaciones, músculos y nota de seguridad; crear una variante (copia sin historial, id derivado del
+nombre) y archivar. Cambiar la unidad no convierte pesos ya registrados (se avisa). Los ejercicios no se
+borran: se archivan, para no romper el historial.
+
+**D-40. Tema.** Oscuro por defecto. El claro redefine los tokens y la escala de grises/estados por CSS
+(mismas clases). La preferencia vive en Ajustes (viaja en el backup) y se copia a `localStorage` para
+aplicarla antes del primer render.
+
+**D-41. Notificaciones.** Se piden solo desde Ajustes, con un botón. Sin permiso: vibración y beep.
+
+**D-42. E2E.** `e2e/offline.spec.ts` corre contra el build de producción servido en `/gym/`: instala el
+SW, corta la red, importa el fixture, registra series, cambia de variante, recarga y verifica sesión,
+resumen e historial, y que no hubo requests externas. Corre en CI (job `e2e`).
+
+**Nota sobre D-02 con poleas.** Con incremento de 5 kg, el jalón prono a 45 kg (+11 %) pasa a
+progresión por reps extendida (hasta 13). Si la pila tiene placas de 2,5, bajá el incremento en Ejercicios.
