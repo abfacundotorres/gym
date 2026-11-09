@@ -1,5 +1,6 @@
 import { formatDDMM, type ISODate } from './dates'
-import { num } from './format'
+import { formatRest, num } from './format'
+import { averageRest } from './rest'
 import { UNIT_SHORT } from './load'
 import type { Exercise, PlanDay, Session, SessionItem, SetEntry } from './types'
 import { effectiveSets } from './volume'
@@ -74,7 +75,8 @@ export function summaryText(session: Session, plan: PlanDay | undefined, exercis
     if (!w.length) continue
     const unit = ex && ex.unit !== 'total' && ex.unit !== 'minutes' ? ` (${UNIT_SHORT[ex.unit]})` : ''
     const swap = it.swappedFrom ? ` [en vez de ${exercises.get(it.swappedFrom)?.name ?? it.swappedFrom}]` : ''
-    lines.push(`${name}${unit}${swap}: ${w.map(formatSet).join(', ')}${it.note ? ` — ${it.note}` : ''}`)
+    const rest = averageRest(w)
+    lines.push(`${name}${unit}${swap}: ${w.map(formatSet).join(', ')}${rest != null ? ` · desc. ~${formatRest(rest)}` : ''}${it.note ? ` — ${it.note}` : ''}`)
   }
   if (session.note) lines.push(`Nota: ${session.note}`)
   return lines.join('\n')

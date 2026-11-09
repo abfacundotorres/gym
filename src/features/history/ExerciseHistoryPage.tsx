@@ -4,7 +4,8 @@ import { getDB } from '../../data/db'
 import { useSettings } from '../../data/hooks'
 import { formatDDMM } from '../../engine/dates'
 import { exposureMetrics } from '../../engine/e1rm'
-import { num } from '../../engine/format'
+import { formatRest, num } from '../../engine/format'
+import { averageRest } from '../../engine/rest'
 import { exposuresOf } from '../../engine/history'
 import { formatLoad } from '../../engine/load'
 import { recommend } from '../../engine/progression'
@@ -68,6 +69,7 @@ export function ExerciseHistoryPage() {
                   <Link to={`/sesion/${h.sessionId}/resumen`} className="tabular-nums text-slate-300 underline-offset-2 hover:underline">{formatDDMM(h.date)}</Link>
                   <span className="text-xs text-slate-400">
                     {m.e1rm != null ? `e1RM ${num(Math.round(m.e1rm * 10) / 10)} kg` : 'sin e1RM'}
+                    {averageRest(h.item.sets) != null && ` · desc. ~${formatRest(averageRest(h.item.sets)!)}`}
                     {h.item.confidence && h.item.confidence !== 'alta' && <span className="ml-2 rounded bg-amber-500/15 px-1 text-amber-300">conf. {h.item.confidence}</span>}
                   </span>
                 </div>

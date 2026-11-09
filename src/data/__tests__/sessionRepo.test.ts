@@ -37,6 +37,24 @@ describe('sessionRepo', () => {
   })
 })
 
+describe('descanso al registrar', () => {
+  it('guarda el descanso desde la serie anterior del mismo ejercicio', async () => {
+    db = createDB('rest-test')
+    const s = await startSession(db, plan, '2026-11-09', null)
+    const t0 = 1_000_000
+    await addSet(db, s.id, 0, { type: 'W', weight: 25, reps: 8 }, t0)
+    await addSet(db, s.id, 0, { type: 'W', weight: 25, reps: 8 }, t0 + 150_000)
+    await addSet(db, s.id, 0, { type: 'W', weight: 25, reps: 8 }, t0 + 150_000 + 45 * 60_000) // pausa larga
+    await addSet(db, s.id, 1, { type: 'W', weight: 10, reps: 10 }, t0 + 200_000) // otro ejercicio: primera serie
+    const cur = (await db.sessions.get(s.id))!
+    expect(cur.items[0]!.sets.map((x) => x.restSec)).toEqual([undefined, 150, undefined])
+    expect(cur.items[1]!.sets[0]!.restSec).toBeUndefined()
+    // editar una serie no pisa su descanso
+    await updateSet(db, s.id, 0, cur.items[0]!.sets[1]!.id, { reps: 9 })
+    expect((await db.sessions.get(s.id))!.items[0]!.sets[1]).toMatchObject({ reps: 9, restSec: 150 })
+  })
+})
+
 describe('swapExercise', () => {
   it('reemplaza si no hay series; agrega después si ya hay', async () => {
     db = createDB('swap-test')

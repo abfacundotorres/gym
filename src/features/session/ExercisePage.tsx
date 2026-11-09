@@ -7,6 +7,7 @@ import { addSet, deleteSet, setItemNote, setSkipped, swapExercise, updateSet } f
 import { familyReference, variantOptions } from '../../engine/variants'
 import { formatDDMM } from '../../engine/dates'
 import { formatLoad, UNIT_SHORT } from '../../engine/load'
+import { formatRest } from '../../engine/format'
 import { formatSet, lastExposure } from '../../engine/session'
 import { exposuresOf } from '../../engine/history'
 import { recommend, type Recommendation } from '../../engine/progression'
@@ -42,6 +43,7 @@ export function ExercisePage() {
   }, [exerciseId])
   const [editing, setEditing] = useState<string | null>(null)
   const [swapping, setSwapping] = useState(false)
+  const [typed, setTyped] = useState<{ exId: string; weight: number | null } | null>(null)
   useWakeLock(data?.session.status === 'in_progress')
 
   // useLiveQuery devuelve el valor anterior hasta resolver el nuevo: no mezclar ejercicios.
@@ -70,8 +72,10 @@ export function ExercisePage() {
     reps: targets[doneW.length] ?? lastDoneW?.reps ?? rec.repCap,
   }
   const lastItem = previous.at(-1)?.item
+  // Mientras no haya efectivas, el peso de trabajo es el que tengas en el stepper (D-43).
+  const workWeight = doneW.length === 0 && typed?.exId === ex.id ? typed.weight : next.weight
   const warmups = doneW.length === 0
-    ? warmupSets(ex, next.weight, settings.kgPerBrick, lastItem ? { sets: lastItem.sets, workingWeight: workingWeight(validSets(lastItem)) } : undefined)
+    ? warmupSets(ex, workWeight, settings.kgPerBrick, lastItem ? { sets: lastItem.sets, workingWeight: workingWeight(validSets(lastItem)) } : undefined)
         .filter((w) => !done.some((d) => d.type === 'A' && d.weight === w.weight))
     : []
   const restSec = settings.restSecOverrides[ex.id] ?? ex.restSec
@@ -193,9 +197,17 @@ export function ExercisePage() {
                     className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left ring-1 ${s.type === 'A' ? 'ring-line/60 text-slate-400' : 'bg-accent/5 ring-accent/30'}`}
                   >
                     <span className="w-6 text-xs text-slate-400">{s.type === 'A' ? 'A' : wIndex + 1}</span>
-                    <span className="flex-1 text-lg tabular-nums">{formatSet(s).replace(/^A /, '')}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-lg tabular-nums">{formatSet(s).replace(/^A /, '')}</span>
+                      {(prev || s.restSec != null) && (
+                        <span className="block text-xs tabular-nums text-slate-500">
+                          {s.restSec != null && `descanso ${formatRest(s.restSec)}`}
+                          {s.restSec != null && prev && ' · '}
+                          {prev && `antes ${formatSet(prev)}`}
+                        </span>
+                      )}
+                    </span>
                     <SetBadges set={s} item={item} pr={prs.get(s.id)} />
-                    {prev && <span className="text-xs text-slate-500 tabular-nums">antes {formatSet(prev)}</span>}
                     <span className="text-accent">✓</span>
                   </button>
                 </li>
@@ -229,8 +241,9 @@ export function ExercisePage() {
               key={`${ex.id}-${done.length}`}
               ex={ex}
               deload={deload}
+              onWorkWeightChange={doneW.length === 0 ? (w) => setTyped({ exId: ex.id, weight: w }) : undefined}
               kgPerBrick={settings.kgPerBrick}
-              initial={{ type: 'W', weight: next.weight, reps: isCardio ? null : next.reps, ...(isCardio ? { minutes: lastW.at(-1)?.minutes ?? ex.range[0] } : {}) }}
+              initial={{ type: 'W', weight: workWeight, reps: isCardio ? null : next.reps, ...(isCardio ? { minutes: lastW.at(-1)?.minutes ?? ex.range[0] } : {}) }}
               title={`Serie ${doneW.length + 1}${doneW.length >= plannedSets ? ' (extra)' : ''}`}
               hint={lastW[doneW.length] ? `antes ${formatSet(lastW[doneW.length]!)}` : undefined}
               submitLabel="✓"
@@ -274,10 +287,12 @@ export function ExercisePage() {
 }
 
 function SetEditor({
-  ex, kgPerBrick, initial, title, hint, submitLabel, onSubmit, onCancel, onDelete, deload = false,
+  ex, kgPerBrick, initial, title, hint, submitLabel, onSubmit, onCancel, onDelete, deload = false, onWorkWeightChange,
 }: {
   ex: Exercise
   deload?: boolean
+  /** Avisa el peso tipeado en una serie efectiva (para recalcular las aproximaciones). */
+  onWorkWeightChange?: (w: number | null) => void
   kgPerBrick: number
   initial: Draft
   title?: string
@@ -306,7 +321,7 @@ function SetEditor({
         </div>
         {!isCardio && (
           <div className="flex gap-1" role="group" aria-label="Tipo de serie">
-            <Chip active={d.type === 'W'} onClick={() => patch({ type: 'W' })}>Efectiva</Chip>
+            <Chip active={d.type === 'W'} onClick={() => { patch({ type: 'W' }); onWorkWeightChange?.(d.weight) }}>Efectiva</Chip>
             <Chip active={d.type === 'A'} onClick={() => setD((c) => ({ type: 'A', weight: c.weight, reps: c.reps }))}>Aprox.</Chip>
           </div>
         )}
@@ -316,7 +331,7 @@ function SetEditor({
       ) : (
         <>
           <div className="flex gap-2">
-            <Stepper label={`Peso (${UNIT_SHORT[ex.unit]})`} value={d.weight} step={ex.increment} onChange={(v) => patch({ weight: v })} />
+            <Stepper label={`Peso (${UNIT_SHORT[ex.unit]})`} value={d.weight} step={ex.increment} onChange={(v) => { patch({ weight: v }); if (d.type === 'W') onWorkWeightChange?.(v) }} />
             <Stepper label={d.flag === 'rp' ? 'Reps totales' : 'Reps'} value={d.reps} step={1} decimal={false} onChange={(v) => patch({ reps: v })} />
           </div>
           {d.weight != null && ex.unit !== 'total' && <p className="-mt-1 text-xs text-slate-400">{formatLoad(ex, d.weight, kgPerBrick)}</p>}

@@ -83,6 +83,8 @@ export interface SetEntry {
   note?: string
   /** ms epoch; null en datos importados. */
   doneAt?: number | null
+  /** Descanso real (s) desde la serie anterior del mismo ejercicio (D-44). */
+  restSec?: number
 }
 
 export interface SessionItem {

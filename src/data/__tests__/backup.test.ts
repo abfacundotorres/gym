@@ -71,7 +71,7 @@ describe('backup', () => {
     const totalSets = data.sessions.flatMap((s) => s.items.flatMap((i) => i.sets)).length
     expect(lines).toHaveLength(totalSets + 1)
     expect(lines[0]).toMatch(/^fecha,dia,sesion_id/)
-    expect(csv).toContain('2026-10-22,jueves_full_body,seed-2026-10-22,rdl_barbell,Peso muerto rumano (barra),per_side,3,W,30,10,,rp,8,,alta,')
+    expect(csv).toContain('2026-10-22,jueves_full_body,seed-2026-10-22,rdl_barbell,Peso muerto rumano (barra),per_side,3,W,30,10,,rp,8,,,alta,')
   })
 
   it('aviso de backup: más de 7 días y sesiones nuevas', () => {

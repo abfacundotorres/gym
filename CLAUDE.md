@@ -32,6 +32,7 @@ E2E offline con @playwright/test (`e2e/`). Deploy estático en GitHub Pages por 
 - `src/ui/` — componentes reutilizables (Stepper, Chip, gráficos SVG propios).
 - `src/lib/` — integración con el navegador (PWA, timer, wake lock, clipboard).
 - `docs/DATA_FORMAT.md` — formato de export. `docs/DECISIONES.md` — supuestos y decisiones.
+  `docs/SEGURIDAD.md` — modelo de amenazas y riesgos conocidos.
 
 ## Convenciones
 - Español rioplatense en UI (es-AR), kg, fechas `dd/mm`. Fechas internas: `'YYYY-MM-DD'` local.
