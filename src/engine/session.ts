@@ -1,8 +1,9 @@
-import { daysBetween, formatDDMM, weekStart, type ISODate } from './dates'
+import { formatDDMM, type ISODate } from './dates'
 import { num } from './format'
 import { UNIT_SHORT } from './load'
-import type { Exercise, Mesocycle, PlanDay, Session, SessionItem, SetEntry } from './types'
+import type { Exercise, PlanDay, Session, SessionItem, SetEntry } from './types'
 import { effectiveSets } from './volume'
+import { deloadSets } from './periodization'
 
 export interface Exposure { date: ISODate; sessionId: string; item: SessionItem }
 
@@ -30,17 +31,6 @@ export function formatSet(set: SetEntry): string {
   return set.type === 'A' ? `A ${s}` : s
 }
 
-export interface MesoWeek { week: number; total: number; isDeload: boolean }
-
-export function mesocycleWeek(meso: Mesocycle, date: ISODate): MesoWeek | null {
-  const diff = daysBetween(weekStart(meso.startDate), weekStart(date))
-  if (diff < 0) return null
-  const week = Math.floor(diff / 7) + 1
-  const total = meso.accumulationWeeks + meso.deloadWeeks
-  if (week > total) return null
-  return { week, total, isDeload: week > meso.accumulationWeeks }
-}
-
 export function newSessionItems(plan: PlanDay): SessionItem[] {
   return plan.items.filter((i) => !i.optional).map((i) => ({ exerciseId: i.exerciseId, sets: [] }))
     .concat(plan.items.filter((i) => i.optional).map((i) => ({ exerciseId: i.exerciseId, sets: [] })))
@@ -55,7 +45,7 @@ export interface SessionStats {
 }
 
 export function sessionStats(session: Session, plan: PlanDay | undefined): SessionStats {
-  const planned = new Map(plan?.items.filter((i) => !i.optional).map((i) => [i.exerciseId, i.sets]) ?? [])
+  const planned = new Map(plan?.items.filter((i) => !i.optional).map((i) => [i.exerciseId, session.deload ? deloadSets(i.sets) : i.sets]) ?? [])
   const plannedFor = (it: SessionItem) => planned.get(it.exerciseId) ?? (it.swappedFrom ? planned.get(it.swappedFrom) : undefined)
   let doneSets = 0
   for (const it of session.items) doneSets += effectiveSets(it)
@@ -71,7 +61,7 @@ export function sessionStats(session: Session, plan: PlanDay | undefined): Sessi
 /** Resumen compacto para pegar en un chat. */
 export function summaryText(session: Session, plan: PlanDay | undefined, exercises: Map<string, Exercise>): string {
   const lines: string[] = []
-  lines.push(`${plan?.name ?? session.planDayId} — ${formatDDMM(session.date)}`)
+  lines.push(`${plan?.name ?? session.planDayId} — ${formatDDMM(session.date)}${session.deload ? ' (deload)' : ''}`)
   if (session.readiness) lines.push(`Sueño ${session.readiness.sleep}/5 · Energía ${session.readiness.energy}/5`)
   for (const it of session.items) {
     const ex = exercises.get(it.exerciseId)

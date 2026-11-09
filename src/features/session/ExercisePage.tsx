@@ -13,6 +13,7 @@ import { findPRs } from '../../engine/prs'
 import { validSets, workingWeight } from '../../engine/validity'
 import { warmupSets } from '../../engine/warmup'
 import { SetBadges } from '../../ui/SetBadges'
+import { deloadSets, deloadWeight } from '../../engine/periodization'
 import { SET_FLAGS, type Exercise, type SetEntry, type SetFlag } from '../../engine/types'
 import { startRest } from '../../lib/restTimer'
 import { useWakeLock } from '../../lib/wakeLock'
@@ -45,11 +46,15 @@ export function ExercisePage() {
   const item = session.items[idx]!
   const ex = ctx.ex
   const planItem = plan?.items.find((p) => p.exerciseId === item.exerciseId || p.exerciseId === item.swappedFrom)
-  const plannedSets = planItem?.sets ?? 3
+  const deload = !!session.deload
+  const plannedSets = deload ? deloadSets(planItem?.sets ?? 3) : (planItem?.sets ?? 3)
   const last = lastExposure(ctx.history, ex.id, session.date, session.id)
   const lastW = last?.item.sets.filter((s) => s.type === 'W') ?? []
   const previous = exposuresOf(ctx.history, ex.id, { before: session.date, excludeSessionId: session.id })
-  const rec = recommend(ex, plannedSets, previous, { kgPerBrick: settings.kgPerBrick, range: planItem?.rangeOverride })
+  const baseRec = recommend(ex, deload ? (planItem?.sets ?? 3) : plannedSets, previous, { kgPerBrick: settings.kgPerBrick, range: planItem?.rangeOverride })
+  const rec: Recommendation = deload
+    ? { ...baseRec, status: 'same', weight: deloadWeight(ex, baseRec.weight, settings.kgPerBrick), targets: baseRec.targets.slice(0, plannedSets), fatigue: false, message: 'Deload' }
+    : baseRec
   const targets = rec.targets
   const done = item.sets
   const doneW = done.filter((s) => s.type === 'W')
@@ -105,7 +110,11 @@ export function ExercisePage() {
         )}
       </div>
 
-      {!isCardio && <RecBanner rec={rec} ex={ex} kgPerBrick={settings.kgPerBrick} />}
+      {!isCardio && (deload ? (
+        <p role="status" className="rounded-xl bg-sky-500/10 p-3 text-sm text-sky-200 ring-1 ring-sky-500/30">
+          Deload: {rec.weight != null ? formatLoad(ex, rec.weight, settings.kgPerBrick) : 'elegí el peso'} × {rec.targets.join('/')}, sin rest-pause ni drops.
+        </p>
+      ) : <RecBanner rec={rec} ex={ex} kgPerBrick={settings.kgPerBrick} />)}
 
       {item.skipped ? (
         <div className="space-y-3 text-center">
@@ -179,6 +188,7 @@ export function ExercisePage() {
             <SetEditor
               key={`${ex.id}-${done.length}`}
               ex={ex}
+              deload={deload}
               kgPerBrick={settings.kgPerBrick}
               initial={{ type: 'W', weight: next.weight, reps: isCardio ? null : next.reps, ...(isCardio ? { minutes: lastW.at(-1)?.minutes ?? ex.range[0] } : {}) }}
               title={`Serie ${doneW.length + 1}${doneW.length >= plannedSets ? ' (extra)' : ''}`}
@@ -224,9 +234,10 @@ export function ExercisePage() {
 }
 
 function SetEditor({
-  ex, kgPerBrick, initial, title, hint, submitLabel, onSubmit, onCancel, onDelete,
+  ex, kgPerBrick, initial, title, hint, submitLabel, onSubmit, onCancel, onDelete, deload = false,
 }: {
   ex: Exercise
+  deload?: boolean
   kgPerBrick: number
   initial: Draft
   title?: string
@@ -272,7 +283,7 @@ function SetEditor({
           {d.type === 'W' && (
             <>
               <div className="flex flex-wrap gap-2" role="group" aria-label="Marca">
-                {SET_FLAGS.map((f) => (
+                {SET_FLAGS.filter((f) => !deload || (f !== 'rp' && f !== 'drop')).map((f) => (
                   <Chip key={f} active={d.flag === f} onClick={() => toggleFlag(f)}>{FLAG_LABEL[f]}</Chip>
                 ))}
               </div>

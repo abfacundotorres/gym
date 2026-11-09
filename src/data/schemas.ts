@@ -116,6 +116,7 @@ const mesocycle = z.object({
   startDate: isoDate,
   accumulationWeeks: z.number().int().min(3).max(8),
   deloadWeeks: z.number().int().min(0).max(2),
+  deloadFrom: isoDate.optional(),
   status: z.enum(['active', 'finished']),
   notes: z.string(),
 })
@@ -139,6 +140,7 @@ const session = z.object({
   planDayId: z.string(),
   mesocycleId: z.string().nullable(),
   readiness: z.object({ sleep: z.number().int().min(1).max(5), energy: z.number().int().min(1).max(5) }).optional(),
+  deload: z.boolean().optional(),
   note: z.string(),
   startedAt: z.number().nullable(),
   finishedAt: z.number().nullable(),

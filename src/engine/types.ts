@@ -63,6 +63,8 @@ export interface Mesocycle {
   startDate: ISODate
   accumulationWeeks: number
   deloadWeeks: number
+  /** Deload adelantado: lunes de la semana en que empieza (reemplaza el cálculo por accumulationWeeks). */
+  deloadFrom?: ISODate
   status: 'active' | 'finished'
   notes: string
 }
@@ -101,6 +103,8 @@ export interface Session {
   planDayId: string
   mesocycleId: string | null
   readiness?: Readiness
+  /** La sesión se hizo en semana de deload (se fija al empezar). */
+  deload?: boolean
   note: string
   startedAt: number | null
   finishedAt: number | null
