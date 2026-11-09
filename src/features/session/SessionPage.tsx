@@ -37,6 +37,11 @@ export function SessionPage() {
           Sueño y energía bajos hoy: mantené los pesos y, si querés, dejá cada ejercicio con una serie menos. Es una sugerencia, vos decidís.
         </p>
       )}
+      {session.status === 'in_progress' && !session.deload && session.short && (
+        <p role="status" className="rounded-xl bg-sky-500/10 p-3 text-sm text-sky-200 ring-1 ring-sky-500/30">
+          Poco tiempo: sin ejercicios opcionales. Si querés, dejá cada ejercicio con una serie menos.
+        </p>
+      )}
       <ol className="space-y-2">
         {session.items.map((it, idx) => {
           const ex = exercises.get(it.exerciseId)

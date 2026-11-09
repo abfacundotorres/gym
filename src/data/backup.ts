@@ -151,7 +151,7 @@ export function needsBackupReminder(lastBackupAt: number | null, sessionTimes: n
 
 const CSV_COLUMNS = [
   'fecha', 'dia', 'sesion_id', 'ejercicio_id', 'ejercicio', 'unidad', 'serie', 'tipo', 'peso', 'reps',
-  'minutos', 'marca', 'reps_antes_pausa', 'rir', 'descanso_s', 'confianza', 'nota',
+  'minutos', 'marca', 'reps_antes_pausa', 'rir', 'descanso_s', 'confianza', 'molestia', 'nota',
 ] as const
 
 function csvCell(v: unknown): string {
@@ -171,7 +171,7 @@ export function toCSV(data: BackupData): string {
         rows.push(
           [
             s.date, s.planDayId, s.id, it.exerciseId, e?.name, e?.unit, i + 1, set.type, set.weight, set.reps,
-            set.minutes, set.flag, set.repsBeforePause, set.rir, set.restSec, it.confidence ?? 'alta', set.note ?? it.note,
+            set.minutes, set.flag, set.repsBeforePause, set.rir, set.restSec, it.confidence ?? 'alta', it.pain, set.note ?? it.note,
           ].map(csvCell).join(','),
         )
       })

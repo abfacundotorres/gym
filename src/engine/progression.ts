@@ -1,4 +1,5 @@
 import { comparableKg } from './load'
+import { deloadWeight } from './periodization'
 import type { Exercise } from './types'
 import type { ExerciseExposure } from './history'
 import { validSets, workingWeight, type ValidSet } from './validity'
@@ -22,6 +23,8 @@ export interface Recommendation {
   held?: boolean
   /** Uso del RIR (D-51): repetir porque llegaste al tope sin reservas, o sumar hasta 2 reps porque te sobró. */
   note?: 'rir_defer' | 'rir_fast'
+  /** Molestia o dolor en la última exposición (D-52). */
+  pain?: 'molestia' | 'dolor'
 }
 
 export const MAX_AUTO_JUMP = 0.1
@@ -159,6 +162,8 @@ export function recommend(
   opts: { kgPerBrick: number; range?: [number, number]; hold?: boolean },
 ): Recommendation {
   const rec = baseRecommend(ex, targetSets, history, opts)
+  const pain = history.at(-1)?.item.pain
+  if (pain) return painAdjust(ex, rec, history.at(-1)!, pain, opts.kgPerBrick)
   if (!opts.hold || (rec.status !== 'increase' && rec.status !== 'same' && rec.status !== 'ready_big_jump')) return rec
   const last = history.at(-1)
   const valid = last ? validSets(last.item) : []
@@ -175,5 +180,36 @@ export function recommend(
     fatigue: false,
     held: true,
     message: 'Hoy mantené el peso: sueño y energía bajos',
+  }
+}
+
+/**
+ * Molestia o dolor la última vez (D-52), por encima del día bajo: no se sube ni se suma una rep.
+ * Molestia: mismo peso. Dolor: −10 % de la carga. Sin series válidas solo se marca el aviso.
+ */
+function painAdjust(
+  ex: Pick<Exercise, 'unit' | 'barKg' | 'sledKg' | 'increment' | 'range'>,
+  rec: Recommendation,
+  last: ExerciseExposure,
+  pain: 'molestia' | 'dolor',
+  kgPerBrick: number,
+): Recommendation {
+  const marked = { ...rec, pain }
+  if (rec.status !== 'increase' && rec.status !== 'same' && rec.status !== 'ready_big_jump') return marked
+  const valid = validSets(last.item)
+  const ww = workingWeight(valid)
+  if (ww == null) return marked
+  const n = rec.targets.length
+  const reps = valid.filter((v) => v.weight === ww).map((v) => Math.min(rec.repCap, v.reps))
+  if (reps.length < n) return marked
+  const { bigJumpPct: _b, note: _n, ...rest } = rec
+  return {
+    ...rest,
+    status: 'same',
+    weight: pain === 'dolor' ? deloadWeight(ex, ww, kgPerBrick) : ww,
+    targets: reps.slice(0, n),
+    fatigue: false,
+    pain,
+    message: pain === 'dolor' ? 'Hubo dolor la última vez: bajá la carga' : 'Hubo molestia la última vez: mantené el peso',
   }
 }

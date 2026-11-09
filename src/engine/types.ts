@@ -95,6 +95,8 @@ export interface SessionItem {
   swappedFrom?: string
   /** Sin campo = alta. */
   confidence?: Confidence
+  /** Molestia o dolor que hubo en este ejercicio (D-52). */
+  pain?: 'molestia' | 'dolor'
 }
 
 export interface Readiness { sleep: number; energy: number }
@@ -107,6 +109,8 @@ export interface Session {
   readiness?: Readiness
   /** La sesión se hizo en semana de deload (se fija al empezar). */
   deload?: boolean
+  /** Se empezó con "poco tiempo hoy": sin ejercicios opcionales (D-53). */
+  short?: boolean
   note: string
   startedAt: number | null
   finishedAt: number | null

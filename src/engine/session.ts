@@ -32,9 +32,10 @@ export function formatSet(set: SetEntry): string {
   return set.type === 'A' ? `A ${s}` : s
 }
 
-export function newSessionItems(plan: PlanDay): SessionItem[] {
-  return plan.items.filter((i) => !i.optional).map((i) => ({ exerciseId: i.exerciseId, sets: [] }))
-    .concat(plan.items.filter((i) => i.optional).map((i) => ({ exerciseId: i.exerciseId, sets: [] })))
+/** Ejercicios del día: los opcionales van al final y con poco tiempo se omiten (D-53). */
+export function newSessionItems(plan: PlanDay, short = false): SessionItem[] {
+  const item = (i: PlanDay['items'][number]): SessionItem => ({ exerciseId: i.exerciseId, sets: [] })
+  return plan.items.filter((i) => !i.optional).map(item).concat(short ? [] : plan.items.filter((i) => i.optional).map(item))
 }
 
 export interface SessionStats {
@@ -76,7 +77,7 @@ export function summaryText(session: Session, plan: PlanDay | undefined, exercis
     const unit = ex && ex.unit !== 'total' && ex.unit !== 'minutes' ? ` (${UNIT_SHORT[ex.unit]})` : ''
     const swap = it.swappedFrom ? ` [en vez de ${exercises.get(it.swappedFrom)?.name ?? it.swappedFrom}]` : ''
     const rest = averageRest(w)
-    lines.push(`${name}${unit}${swap}: ${w.map(formatSet).join(', ')}${rest != null ? ` · desc. ~${formatRest(rest)}` : ''}${it.note ? ` — ${it.note}` : ''}`)
+    lines.push(`${name}${unit}${swap}${it.pain ? ` [${it.pain}]` : ''}: ${w.map(formatSet).join(', ')}${rest != null ? ` · desc. ~${formatRest(rest)}` : ''}${it.note ? ` — ${it.note}` : ''}`)
   }
   if (session.note) lines.push(`Nota: ${session.note}`)
   return lines.join('\n')
