@@ -199,3 +199,10 @@ efectivas en el resumen de texto y en el historial por ejercicio, y se exporta e
 Las series importadas del seed no tienen descanso.
 
 **D-45. Seguridad.** Ver `docs/SEGURIDAD.md`. CI con permisos mínimos (`contents: read`).
+
+## Versión visible
+
+**D-46. Versión.** Ajustes → Acerca de muestra el commit corto (en CI, `GITHUB_SHA`; local, `git rev-parse`) y la
+hora de compilación (hora local del dispositivo). El botón "Buscar actualización" pide al service worker que
+revise el servidor y avisa si hay una versión nueva; la instalación sigue siendo con el aviso "Actualizar".
+Cada build cambia la hora, así que cada deploy genera una versión nueva aunque el código no haya cambiado.

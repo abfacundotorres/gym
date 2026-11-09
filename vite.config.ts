@@ -1,8 +1,18 @@
+import { execSync } from 'node:child_process'
 import type { Plugin } from 'vite'
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+
+// Versión visible en Ajustes: commit corto (en CI, GITHUB_SHA) y hora de compilación.
+function commit(): string {
+  try {
+    return (process.env.GITHUB_SHA ?? execSync('git rev-parse HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()).slice(0, 7)
+  } catch {
+    return 'dev'
+  }
+}
 
 // Base configurable para hosting estático (GitHub Pages usa /<repo>/).
 const base = process.env.BASE ?? '/'
@@ -33,6 +43,10 @@ function cspPlugin(): Plugin {
 
 export default defineConfig({
   base,
+  define: {
+    __COMMIT__: JSON.stringify(commit()),
+    __BUILD_TIME__: JSON.stringify(Date.now()),
+  },
   plugins: [
     react(),
     tailwindcss(),
