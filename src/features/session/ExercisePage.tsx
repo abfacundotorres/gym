@@ -179,6 +179,7 @@ export function ExercisePage() {
                     ex={ex}
                     kgPerBrick={settings.kgPerBrick}
                     initial={s}
+                    askRir={s.id === doneW.at(-1)?.id}
                     submitLabel="Guardar"
                     onSubmit={async (d) => {
                       await updateSet(db, session.id, idx, s.id, { flag: undefined, repsBeforePause: undefined, rir: undefined, ...d })
@@ -243,6 +244,7 @@ export function ExercisePage() {
               key={`${ex.id}-${done.length}`}
               ex={ex}
               deload={deload}
+              askRir={doneW.length + 1 >= plannedSets}
               onWorkWeightChange={doneW.length === 0 ? (w) => setTyped({ exId: ex.id, weight: w }) : undefined}
               kgPerBrick={settings.kgPerBrick}
               initial={{ type: 'W', weight: workWeight, reps: isCardio ? null : next.reps, ...(isCardio ? { minutes: lastW.at(-1)?.minutes ?? ex.range[0] } : {}) }}
@@ -289,10 +291,12 @@ export function ExercisePage() {
 }
 
 function SetEditor({
-  ex, kgPerBrick, initial, title, hint, submitLabel, onSubmit, onCancel, onDelete, deload = false, onWorkWeightChange,
+  ex, kgPerBrick, initial, title, hint, submitLabel, onSubmit, onCancel, onDelete, deload = false, onWorkWeightChange, askRir = false,
 }: {
   ex: Exercise
   deload?: boolean
+  /** Es la última serie efectiva del ejercicio: se pregunta el RIR (D-51). */
+  askRir?: boolean
   /** Avisa el peso tipeado en una serie efectiva (para recalcular las aproximaciones). */
   onWorkWeightChange?: (w: number | null) => void
   kgPerBrick: number
@@ -305,6 +309,7 @@ function SetEditor({
   onDelete?: () => void | Promise<void>
 }) {
   const [d, setD] = useState<Draft>(initial)
+  const [rirOpen, setRirOpen] = useState(false)
   const isCardio = ex.unit === 'minutes'
   const patch = (p: Partial<Draft>) => setD((cur) => ({ ...cur, ...p }))
   const toggleFlag = (f: SetFlag) =>
@@ -347,12 +352,18 @@ function SetEditor({
               {d.flag === 'rp' && (
                 <Stepper label="Reps antes de la primera pausa" value={d.repsBeforePause ?? null} step={1} decimal={false} onChange={(v) => patch({ repsBeforePause: v ?? undefined })} />
               )}
-              <div className="flex items-center gap-2" role="group" aria-label="RIR">
-                <span className="text-xs text-slate-400">RIR</span>
-                {[0, 1, 2, 3].map((r) => (
-                  <Chip key={r} active={d.rir === r} onClick={() => patch({ rir: d.rir === r ? undefined : r })}>{r === 3 ? '3+' : r}</Chip>
-                ))}
-              </div>
+              {askRir || rirOpen || d.rir != null ? (
+                <div className="space-y-1" role="group" aria-label="RIR">
+                  <span className="block text-xs text-slate-400">{askRir ? 'Última serie: ¿cuántas reps te quedaron? (RIR)' : 'RIR (reps en reserva)'}</span>
+                  <div className="flex gap-2">
+                    {[0, 1, 2, 3].map((r) => (
+                      <Chip key={r} active={d.rir === r} onClick={() => patch({ rir: d.rir === r ? undefined : r })}>{r === 3 ? '3+' : r}</Chip>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <button type="button" className="min-h-10 text-xs text-slate-400 underline-offset-4 hover:underline" onClick={() => setRirOpen(true)}>+ RIR</button>
+              )}
             </>
           )}
         </>
@@ -418,6 +429,8 @@ function RecBanner({ rec, ex, kgPerBrick }: { rec: Recommendation; ex: Exercise;
   return (
     <div className={`rounded-xl p-3 text-sm ring-1 ${tone}`} role="status">
       <p>{text}</p>
+      {rec.note === 'rir_defer' && <p className="mt-1 text-xs text-slate-400">Llegaste al tope con 0 reps en reserva: repetí y buscá terminar con 1 en reserva. Si lo repetís, la próxima subís.</p>}
+      {rec.note === 'rir_fast' && <p className="mt-1 text-xs text-slate-400">Te sobraron 3 o más en la última serie: probá sumar hasta 2 reps.</p>}
       {rec.held && <p className="mt-1 text-xs text-slate-400">Sueño y energía bajos: hoy no se suben cargas. Si te sentís bien, podés subir igual.</p>}
       {rec.status === 'ready_big_jump' && (
         <p className="mt-1 text-xs text-slate-400">El siguiente peso es {formatLoad(ex, (rec.weight ?? 0) + ex.increment, kgPerBrick)}. Si subís, el objetivo vuelve a {ex.range[0]} reps.</p>

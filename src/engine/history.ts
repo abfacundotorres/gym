@@ -1,6 +1,12 @@
 import type { Session, SessionItem } from './types'
 
-export interface ExerciseExposure { date: string; sessionId: string; item: SessionItem }
+export interface ExerciseExposure {
+  date: string
+  sessionId: string
+  item: SessionItem
+  /** Hora de inicio de la sesión (ms), para ordenar sesiones del mismo día. */
+  at?: number
+}
 
 /**
  * Exposiciones de una variante, de la más vieja a la más nueva (sin salteadas ni vacías).
@@ -13,8 +19,10 @@ export function exposuresOf(sessions: Session[], exerciseId: string, opts: { bef
     if (s.deload && !opts.includeDeload) continue
     if (opts.before && s.date > opts.before) continue
     for (const item of s.items) {
-      if (item.exerciseId === exerciseId && !item.skipped && item.sets.length) out.push({ date: s.date, sessionId: s.id, item })
+      if (item.exerciseId === exerciseId && !item.skipped && item.sets.length) out.push({ date: s.date, sessionId: s.id, item, at: s.startedAt ?? 0 })
     }
   }
-  return out.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.sessionId < b.sessionId ? -1 : 1))
+  return out.sort((a, b) =>
+    a.date !== b.date ? (a.date < b.date ? -1 : 1) : (a.at ?? 0) !== (b.at ?? 0) ? (a.at ?? 0) - (b.at ?? 0) : a.sessionId < b.sessionId ? -1 : 1,
+  )
 }
