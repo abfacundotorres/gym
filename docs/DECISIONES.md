@@ -206,3 +206,10 @@ Las series importadas del seed no tienen descanso.
 hora de compilación (hora local del dispositivo). El botón "Buscar actualización" pide al service worker que
 revise el servidor y avisa si hay una versión nueva; la instalación sigue siendo con el aviso "Actualizar".
 Cada build cambia la hora, así que cada deploy genera una versión nueva aunque el código no haya cambiado.
+
+## Ícono
+
+**D-47. Ícono.** Pesa con cara sonriente, placas de colores y degradé violeta→rosa (`public/icons/icon.svg`).
+Las versiones maskable y apple-touch son a sangre y la figura queda dentro de la zona segura central, para que
+la máscara circular de Android no corte nada. Los PNG se regeneran con `node scripts/gen-icons.mjs`.
+El color de fondo de la pantalla de arranque (manifest) sigue siendo el oscuro de la app.
