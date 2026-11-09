@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto'
 import { afterEach, describe, expect, it } from 'vitest'
 import { createDB, type GymDB } from '../db'
-import { activeSession, addSet, deleteSet, finishSession, setSkipped, startSession, swapExercise, updateSet } from '../sessionRepo'
+import { activeSession, addSet, deleteSet, finishSession, setItemPain, setSkipped, startSession, swapExercise, updateSet } from '../sessionRepo'
 import type { PlanDay } from '../../engine/types'
 
 const plan: PlanDay = {
@@ -82,5 +82,18 @@ describe('exerciseRepo', () => {
     expect([v1.id, v2.id]).toEqual(['jalon_v', 'jalon_v_2'])
     expect(v1.archived).toBeUndefined()
     expect(v1.family).toBe('f')
+  })
+})
+
+describe('molestia y poco tiempo', () => {
+  it('guarda y quita la molestia; con poco tiempo no agrega opcionales', async () => {
+    db = createDB('pain-test')
+    const s = await startSession(db, plan, '2026-11-09', null, undefined, 1000, false, true)
+    expect(s.short).toBe(true)
+    expect(s.items.map((i) => i.exerciseId)).toEqual(['b', 'a']) // sin el opcional 'c'
+    await setItemPain(db, s.id, 0, 'dolor')
+    expect((await db.sessions.get(s.id))!.items[0]).toMatchObject({ exerciseId: 'b', pain: 'dolor' })
+    await setItemPain(db, s.id, 0, null)
+    expect((await db.sessions.get(s.id))!.items[0]!.pain).toBeUndefined()
   })
 })

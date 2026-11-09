@@ -211,10 +211,23 @@ export function reviewMesocycle(
       if (to) proposals.push({ kind: 'rotate', planDayId: day.id, exerciseId: it.exerciseId, to, reason: 'estancado: rotar variante' })
     }
   }
+  // Molestias o dolor en 2 de las últimas 3 veces (D-52): rotar variante, tildado por defecto.
+  const finishedSessions = allSessions.filter((s) => s.status === 'finished')
+  const alreadyRotating = (dayId: string, exId: string) => proposals.some((p) => p.kind === 'rotate' && p.planDayId === dayId && p.exerciseId === exId)
+  for (const day of planDays) {
+    for (const it of day.items) {
+      if (it.optional || alreadyRotating(day.id, it.exerciseId)) continue
+      const recent = exposuresOf(finishedSessions, it.exerciseId).slice(-3)
+      if (recent.filter((e) => e.item.pain).length < 2) continue
+      const ex = exercises.get(it.exerciseId)
+      const to = ex && it.alt.find((a) => exercises.get(a)?.family === ex.family && !exercises.get(a)?.archived)
+      if (to) proposals.push({ kind: 'rotate', planDayId: day.id, exerciseId: it.exerciseId, to, reason: 'molestias repetidas: rotar variante' })
+    }
+  }
   // Rotación opcional (§6.5): el resto de los ejercicios con alternativa de la misma familia. Destildada por defecto.
   for (const day of planDays) {
     for (const it of day.items) {
-      if (stalled.includes(it.exerciseId) || it.optional) continue
+      if (stalled.includes(it.exerciseId) || it.optional || alreadyRotating(day.id, it.exerciseId)) continue
       const ex = exercises.get(it.exerciseId)
       const to = ex && it.alt.find((a) => exercises.get(a)?.family === ex.family && !exercises.get(a)?.archived)
       if (to) proposals.push({ kind: 'rotate', planDayId: day.id, exerciseId: it.exerciseId, to, reason: 'rotación opcional de variante', optional: true })

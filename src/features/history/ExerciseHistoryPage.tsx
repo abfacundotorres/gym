@@ -70,6 +70,7 @@ export function ExerciseHistoryPage() {
                   <span className="text-xs text-slate-400">
                     {m.e1rm != null ? `e1RM ${num(Math.round(m.e1rm * 10) / 10)} kg` : 'sin e1RM'}
                     {averageRest(h.item.sets) != null && ` · desc. ~${formatRest(averageRest(h.item.sets)!)}`}
+                    {h.item.pain && <span className="ml-2 rounded bg-red-500/15 px-1 text-red-300">{h.item.pain}</span>}
                     {h.item.confidence && h.item.confidence !== 'alta' && <span className="ml-2 rounded bg-amber-500/15 px-1 text-amber-300">conf. {h.item.confidence}</span>}
                   </span>
                 </div>

@@ -58,6 +58,7 @@ Unidades: `per_side` = kg de discos por lado, sin barra/carro · `per_hand` = kg
 | `planDayId`, `mesocycleId` | string, string\|null | |
 | `readiness?` | `{ sleep 1-5, energy 1-5 }` | |
 | `deload?` | boolean | la sesión se hizo en semana de deload |
+| `short?` | boolean | se empezó con "poco tiempo hoy" (sin ejercicios opcionales) |
 | `note` | string | |
 | `startedAt`, `finishedAt` | number\|null | null en datos importados |
 | `status` | `in_progress` \| `finished` | |
@@ -65,7 +66,7 @@ Unidades: `per_side` = kg de discos por lado, sin barra/carro · `per_hand` = kg
 | `items` | SessionItem[] | |
 | `exerciseIds` | string[] | derivado de `items` (índice) |
 
-**SessionItem**: `{ exerciseId, note?, sets: SetEntry[], skipped?, swappedFrom?, confidence?: 'alta'|'media'|'baja' }`
+**SessionItem**: `{ exerciseId, note?, sets: SetEntry[], skipped?, swappedFrom?, confidence?: 'alta'|'media'|'baja', pain?: 'molestia'|'dolor' }`
 (sin `confidence` = alta).
 
 **SetEntry**: `{ id, type: 'A'|'W', weight: number|null, reps: number|null, minutes?, flag?: 'rp'|'drop'|'rebote'|'asist', repsBeforePause?, rir? (0-3), note?, doneAt?: number|null, restSec?: number }`
@@ -84,7 +85,7 @@ Unidades: `per_side` = kg de discos por lado, sin barra/carro · `per_hand` = kg
 
 Solo exportación (para planillas). Una fila por serie, UTF-8, separador `,`, comillas dobles si hace falta.
 
-`fecha, dia, sesion_id, ejercicio_id, ejercicio, unidad, serie, tipo, peso, reps, minutos, marca, reps_antes_pausa, rir, descanso_s, confianza, nota`
+`fecha, dia, sesion_id, ejercicio_id, ejercicio, unidad, serie, tipo, peso, reps, minutos, marca, reps_antes_pausa, rir, descanso_s, confianza, molestia, nota`
 
 ## seed.json
 

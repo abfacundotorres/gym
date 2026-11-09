@@ -242,3 +242,15 @@ cambia. Reglas: (a) todas las series al tope de reps y la última con RIR 0 **la
 llegar con 1 en reserva; si ya lo repetiste al tope, se sube (nunca bloquea más de una vez); (b) RIR 3+ sin llegar al tope →
 hasta +2 reps en vez de +1, sin pasar el tope; (c) con día bajo (D-49) manda el día bajo. Las series excluidas no cuentan.
 Además, las sesiones del mismo día se ordenan por hora de inicio y no por id.
+
+**D-52. Molestia o dolor.** Se marca por ejercicio durante la sesión (`pain`: molestia o dolor). Efecto en la próxima
+vez que hagas ese ejercicio, por encima del día bajo y del RIR: molestia → mismo peso y repetir lo de la última vez
+(sin sumar rep); dolor → −10 % de la carga, mismas reps. Es una sugerencia editable. La sugerencia nombra la causa y
+recuerda que podés cambiar de variante (o consultar a un profesional si es dolor). En la revisión del mesociclo, si hubo
+molestia o dolor en 2 de las últimas 3 veces y hay una alternativa de la misma familia, se propone rotar la variante
+(tildada por defecto). Se ve en el historial por ejercicio y en el resumen de texto (`[molestia]`) y se exporta en el CSV.
+La marca no excluye las series de la progresión ni del volumen.
+
+**D-53. Poco tiempo hoy.** Opción al empezar la sesión: no se agregan los ejercicios opcionales (el escalador) y se
+sugiere una serie menos por ejercicio ("podés dejarlo en N"), igual que un día bajo pero sin mantener los pesos. Es solo
+una sugerencia: el plan no cambia y no afecta la progresión (no se marca "sin datos suficientes" por hacer menos series).

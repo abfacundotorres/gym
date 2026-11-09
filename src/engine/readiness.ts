@@ -14,3 +14,8 @@ export function readinessLevel(r?: Readiness): ReadinessLevel {
 export function reducedSets(planned: number): number {
   return Math.min(planned, Math.max(2, planned - 1))
 }
+
+/** ¿Se sugiere una serie menos por ejercicio? Día bajo o poco tiempo (D-49, D-53). */
+export function suggestFewerSets(r: Readiness | undefined, short: boolean | undefined): boolean {
+  return !!short || readinessLevel(r) === 'low'
+}

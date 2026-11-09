@@ -18,8 +18,9 @@ export async function startSession(
   readiness?: Readiness,
   now = Date.now(),
   deload = false,
+  short = false,
 ): Promise<Session> {
-  const items = newSessionItems(plan)
+  const items = newSessionItems(plan, short)
   const s: Session = {
     id: `s-${date}-${newId().slice(0, 8)}`,
     date,
@@ -34,6 +35,7 @@ export async function startSession(
     exerciseIds: items.map((i) => i.exerciseId),
     ...(readiness ? { readiness } : {}),
     ...(deload ? { deload: true } : {}),
+    ...(short ? { short: true } : {}),
   }
   await db.sessions.add(s)
   return s
@@ -119,4 +121,12 @@ export async function swapExercise(db: GymDB, sessionId: string, index: number, 
     await db.sessions.put({ ...s, items, exerciseIds: [...new Set(items.map((i) => i.exerciseId))] })
   })
   return target
+}
+
+/** Marca o desmarca molestia o dolor en el ejercicio (D-52). */
+export function setItemPain(db: GymDB, sessionId: string, index: number, pain: 'molestia' | 'dolor' | null): Promise<void> {
+  return mutateItem(db, sessionId, index, (it) => {
+    const { pain: _p, ...rest } = it
+    return pain ? { ...rest, pain } : rest
+  })
 }

@@ -9,6 +9,7 @@ import { deloadSuggestion, mesocycleEnd, mesocycleWeek, pausedWeeks, type Deload
 import { deloadThisWeek, dismissDeloadSuggestion, META_DELOAD_DISMISSED, toggleSkipped } from '../../data/planRepo'
 import type { PlanDay, Readiness } from '../../engine/types'
 import { Button, Card } from '../../ui/Button'
+import { Chip } from '../../ui/Stepper'
 import { ImportFlow } from '../settings/ImportFlow'
 
 export function TodayPage() {
@@ -68,8 +69,8 @@ export function TodayPage() {
     : null
   const showSuggestion = !!suggestion?.reasons.length && (burnedOut || !data.dismissedThisWeek)
 
-  async function begin(p: PlanDay, readiness?: Readiness) {
-    const s = await startSession(db, p, today, week ? data!.meso!.id : null, readiness, Date.now(), !!week?.isDeload)
+  async function begin(p: PlanDay, readiness?: Readiness, short = false) {
+    const s = await startSession(db, p, today, week ? data!.meso!.id : null, readiness, Date.now(), !!week?.isDeload, short)
     navigate(`/sesion/${s.id}`)
   }
 
@@ -123,7 +124,7 @@ export function TodayPage() {
           </Button>
         </Card>
       ) : readinessFor ? (
-        <ReadinessCheck onDone={(r) => void begin(readinessFor, r)} />
+        <ReadinessCheck onDone={(r, short) => void begin(readinessFor, r, short)} />
       ) : (
         <>
           {plan ? (
@@ -225,13 +226,18 @@ function ScaleRow({ label, value, set }: { label: string; value: number | null; 
   )
 }
 
-function ReadinessCheck({ onDone }: { onDone: (r?: Readiness) => void }) {
+function ReadinessCheck({ onDone }: { onDone: (r?: Readiness, short?: boolean) => void }) {
   const [sleep, setSleep] = useState<number | null>(null)
+  const [short, setShort] = useState(false)
   return (
     <Card className="space-y-4">
+      <div className="space-y-1">
+        <Chip active={short} onClick={() => setShort(!short)}>Poco tiempo hoy</Chip>
+        {short && <p className="text-xs text-slate-400">Sin ejercicios opcionales y con la sugerencia de una serie menos por ejercicio.</p>}
+      </div>
       <ScaleRow label="¿Cómo dormiste?" value={sleep} set={setSleep} />
-      <ScaleRow label="¿Energía?" value={null} set={(energy) => sleep != null && onDone({ sleep, energy })} />
-      <Button variant="ghost" className="w-full" onClick={() => onDone()}>Omitir y empezar</Button>
+      <ScaleRow label="¿Energía?" value={null} set={(energy) => sleep != null && onDone({ sleep, energy }, short)} />
+      <Button variant="ghost" className="w-full" onClick={() => onDone(undefined, short)}>Omitir y empezar</Button>
     </Card>
   )
 }

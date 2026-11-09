@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { getDB } from '../../data/db'
 import { useSettings } from '../../data/hooks'
-import { addSet, deleteSet, setItemNote, setSkipped, swapExercise, updateSet } from '../../data/sessionRepo'
+import { addSet, deleteSet, setItemNote, setItemPain, setSkipped, swapExercise, updateSet } from '../../data/sessionRepo'
 import { familyReference, variantOptions } from '../../engine/variants'
 import { formatDDMM } from '../../engine/dates'
 import { formatLoad, UNIT_SHORT } from '../../engine/load'
@@ -16,7 +16,7 @@ import { validSets, workingWeight } from '../../engine/validity'
 import { warmupSets } from '../../engine/warmup'
 import { SetBadges } from '../../ui/SetBadges'
 import { deloadSets, deloadWeight } from '../../engine/periodization'
-import { readinessLevel, reducedSets } from '../../engine/readiness'
+import { readinessLevel, reducedSets, suggestFewerSets } from '../../engine/readiness'
 import { SET_FLAGS, type Exercise, type SetEntry, type SetFlag } from '../../engine/types'
 import { startRest } from '../../lib/restTimer'
 import { useWakeLock } from '../../lib/wakeLock'
@@ -55,6 +55,7 @@ export function ExercisePage() {
   const planItem = plan?.items.find((p) => p.exerciseId === item.exerciseId || p.exerciseId === item.swappedFrom)
   const deload = !!session.deload
   const lowDay = !deload && readinessLevel(session.readiness) === 'low'
+  const fewer = !deload && suggestFewerSets(session.readiness, session.short)
   const plannedSets = deload ? deloadSets(planItem?.sets ?? 3) : (planItem?.sets ?? 3)
   const last = lastExposure(ctx.history, ex.id, session.date, session.id)
   const lastW = last?.item.sets.filter((s) => s.type === 'W') ?? []
@@ -101,7 +102,7 @@ export function ExercisePage() {
       <header>
         <h1 className="text-2xl font-bold leading-tight">{ex.name}</h1>
         <p className="text-sm text-slate-400">
-          {plannedSets} series{lowDay && plannedSets > reducedSets(plannedSets) ? ` (hoy podés dejarlo en ${reducedSets(plannedSets)})` : ''} · {ex.range[0]}-{ex.range[1]} {isCardio ? 'min' : 'reps'}{ex.repsPerLeg && ' por pierna'}
+          {plannedSets} series{fewer && plannedSets > reducedSets(plannedSets) ? ` (hoy podés dejarlo en ${reducedSets(plannedSets)})` : ''} · {ex.range[0]}-{ex.range[1]} {isCardio ? 'min' : 'reps'}{ex.repsPerLeg && ' por pierna'}
           {!isCardio && ` · descanso ${Math.round(restSec / 60 * 10) / 10} min`}
         </p>
       </header>
@@ -131,6 +132,14 @@ export function ExercisePage() {
             Ocupado → alternativa
           </button>
         )
+      )}
+
+      {session.status === 'in_progress' && !isCardio && (
+        <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Molestia o dolor">
+          <span className="text-sm text-slate-400">¿Algo te molesta?</span>
+          <Chip active={item.pain === 'molestia'} onClick={() => void setItemPain(db, session.id, idx, item.pain === 'molestia' ? null : 'molestia')}>Molestia</Chip>
+          <Chip active={item.pain === 'dolor'} onClick={() => void setItemPain(db, session.id, idx, item.pain === 'dolor' ? null : 'dolor')}>Dolor</Chip>
+        </div>
       )}
 
       {ex.safetyNote && <SafetyNote sessionId={session.id} ex={ex} />}
@@ -418,8 +427,13 @@ function RecBanner({ rec, ex, kgPerBrick }: { rec: Recommendation; ex: Exercise;
       : rec.status === 'insufficient' || rec.status === 'no_history'
         ? 'bg-surface text-slate-300 ring-line'
         : 'bg-surface text-slate-200 ring-line'
+  const painAdjusted = !!rec.pain && rec.status === 'same'
   const text =
-    rec.held
+    painAdjusted
+      ? rec.pain === 'dolor'
+        ? `Hubo dolor la última vez: bajá a ${formatLoad(ex, rec.weight, kgPerBrick)}, repetí ${rec.targets.join('/')}`
+        : `Hubo molestia la última vez: mantené el peso${rec.weight != null ? ` (${formatLoad(ex, rec.weight, kgPerBrick)})` : ''}, repetí ${rec.targets.join('/')}`
+      : rec.held
       ? `Hoy mantené el peso${rec.weight != null ? ` (${formatLoad(ex, rec.weight, kgPerBrick)})` : ''}, repetí ${rec.targets.join('/')}`
       : rec.status === 'increase'
       ? `Subí a ${formatLoad(ex, rec.weight, kgPerBrick)}, objetivo ${rec.targets.join('/')}`
@@ -429,6 +443,7 @@ function RecBanner({ rec, ex, kgPerBrick }: { rec: Recommendation; ex: Exercise;
   return (
     <div className={`rounded-xl p-3 text-sm ring-1 ${tone}`} role="status">
       <p>{text}</p>
+      {rec.pain && <p className="mt-1 text-xs text-slate-400">{rec.pain === 'dolor' ? 'Si el dolor sigue, probá otra variante (Ocupado → alternativa) o consultá a un profesional.' : 'Si vuelve a molestar, probá otra variante (Ocupado → alternativa).'}</p>}
       {rec.note === 'rir_defer' && <p className="mt-1 text-xs text-slate-400">Llegaste al tope con 0 reps en reserva: repetí y buscá terminar con 1 en reserva. Si lo repetís, la próxima subís.</p>}
       {rec.note === 'rir_fast' && <p className="mt-1 text-xs text-slate-400">Te sobraron 3 o más en la última serie: probá sumar hasta 2 reps.</p>}
       {rec.held && <p className="mt-1 text-xs text-slate-400">Sueño y energía bajos: hoy no se suben cargas. Si te sentís bien, podés subir igual.</p>}
