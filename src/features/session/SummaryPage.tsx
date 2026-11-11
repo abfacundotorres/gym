@@ -42,7 +42,7 @@ export function SummaryPage() {
     <section className="space-y-4">
       <header>
         <p className="text-sm text-slate-400">{formatDDMM(session.date)}{stats.minutes != null && ` · ${stats.minutes} min`}</p>
-        <h1 className="text-2xl font-bold">Resumen: {plan?.name ?? session.planDayId}</h1>
+        <h1 className="title text-3xl">Resumen: {plan?.name ?? session.planDayId}</h1>
       </header>
       <div className="grid grid-cols-2 gap-2">
         <Card>

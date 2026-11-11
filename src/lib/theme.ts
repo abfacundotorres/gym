@@ -12,7 +12,7 @@ export function applyStoredTheme() {
 
 function setTheme(theme: 'dark' | 'light') {
   document.documentElement.classList.toggle('dark', theme === 'dark')
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#0b0f14' : '#f6f7f9')
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#07090c' : '#f4f6f8')
   try { localStorage.setItem(KEY, theme) } catch { /* sin storage */ }
 }
 

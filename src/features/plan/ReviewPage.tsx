@@ -43,7 +43,7 @@ export function ReviewPage() {
     <section className="space-y-5">
       <Link to="/plan" className="block py-1 text-sm text-slate-400">← Plan</Link>
       <header>
-        <h1 className="text-2xl font-bold">Revisión del mesociclo</h1>
+        <h1 className="title text-3xl">Revisión del mesociclo</h1>
         <p className="text-sm text-slate-400">
           Desde el {formatDDMM(meso.startDate)}{week ? ` · vas por la semana ${week.week} de ${week.total} (vista previa)` : ''}
         </p>

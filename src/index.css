@@ -3,11 +3,26 @@
 /* Tema por clase en <html>: oscuro por defecto, claro desde Ajustes. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Archivo variable (ejes wght + wdth), empaquetada: cero requests externos. Licencia OFL en ARCHIVO-OFL.txt. */
+@font-face {
+  font-family: "Archivo";
+  src: url("./assets/fonts/archivo-latin-wdth.woff2") format("woff2");
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
-  --color-bg: #0b0f14;
-  --color-surface: #141a22;
-  --color-line: #232c38;
-  --color-accent: #34d399;
+  --font-sans: "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --color-bg: #07090c;
+  --color-surface: #11151b;
+  --color-raised: #181d25;
+  --color-line: #232a35;
+  /* Acento lima: --color-accent para texto/bordes, --color-accent-solid para fondos (botones) con --color-on-accent encima. */
+  --color-accent: #c8f43a;
+  --color-accent-solid: #c8f43a;
+  --color-on-accent: #0b0f02;
   /* Serie de gráficos: validada contra la superficie oscura (lightness band + contraste). */
   --color-chart: #0ea371;
 }
@@ -18,10 +33,11 @@
  */
 html:not(.dark) {
   color-scheme: light;
-  --color-bg: #f6f7f9;
+  --color-bg: #f4f6f8;
   --color-surface: #ffffff;
+  --color-raised: #eceff3;
   --color-line: #d9dee5;
-  --color-accent: #047857;
+  --color-accent: #3f6212;
   --color-chart: #059669;
   --color-slate-100: #0f172a;
   --color-slate-200: #1e293b;
@@ -40,10 +56,30 @@ html:not(.dark) {
 }
 html.dark { color-scheme: dark; }
 
+/* Títulos y números grandes: Archivo condensada, en mayúsculas. */
+@utility title {
+  font-stretch: 72%;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.005em;
+  line-height: 1.02;
+}
+@utility digits {
+  font-stretch: 72%;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+@utility eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
 html, body, #root { height: 100%; }
 body {
   @apply bg-bg text-slate-100 antialiased;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   overscroll-behavior-y: none;
   -webkit-tap-highlight-color: transparent;
 }

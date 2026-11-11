@@ -30,7 +30,7 @@ export function VolumePage() {
 
   return (
     <section className="space-y-4">
-      <h1 className="text-2xl font-bold">Volumen</h1>
+      <h1 className="title text-3xl">Volumen</h1>
       <div className="flex items-center gap-2">
         <Button aria-label="Semana anterior" onClick={() => setMonday(addDays(monday, -7))}>←</Button>
         <p className="flex-1 text-center text-sm">

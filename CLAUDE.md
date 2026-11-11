@@ -29,7 +29,7 @@ E2E offline con @playwright/test (`e2e/`). Deploy estático en GitHub Pages por 
   `warmup`, `e1rm`, `prs`, `stagnation`, `volume`, `load` (unidades y carga comparable), `history`, `session`,
   `periodization` (semanas y pausas, deload, sugerencias, revisión de mesociclo), `variants`, `readiness`.
 - `src/features/<pantalla>/` — pantallas.
-- `src/ui/` — componentes reutilizables (Stepper, Chip, gráficos SVG propios).
+- `src/ui/` — componentes reutilizables (Stepper, Chip, Segments, BottomBar, gráficos SVG propios). Estilo: D-54 (acento lima, Archivo empaquetada, utilidades `title`/`digits`/`eyebrow` en `src/index.css`).
 - `src/lib/` — integración con el navegador (PWA, timer, wake lock, clipboard).
 - `docs/DATA_FORMAT.md` — formato de export. `docs/DECISIONES.md` — supuestos y decisiones.
   `docs/SEGURIDAD.md` — modelo de amenazas y riesgos conocidos.

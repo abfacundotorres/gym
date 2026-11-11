@@ -28,7 +28,8 @@ test('offline: importar, registrar una sesión, recargar y que todo persista', a
   await page.getByRole('link', { name: /Press inclinado/ }).click()
 
   // El motor prellena 25 por mano (objetivo 8/8/7 después del 5/11).
-  await expect(page.getByRole('status').first()).toContainText('Mismo peso (25 por mano), objetivo 8/8/7')
+  await expect(page.getByRole('status').first()).toContainText('mismo peso')
+  await expect(page.getByRole('status').first()).toContainText('25 por mano × 8·8·7')
   await page.getByRole('button', { name: 'Guardar serie' }).click()
   await expect(page.getByRole('timer')).toBeVisible()
   await page.getByRole('button', { name: 'Saltar' }).click()
@@ -39,6 +40,7 @@ test('offline: importar, registrar una sesión, recargar y que todo persista', a
 
   // Ocupado → alternativa en el jalón.
   await page.getByRole('button', { name: 'Siguiente →' }).click()
+  await page.getByRole('button', { name: 'Más opciones' }).click()
   await page.getByRole('button', { name: 'Ocupado → alternativa' }).click()
   await page.getByRole('button', { name: 'Jalón agarre neutro' }).click()
   await expect(page.getByRole('heading', { name: 'Jalón agarre neutro' })).toBeVisible()
@@ -47,7 +49,7 @@ test('offline: importar, registrar una sesión, recargar y que todo persista', a
   // Recargar sin red: la sesión en curso sigue ahí.
   await page.reload()
   await page.getByRole('link', { name: '← Sesión' }).click()
-  await expect(page.getByText('25×8, 25×8, 25×8')).toBeVisible()
+  await expect(page.getByText('25×8 · 25×8 · 25×8')).toBeVisible()
   await page.getByRole('button', { name: 'Terminar sesión' }).click()
   await page.getByRole('button', { name: 'Terminar', exact: true }).click()
   await expect(page.locator('pre')).toContainText('Press inclinado (mancuernas) (por mano): 25×8, 25×8, 25×8')
