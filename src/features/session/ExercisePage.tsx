@@ -9,25 +9,33 @@ import { formatDDMM } from '../../engine/dates'
 import { formatLoad, UNIT_SHORT } from '../../engine/load'
 import { formatRest } from '../../engine/format'
 import { formatSet, lastExposure } from '../../engine/session'
-import { exposuresOf } from '../../engine/history'
-import { recommend, type Recommendation } from '../../engine/progression'
+import type { Recommendation } from '../../engine/progression'
 import { findPRs } from '../../engine/prs'
 import { validSets, workingWeight } from '../../engine/validity'
 import { warmupSets } from '../../engine/warmup'
 import { SetBadges } from '../../ui/SetBadges'
-import { deloadSets, deloadWeight } from '../../engine/periodization'
-import { readinessLevel, reducedSets, suggestFewerSets } from '../../engine/readiness'
+import { deloadSets } from '../../engine/periodization'
+import { reducedSets } from '../../engine/readiness'
 import { SET_FLAGS, type Exercise, type SetEntry, type SetFlag } from '../../engine/types'
 import { startRest } from '../../lib/restTimer'
 import { useWakeLock } from '../../lib/wakeLock'
+import { BottomBar } from '../../ui/BottomBar'
 import { Button } from '../../ui/Button'
+import { Segments } from '../../ui/Segments'
 import { Chip, Stepper } from '../../ui/Stepper'
+import { todaysRecommendation } from './recommendation'
 import { useSessionData } from './useSessionData'
 
 const FLAG_LABEL: Record<SetFlag, string> = { rp: 'Rest-pause', drop: 'Drop', rebote: 'Rebote', asist: 'Asistida' }
 type Draft = Omit<SetEntry, 'id'>
 
+/** Cada ejercicio es una pantalla nueva (el key reinicia menú, aproximaciones y edición). */
 export function ExercisePage() {
+  const { idx } = useParams()
+  return <ExerciseScreen key={idx} />
+}
+
+function ExerciseScreen() {
   const { id, idx: idxParam } = useParams()
   const idx = Number(idxParam)
   const navigate = useNavigate()
@@ -44,6 +52,8 @@ export function ExercisePage() {
   }, [exerciseId])
   const [editing, setEditing] = useState<string | null>(null)
   const [swapping, setSwapping] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [warmOpen, setWarmOpen] = useState(false)
   const [typed, setTyped] = useState<{ exId: string; weight: number | null } | null>(null)
   useWakeLock(data?.session.status === 'in_progress')
 
@@ -53,17 +63,9 @@ export function ExercisePage() {
   const item = session.items[idx]!
   const ex = ctx.ex
   const planItem = plan?.items.find((p) => p.exerciseId === item.exerciseId || p.exerciseId === item.swappedFrom)
-  const deload = !!session.deload
-  const lowDay = !deload && readinessLevel(session.readiness) === 'low'
-  const fewer = !deload && suggestFewerSets(session.readiness, session.short)
-  const plannedSets = deload ? deloadSets(planItem?.sets ?? 3) : (planItem?.sets ?? 3)
+  const { deload, fewer, plannedSets, previous, rec } = todaysRecommendation(ex, session, planItem, ctx.history, settings.kgPerBrick)
   const last = lastExposure(ctx.history, ex.id, session.date, session.id)
   const lastW = last?.item.sets.filter((s) => s.type === 'W') ?? []
-  const previous = exposuresOf(ctx.history, ex.id, { before: session.date, excludeSessionId: session.id })
-  const baseRec = recommend(ex, deload ? (planItem?.sets ?? 3) : plannedSets, previous, { kgPerBrick: settings.kgPerBrick, range: planItem?.rangeOverride, hold: lowDay })
-  const rec: Recommendation = deload
-    ? { ...baseRec, status: 'same', weight: deloadWeight(ex, baseRec.weight, settings.kgPerBrick), targets: baseRec.targets.slice(0, plannedSets), fatigue: false, message: 'Deload' }
-    : baseRec
   const targets = rec.targets
   const done = item.sets
   const doneW = done.filter((s) => s.type === 'W')
@@ -93,83 +95,100 @@ export function ExercisePage() {
     if (d.type === 'W' && restSec > 0 && !isCardio) startRest(restSec, ex.name)
   }
 
+  const notDone = (it: (typeof session.items)[number]) => {
+    const pi = plan?.items.find((p) => p.exerciseId === it.exerciseId || p.exerciseId === it.swappedFrom)
+    const target = pi ? (session.deload ? deloadSets(pi.sets) : pi.sets) : 0
+    return !it.skipped && !(target > 0 && it.sets.filter((x) => x.type === 'W').length >= target)
+  }
+  const doneA = done.filter((x) => x.type === 'A').length
+  const warmTotal = doneA + warmups.length
+  const inProgress = session.status === 'in_progress'
+
   return (
-    <section className="space-y-4">
-      <div className="flex items-center justify-between text-sm">
-        <Link to={`/sesion/${session.id}`} className="py-2 text-slate-400">← Sesión</Link>
-        <span className="text-slate-400 tabular-nums">{idx + 1}/{session.items.length}</span>
+    <section className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <Link to={`/sesion/${session.id}`} className="-ml-1 py-2 pr-3 text-sm text-slate-400">← Sesión</Link>
+        <ol className="flex flex-1 justify-center gap-1" aria-label={`Ejercicio ${idx + 1} de ${session.items.length}`}>
+          {session.items.map((it, i) => (
+            <li key={i} className={`h-1 w-5 max-w-full rounded-full ${i === idx ? 'bg-slate-100' : notDone(it) ? 'bg-raised' : 'bg-accent-solid'}`} />
+          ))}
+        </ol>
+        {inProgress ? (
+          <button
+            aria-label="Más opciones"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="relative -mr-2 flex size-11 items-center justify-center rounded-full text-slate-300 active:bg-raised"
+          >
+            <svg viewBox="0 0 24 24" className="size-6" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" /></svg>
+            {(item.pain || item.note) && <span className="absolute right-2 top-2 size-2 rounded-full bg-accent-solid" />}
+          </button>
+        ) : <span className="size-11" />}
       </div>
-      <header>
-        <h1 className="text-2xl font-bold leading-tight">{ex.name}</h1>
-        <p className="text-sm text-slate-400">
-          {plannedSets} series{fewer && plannedSets > reducedSets(plannedSets) ? ` (hoy podés dejarlo en ${reducedSets(plannedSets)})` : ''} · {ex.range[0]}-{ex.range[1]} {isCardio ? 'min' : 'reps'}{ex.repsPerLeg && ' por pierna'}
-          {!isCardio && ` · descanso ${Math.round(restSec / 60 * 10) / 10} min`}
-        </p>
+
+      <header className="space-y-1.5">
+        <h1 className="title text-[1.7rem]">{ex.name}</h1>
+        <div className="flex flex-wrap gap-1.5 text-xs font-semibold text-slate-300">
+          <span className="rounded-full bg-raised px-2.5 py-1">{plannedSets} series</span>
+          <span className="rounded-full bg-raised px-2.5 py-1">{ex.range[0]}-{ex.range[1]} {isCardio ? 'min' : 'reps'}{ex.repsPerLeg && ' por pierna'}</span>
+          {!isCardio && <span className="rounded-full bg-raised px-2.5 py-1">descanso {formatRest(restSec)}</span>}
+        </div>
+        {fewer && plannedSets > reducedSets(plannedSets) && <p className="text-xs text-slate-400">Hoy podés dejarlo en {reducedSets(plannedSets)} series.</p>}
+        {item.swappedFrom && <p className="text-xs text-slate-400">En lugar de {ctx.family.find((f) => f.id === item.swappedFrom)?.name ?? item.swappedFrom}</p>}
       </header>
 
-      {item.swappedFrom && <p className="text-xs text-slate-400">En lugar de {ctx.family.find((f) => f.id === item.swappedFrom)?.name ?? item.swappedFrom}</p>}
-      {options.length > 0 && session.status === 'in_progress' && (
-        swapping ? (
-          <div className="space-y-2 rounded-xl bg-surface p-3 ring-1 ring-line">
-            <p className="text-sm text-slate-400">Cambiar por:</p>
-            {options.map((o) => (
-              <Button
-                key={o.id}
-                className="w-full text-left"
-                onClick={async () => {
-                  const to = await swapExercise(db, session.id, idx, o.id)
-                  setSwapping(false)
-                  navigate(`/sesion/${session.id}/${to}`, { replace: true })
-                }}
-              >
-                {o.name}
-              </Button>
-            ))}
-            <Button variant="ghost" className="w-full" onClick={() => setSwapping(false)}>Cancelar</Button>
-          </div>
-        ) : (
-          <button className="min-h-11 text-sm text-slate-300 underline-offset-4 hover:underline" onClick={() => setSwapping(true)}>
-            Ocupado → alternativa
-          </button>
-        )
-      )}
-
-      {session.status === 'in_progress' && !isCardio && (
-        <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Molestia o dolor">
-          <span className="text-sm text-slate-400">¿Algo te molesta?</span>
-          <Chip active={item.pain === 'molestia'} onClick={() => void setItemPain(db, session.id, idx, item.pain === 'molestia' ? null : 'molestia')}>Molestia</Chip>
-          <Chip active={item.pain === 'dolor'} onClick={() => void setItemPain(db, session.id, idx, item.pain === 'dolor' ? null : 'dolor')}>Dolor</Chip>
+      {inProgress && menuOpen && (
+        <div className="space-y-4 rounded-2xl bg-surface p-3 ring-1 ring-line" role="group" aria-label="Opciones del ejercicio">
+          {options.length > 0 && (
+            swapping ? (
+              <div className="space-y-2">
+                <p className="text-sm text-slate-400">Cambiar por:</p>
+                {options.map((o) => (
+                  <Button
+                    key={o.id}
+                    className="w-full text-left"
+                    onClick={async () => {
+                      const to = await swapExercise(db, session.id, idx, o.id)
+                      setSwapping(false)
+                      setMenuOpen(false)
+                      navigate(`/sesion/${session.id}/${to}`, { replace: true })
+                    }}
+                  >
+                    {o.name}
+                  </Button>
+                ))}
+                <Button variant="ghost" className="w-full" onClick={() => setSwapping(false)}>Cancelar</Button>
+              </div>
+            ) : (
+              <Button className="w-full justify-start text-left" onClick={() => setSwapping(true)}>Ocupado → alternativa</Button>
+            )
+          )}
+          {!isCardio && (
+            <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Molestia o dolor">
+              <span className="text-sm text-slate-400">¿Algo te molesta?</span>
+              <Chip active={item.pain === 'molestia'} onClick={() => void setItemPain(db, session.id, idx, item.pain === 'molestia' ? null : 'molestia')}>Molestia</Chip>
+              <Chip active={item.pain === 'dolor'} onClick={() => void setItemPain(db, session.id, idx, item.pain === 'dolor' ? null : 'dolor')}>Dolor</Chip>
+            </div>
+          )}
+          <Button variant="ghost" className="w-full" disabled={done.length > 0 || item.skipped} onClick={() => { void setSkipped(db, session.id, idx, true); setMenuOpen(false) }}>
+            Saltear ejercicio
+          </Button>
+          <ItemNote key={item.note ?? ''} initial={item.note ?? ''} onSave={(n) => void setItemNote(db, session.id, idx, n)} />
         </div>
       )}
 
       {ex.safetyNote && <SafetyNote sessionId={session.id} ex={ex} />}
       {ex.note && <p className="text-xs text-slate-400">{ex.note}</p>}
 
-      <div className="rounded-xl bg-surface p-3 text-sm ring-1 ring-line">
-        {last ? (
-          <>
-            <span className="text-slate-400">La última vez ({formatDDMM(last.date)}): </span>
-            {last.item.sets.map(formatSet).join(', ')}
-            {last.item.confidence && last.item.confidence !== 'alta' && <span className="ml-1 rounded bg-amber-500/15 px-1 text-xs text-amber-300">conf. {last.item.confidence}</span>}
-            {last.item.note && <p className="mt-1 text-xs text-slate-400">{last.item.note}</p>}
-          </>
-        ) : (
-          <>
-            <span className="text-slate-400">Sin historial para esta variante.</span>
-            {famRef && (
-              <p className="mt-1 text-xs text-slate-400">
-                Referencia de familia, no equivalente: {ctx.family.find((f) => f.id === famRef.exerciseId)?.name} {formatLoad(ctx.family.find((f) => f.id === famRef.exerciseId)!, famRef.weight, settings.kgPerBrick)} ({formatDDMM(famRef.date)}).
-              </p>
-            )}
-          </>
-        )}
-      </div>
-
-      {!isCardio && (deload ? (
-        <p role="status" className="rounded-xl bg-sky-500/10 p-3 text-sm text-sky-200 ring-1 ring-sky-500/30">
-          Deload: {rec.weight != null ? formatLoad(ex, rec.weight, settings.kgPerBrick) : 'elegí el peso'} × {rec.targets.join('/')}, sin rest-pause ni drops.
-        </p>
-      ) : <RecBanner rec={rec} ex={ex} kgPerBrick={settings.kgPerBrick} />)}
+      {!isCardio && (
+        <TodayCard rec={rec} ex={ex} deload={deload} kgPerBrick={settings.kgPerBrick} last={last} famRef={famRef} family={ctx.family} />
+      )}
+      {isCardio && last && (
+        <div className="rounded-2xl bg-surface p-3 text-sm ring-1 ring-line">
+          <span className="text-slate-400">La última vez ({formatDDMM(last.date)}): </span>
+          {last.item.sets.map(formatSet).join(', ')}
+        </div>
+      )}
 
       {item.skipped ? (
         <div className="space-y-3 text-center">
@@ -178,6 +197,38 @@ export function ExercisePage() {
         </div>
       ) : (
         <>
+          {editing == null && warmTotal > 0 && (
+            <div>
+              <button
+                aria-expanded={warmOpen}
+                onClick={() => setWarmOpen(!warmOpen)}
+                className="flex min-h-11 w-full items-center justify-between gap-3 rounded-2xl border border-dashed border-line px-3.5 text-sm text-slate-400"
+              >
+                <span>Entrada en calor · {warmTotal} {warmTotal === 1 ? 'aproximación' : 'aproximaciones'}</span>
+                <span className="flex items-center gap-2"><Segments done={doneA} total={warmTotal} /><span aria-hidden="true">{warmOpen ? '▴' : '▾'}</span></span>
+              </button>
+              {warmOpen && warmups.length > 0 && (
+                <ol className="mt-2 space-y-1.5" aria-label="Aproximaciones sugeridas">
+                  {warmups.map((w) => (
+                    <li key={w.weight}>
+                      <button
+                        onClick={() => void log({ type: 'A', weight: w.weight, reps: w.reps })}
+                        aria-label={`Registrar aproximación ${formatLoad(ex, w.weight, settings.kgPerBrick)} por ${w.reps}`}
+                        className="flex min-h-12 w-full items-center gap-3 rounded-2xl bg-surface px-3.5 py-2 text-left text-slate-300"
+                      >
+                        <span className="min-w-0 flex-1">
+                          <span className="digits block text-xl">{formatLoad(ex, w.weight, settings.kgPerBrick)} × {w.reps}</span>
+                          <span className="block text-[11px] text-slate-500">{w.label}</span>
+                        </span>
+                        <span className="text-lg text-slate-500">✓</span>
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
+          )}
+
           <ol className="space-y-2">
             {done.map((s, i) => {
               const wIndex = s.type === 'W' ? done.slice(0, i + 1).filter((x) => x.type === 'W').length - 1 : -1
@@ -206,11 +257,11 @@ export function ExercisePage() {
                   <button
                     onClick={() => setEditing(s.id)}
                     aria-label={`Editar serie ${i + 1}: ${formatSet(s)}`}
-                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left ring-1 ${s.type === 'A' ? 'ring-line/60 text-slate-400' : 'bg-accent/5 ring-accent/30'}`}
+                    className={`flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-left ${s.type === 'A' ? 'text-slate-400 ring-1 ring-line' : 'bg-surface'}`}
                   >
-                    <span className="w-6 text-xs text-slate-400">{s.type === 'A' ? 'A' : wIndex + 1}</span>
+                    <span className={`digits w-5 text-xl ${s.type === 'A' ? 'text-slate-500' : 'text-accent'}`}>{s.type === 'A' ? 'A' : wIndex + 1}</span>
                     <span className="min-w-0 flex-1">
-                      <span className="block text-lg tabular-nums">{formatSet(s).replace(/^A /, '')}</span>
+                      <span className="digits block text-2xl">{formatSet(s).replace(/^A /, '')}</span>
                       {(prev || s.restSec != null) && (
                         <span className="block text-xs tabular-nums text-slate-500">
                           {s.restSec != null && `descanso ${formatRest(s.restSec)}`}
@@ -226,27 +277,6 @@ export function ExercisePage() {
               )
             })}
           </ol>
-
-          {editing == null && warmups.length > 0 && (
-            <ol className="space-y-1" aria-label="Aproximaciones sugeridas">
-              {warmups.map((w) => (
-                <li key={w.weight}>
-                  <button
-                    onClick={() => void log({ type: 'A', weight: w.weight, reps: w.reps })}
-                    aria-label={`Registrar aproximación ${formatLoad(ex, w.weight, settings.kgPerBrick)} por ${w.reps}`}
-                    className="flex w-full items-center gap-3 rounded-xl border border-dashed border-line px-3 py-2 text-left text-slate-400"
-                  >
-                    <span className="w-6 text-xs">A</span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block tabular-nums">{formatLoad(ex, w.weight, settings.kgPerBrick)} × {w.reps}</span>
-                      <span className="block text-[11px] text-slate-500">{w.label}</span>
-                    </span>
-                    <span className="text-lg">✓</span>
-                  </button>
-                </li>
-              ))}
-            </ol>
-          )}
 
           {editing == null && (
             <SetEditor
@@ -267,34 +297,33 @@ export function ExercisePage() {
           {editing == null && targets.length > doneW.length + 1 && (
             <ol className="space-y-1 text-sm text-slate-500">
               {targets.slice(doneW.length + 1).map((t, i) => (
-                <li key={i} className="flex justify-between px-3">
-                  <span>Serie {doneW.length + 2 + i}</span>
-                  <span className="tabular-nums">{next.weight == null ? '—' : formatLoad(ex, next.weight, settings.kgPerBrick)} × {t}</span>
+                <li key={i} className="flex justify-between px-3.5">
+                  <span>Serie {doneW.length + 2 + i} · objetivo</span>
+                  <span className="digits text-lg">{next.weight == null ? '—' : formatLoad(ex, next.weight, settings.kgPerBrick)} × {t}</span>
                 </li>
               ))}
             </ol>
           )}
-
-          <div className="grid grid-cols-2 gap-2">
-            <Button disabled={!lastDone} onClick={() => lastDone && void log({ type: lastDone.type, weight: lastDone.weight, reps: lastDone.reps, ...(lastDone.minutes != null ? { minutes: lastDone.minutes } : {}) })}>
-              Repetir la anterior
-            </Button>
-            <Button variant="ghost" onClick={() => void setSkipped(db, session.id, idx, true)} disabled={done.length > 0}>
-              Saltear
-            </Button>
-          </div>
-          <ItemNote key={item.note ?? ''} initial={item.note ?? ''} onSave={(n) => void setItemNote(db, session.id, idx, n)} />
         </>
       )}
 
-      <div className="grid grid-cols-2 gap-2 pt-2">
-        <Button disabled={prevIdx == null} onClick={() => prevIdx != null && navigate(`/sesion/${session.id}/${prevIdx}`, { replace: true })}>← Anterior</Button>
-        {nextIdx != null ? (
-          <Button variant={doneW.length >= plannedSets ? 'primary' : 'secondary'} onClick={() => navigate(`/sesion/${session.id}/${nextIdx}`, { replace: true })}>Siguiente →</Button>
-        ) : (
-          <Button variant="primary" onClick={() => navigate(`/sesion/${session.id}`)}>Ver sesión</Button>
-        )}
-      </div>
+      <BottomBar>
+        <div className="flex gap-2">
+          <Button aria-label="← Anterior" className="w-16 shrink-0 !px-0 text-2xl" disabled={prevIdx == null} onClick={() => prevIdx != null && navigate(`/sesion/${session.id}/${prevIdx}`, { replace: true })}>←</Button>
+          <Button
+            className="min-w-0 flex-1"
+            disabled={!lastDone || !!item.skipped || editing != null}
+            onClick={() => lastDone && void log({ type: lastDone.type, weight: lastDone.weight, reps: lastDone.reps, ...(lastDone.minutes != null ? { minutes: lastDone.minutes } : {}) })}
+          >
+            Repetir la anterior
+          </Button>
+          {nextIdx != null ? (
+            <Button aria-label="Siguiente →" variant={doneW.length >= plannedSets ? 'primary' : 'secondary'} className="w-16 shrink-0 !px-0 text-2xl" onClick={() => navigate(`/sesion/${session.id}/${nextIdx}`, { replace: true })}>→</Button>
+          ) : (
+            <Button aria-label="Ver sesión" variant="primary" className="w-16 shrink-0 !px-0 text-2xl" onClick={() => navigate(`/sesion/${session.id}`)}>→</Button>
+          )}
+        </div>
+      </BottomBar>
     </section>
   )
 }
@@ -329,11 +358,11 @@ function SetEditor({
     })
 
   return (
-    <div className="space-y-3 rounded-xl bg-surface p-3 ring-1 ring-accent/40">
-      <div className="flex items-center justify-between">
-        <div className="flex gap-2">
-          {title && <span className="font-semibold">{title}</span>}
-          {hint && <span className="text-xs leading-6 text-slate-500">{hint}</span>}
+    <div className="space-y-2.5 rounded-2xl bg-surface p-3 ring-1 ring-accent/50">
+      <div className="flex items-center justify-between gap-2 px-1">
+        <div className="flex min-w-0 items-baseline gap-2">
+          {title && <span className="title text-2xl">{title}</span>}
+          {hint && <span className="truncate text-xs text-slate-500">{hint}</span>}
         </div>
         {!isCardio && (
           <div className="flex gap-1" role="group" aria-label="Tipo de serie">
@@ -350,13 +379,16 @@ function SetEditor({
             <Stepper label={`Peso (${UNIT_SHORT[ex.unit]})`} value={d.weight} step={ex.increment} onChange={(v) => { patch({ weight: v }); if (d.type === 'W') onWorkWeightChange?.(v) }} />
             <Stepper label={d.flag === 'rp' ? 'Reps totales' : 'Reps'} value={d.reps} step={1} decimal={false} onChange={(v) => patch({ reps: v })} />
           </div>
-          {d.weight != null && ex.unit !== 'total' && <p className="-mt-1 text-xs text-slate-400">{formatLoad(ex, d.weight, kgPerBrick)}</p>}
+          {d.weight != null && ex.unit !== 'total' && ex.unit !== 'per_hand' && <p className="-mt-1 px-1 text-xs text-slate-400">{formatLoad(ex, d.weight, kgPerBrick)}</p>}
           {d.type === 'W' && (
             <>
               <div className="flex flex-wrap gap-2" role="group" aria-label="Marca">
                 {SET_FLAGS.filter((f) => !deload || (f !== 'rp' && f !== 'drop')).map((f) => (
-                  <Chip key={f} active={d.flag === f} onClick={() => toggleFlag(f)}>{FLAG_LABEL[f]}</Chip>
+                  <Chip key={f} compact active={d.flag === f} onClick={() => toggleFlag(f)}>{FLAG_LABEL[f]}</Chip>
                 ))}
+                {!(askRir || rirOpen || d.rir != null) && (
+                  <button type="button" className="min-h-10 px-1.5 text-[13px] text-slate-400" onClick={() => setRirOpen(true)}>+ RIR</button>
+                )}
               </div>
               {d.flag === 'rp' && (
                 <Stepper label="Reps antes de la primera pausa" value={d.repsBeforePause ?? null} step={1} decimal={false} onChange={(v) => patch({ repsBeforePause: v ?? undefined })} />
@@ -370,9 +402,7 @@ function SetEditor({
                     ))}
                   </div>
                 </div>
-              ) : (
-                <button type="button" className="min-h-10 text-xs text-slate-400 underline-offset-4 hover:underline" onClick={() => setRirOpen(true)}>+ RIR</button>
-              )}
+              ) : null}
             </>
           )}
         </>
@@ -382,12 +412,11 @@ function SetEditor({
         {onCancel && <Button variant="ghost" onClick={onCancel}>Cancelar</Button>}
         <Button
           variant="primary"
-          aria-label={submitLabel === '✓' ? 'Guardar serie' : undefined}
-          className="flex-1 text-xl"
+          className="flex-1 text-lg"
           disabled={isCardio ? d.minutes == null : d.weight == null && d.reps == null}
           onClick={() => void onSubmit(d.repsBeforePause != null && d.reps != null && d.repsBeforePause > d.reps ? { ...d, repsBeforePause: d.reps } : d)}
         >
-          {submitLabel}
+          {submitLabel === '✓' ? '✓ Guardar serie' : submitLabel}
         </Button>
       </div>
     </div>
@@ -403,7 +432,7 @@ function SafetyNote({ sessionId, ex }: { sessionId: string; ex: Exercise }) {
     try { localStorage.setItem(key, '1') } catch { /* sin storage */ }
   }, [key])
   return (
-    <details open={open} className="rounded-xl bg-amber-500/10 p-3 text-sm text-amber-100 ring-1 ring-amber-500/30">
+    <details open={open} className="rounded-2xl bg-amber-500/10 p-3 text-sm text-amber-100 ring-1 ring-amber-500/30">
       <summary className="cursor-pointer font-medium">Nota de seguridad</summary>
       <p className="mt-1">{ex.safetyNote}</p>
     </details>
@@ -415,46 +444,82 @@ function ItemNote({ initial, onSave }: { initial: string; onSave: (n: string) =>
   return (
     <details className="text-sm" open={!!initial}>
       <summary className="cursor-pointer py-2 text-slate-400">Nota del ejercicio</summary>
-      <textarea value={v} onChange={(e) => setV(e.target.value)} onBlur={() => v !== initial && onSave(v)} rows={2} className="w-full rounded-lg bg-bg p-2 ring-1 ring-line" />
+      <textarea value={v} onChange={(e) => setV(e.target.value)} onBlur={() => v !== initial && onSave(v)} rows={2} className="w-full rounded-xl bg-bg p-2 ring-1 ring-line" />
     </details>
   )
 }
 
-function RecBanner({ rec, ex, kgPerBrick }: { rec: Recommendation; ex: Exercise; kgPerBrick: number }) {
-  const tone =
-    rec.status === 'increase' || rec.status === 'ready_big_jump'
-      ? 'bg-accent/10 text-accent ring-accent/40'
-      : rec.status === 'insufficient' || rec.status === 'no_history'
-        ? 'bg-surface text-slate-300 ring-line'
-        : 'bg-surface text-slate-200 ring-line'
+/** Recomendación de hoy en grande + última vez, en una sola tarjeta. */
+function TodayCard({
+  rec, ex, deload, kgPerBrick, last, famRef, family,
+}: {
+  rec: Recommendation
+  ex: Exercise
+  deload: boolean
+  kgPerBrick: number
+  last: ReturnType<typeof lastExposure>
+  famRef: ReturnType<typeof familyReference>
+  family: Exercise[]
+}) {
   const painAdjusted = !!rec.pain && rec.status === 'same'
-  const text =
-    painAdjusted
-      ? rec.pain === 'dolor'
-        ? `Hubo dolor la última vez: bajá a ${formatLoad(ex, rec.weight, kgPerBrick)}, repetí ${rec.targets.join('/')}`
-        : `Hubo molestia la última vez: mantené el peso${rec.weight != null ? ` (${formatLoad(ex, rec.weight, kgPerBrick)})` : ''}, repetí ${rec.targets.join('/')}`
+  const numeric = rec.weight != null && rec.targets.length > 0 && (deload || rec.status === 'increase' || rec.status === 'same')
+  const label = deload
+    ? 'Deload'
+    : painAdjusted
+      ? rec.pain === 'dolor' ? 'Hubo dolor · bajá' : 'Hubo molestia · mantené'
       : rec.held
-      ? `Hoy mantené el peso${rec.weight != null ? ` (${formatLoad(ex, rec.weight, kgPerBrick)})` : ''}, repetí ${rec.targets.join('/')}`
-      : rec.status === 'increase'
-      ? `Subí a ${formatLoad(ex, rec.weight, kgPerBrick)}, objetivo ${rec.targets.join('/')}`
-      : rec.status === 'same'
-        ? `Mismo peso${rec.weight != null ? ` (${formatLoad(ex, rec.weight, kgPerBrick)})` : ''}, objetivo ${rec.targets.join('/')}`
-        : rec.message
+        ? 'Hoy · mantené el peso'
+        : rec.status === 'increase'
+          ? 'Hoy · subí'
+          : rec.status === 'same' ? 'Hoy · mismo peso' : 'Hoy'
+  const big = numeric ? `${formatLoad(ex, rec.weight, kgPerBrick)} × ${rec.targets.join('·')}` : null
+  const tone = deload
+    ? 'bg-sky-500/10 ring-sky-500/30'
+    : rec.status === 'increase' || rec.status === 'ready_big_jump'
+      ? 'bg-gradient-to-br from-accent/15 to-surface ring-accent/40'
+      : 'bg-surface ring-line'
+  const note = 'mt-1.5 text-xs text-slate-400'
   return (
-    <div className={`rounded-xl p-3 text-sm ring-1 ${tone}`} role="status">
-      <p>{text}</p>
-      {rec.pain && <p className="mt-1 text-xs text-slate-400">{rec.pain === 'dolor' ? 'Si el dolor sigue, probá otra variante (Ocupado → alternativa) o consultá a un profesional.' : 'Si vuelve a molestar, probá otra variante (Ocupado → alternativa).'}</p>}
-      {rec.note === 'rir_defer' && <p className="mt-1 text-xs text-slate-400">Llegaste al tope con 0 reps en reserva: repetí y buscá terminar con 1 en reserva. Si lo repetís, la próxima subís.</p>}
-      {rec.note === 'rir_fast' && <p className="mt-1 text-xs text-slate-400">Te sobraron 3 o más en la última serie: probá sumar hasta 2 reps.</p>}
-      {rec.held && <p className="mt-1 text-xs text-slate-400">Sueño y energía bajos: hoy no se suben cargas. Si te sentís bien, podés subir igual.</p>}
+    <div className={`rounded-2xl p-3.5 ring-1 ${tone}`} role="status">
+      <p className={`eyebrow ${deload ? 'text-sky-300' : 'text-accent'}`}>{label}</p>
+      {big ? (
+        <p className={`digits mt-1 ${big.length > 22 ? 'text-3xl' : 'text-4xl'} leading-[1.05]`}>{big}</p>
+      ) : (
+        <p className="mt-1.5 text-lg font-semibold leading-snug">{deload ? 'Elegí el peso' : rec.message}</p>
+      )}
+      {deload && <p className={note}>Sin rest-pause ni drops.</p>}
+      {rec.pain && <p className={note}>{rec.pain === 'dolor' ? 'Si el dolor sigue, probá otra variante (Ocupado → alternativa) o consultá a un profesional.' : 'Si vuelve a molestar, probá otra variante (Ocupado → alternativa).'}</p>}
+      {rec.note === 'rir_defer' && <p className={note}>Llegaste al tope con 0 reps en reserva: repetí y buscá terminar con 1 en reserva. Si lo repetís, la próxima subís.</p>}
+      {rec.note === 'rir_fast' && <p className={note}>Te sobraron 3 o más en la última serie: probá sumar hasta 2 reps.</p>}
+      {rec.held && <p className={note}>Sueño y energía bajos: hoy no se suben cargas. Si te sentís bien, podés subir igual.</p>}
       {rec.status === 'ready_big_jump' && (
-        <p className="mt-1 text-xs text-slate-400">El siguiente peso es {formatLoad(ex, (rec.weight ?? 0) + ex.increment, kgPerBrick)}. Si subís, el objetivo vuelve a {ex.range[0]} reps.</p>
+        <p className={note}>El siguiente peso es {formatLoad(ex, (rec.weight ?? 0) + ex.increment, kgPerBrick)}. Si subís, el objetivo vuelve a {ex.range[0]} reps.</p>
       )}
       {rec.status === 'same' && rec.bigJumpPct != null && (
-        <p className="mt-1 text-xs text-slate-400">El incremento es de +{rec.bigJumpPct} %: progresá con reps hasta {rec.repCap}.</p>
+        <p className={note}>El incremento es de +{rec.bigJumpPct} %: progresá con reps hasta {rec.repCap}.</p>
       )}
-      {rec.status === 'insufficient' && <p className="mt-1 text-xs text-slate-400">No sugiero subir hasta tener {rec.targets.length} series válidas al mismo peso.</p>}
-      {rec.fatigue && rec.status !== 'same' && <p className="mt-1 text-xs text-amber-300">Dos sesiones flojas seguidas: considerá bajar 5-10 % o revisar la fatiga.</p>}
+      {rec.status === 'insufficient' && <p className={note}>No sugiero subir hasta tener {rec.targets.length} series válidas al mismo peso.</p>}
+      {rec.fatigue && rec.status !== 'same' && <p className="mt-1.5 text-xs text-amber-300">Dos sesiones flojas seguidas: considerá bajar 5-10 % o revisar la fatiga.</p>}
+
+      <div className="mt-2.5 border-t border-line pt-2 text-sm">
+        {last ? (
+          <>
+            <span className="text-slate-400">La última vez ({formatDDMM(last.date)}): </span>
+            {last.item.sets.map(formatSet).join(', ')}
+            {last.item.confidence && last.item.confidence !== 'alta' && <span className="ml-1 rounded bg-amber-500/15 px-1 text-xs text-amber-300">conf. {last.item.confidence}</span>}
+            {last.item.note && <p className="mt-1 text-xs text-slate-400">{last.item.note}</p>}
+          </>
+        ) : (
+          <>
+            <span className="text-slate-400">Sin historial para esta variante.</span>
+            {famRef && (
+              <p className="mt-1 text-xs text-slate-400">
+                Referencia de familia, no equivalente: {family.find((f) => f.id === famRef.exerciseId)?.name} {formatLoad(family.find((f) => f.id === famRef.exerciseId)!, famRef.weight, kgPerBrick)} ({formatDDMM(famRef.date)}).
+              </p>
+            )}
+          </>
+        )}
+      </div>
     </div>
   )
 }

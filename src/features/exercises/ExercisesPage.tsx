@@ -16,7 +16,7 @@ export function ExercisesPage() {
   return (
     <section className="space-y-4">
       <Link to="/plan" className="block py-1 text-sm text-slate-400">← Plan</Link>
-      <h1 className="text-2xl font-bold">Ejercicios</h1>
+      <h1 className="title text-3xl">Ejercicios</h1>
       <Chip active={showArchived} onClick={() => setShowArchived(!showArchived)}>Mostrar archivados</Chip>
       {[...families.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([fam, exs]) => (
         <div key={fam}>

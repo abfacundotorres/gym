@@ -41,7 +41,7 @@ export function ExerciseHistoryPage() {
     <section className="space-y-4">
       <Link to="/historial?ver=ejercicios" className="block py-1 text-sm text-slate-400">← Ejercicios</Link>
       <header>
-        <h1 className="text-2xl font-bold leading-tight">{ex.name}</h1>
+        <h1 className="title text-3xl">{ex.name}</h1>
         <p className="text-sm text-slate-400">
           {ex.range[0]}-{ex.range[1]} reps · +{num(ex.increment)}
           {TREND_LABEL[trend] && <span className="ml-2 rounded bg-amber-500/15 px-1.5 text-xs text-amber-300">{TREND_LABEL[trend]}</span>}

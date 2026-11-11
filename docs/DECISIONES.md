@@ -254,3 +254,27 @@ La marca no excluye las series de la progresión ni del volumen.
 **D-53. Poco tiempo hoy.** Opción al empezar la sesión: no se agregan los ejercicios opcionales (el escalador) y se
 sugiere una serie menos por ejercicio ("podés dejarlo en N"), igual que un día bajo pero sin mantener los pesos. Es solo
 una sugerencia: el plan no cambia y no afecta la progresión (no se marca "sin datos suficientes" por hacer menos series).
+
+**D-54. Identidad visual "deportiva oscura".** Fondo casi negro, un solo acento lima (`--color-accent-solid` para fondos
+de botones con `--color-on-accent` encima; `--color-accent` para texto y bordes, más oscuro en el tema claro para que
+tenga contraste). Tipografía: Archivo variable (ejes peso y ancho), un único archivo `woff2` de 90 KB empaquetado en
+`src/assets/fonts/` con su licencia OFL, sin requests externos y precacheado por el service worker (`font-src 'self'`).
+Títulos y números grandes en Archivo condensada y mayúsculas (utilidades `title` y `digits`). Sin dependencias nuevas. El
+color de los gráficos no cambió. Cambian `theme_color` y `background_color` del manifest (no `start_url` ni `scope`).
+
+**D-55. Modo foco en la sesión.** En la lista de la sesión y en cada ejercicio se ocultan las pestañas y las acciones
+van fijas abajo (`BottomBar`, sobre la barra de descanso, que sigue visible). El resumen sí muestra las pestañas. Desde la
+lista se sale con "← Salir" (la sesión queda a medias y Hoy ofrece "Continuar"). El botón principal es "Seguir: <primer
+ejercicio sin completar>" y, cuando no queda ninguno, "Terminar". Cada ejercicio es una pantalla nueva (se reinician el
+menú, las aproximaciones y la edición al cambiar).
+
+**D-56. Pantalla de ejercicio.** La recomendación de hoy va en grande (`25 por mano × 8·8·7`) junto con la última vez en
+una sola tarjeta; las aproximaciones sugeridas se pliegan en una línea con su avance; peso y reps son números grandes con
+−/+ debajo y "Guardar serie" dentro de la tarjeta. Pie fijo: ← / Repetir la anterior / →. El menú ⋯ reúne "Ocupado →
+alternativa", molestia/dolor, saltear y la nota del ejercicio; un punto en el ⋯ avisa si hay molestia/dolor o nota. La
+nota de seguridad sigue visible. Los textos de la recomendación no cambian de lógica: el cálculo vive en
+`features/session/recommendation.ts` y lo comparten la pantalla del ejercicio y la lista de la sesión.
+
+**D-57. Sin duración estimada.** El motor no calcula cuánto dura una sesión y no se inventa: Hoy no muestra tiempo
+estimado. La lista de la sesión muestra solo el tiempo transcurrido desde que empezó (dato real, `startedAt`) y las series
+hechas sobre las planificadas (con el recorte del deload aplicado).

@@ -20,6 +20,7 @@ export function TodayPage() {
   const [pickedId, setPickedId] = useState<string | null>(null)
   const [readinessFor, setReadinessFor] = useState<PlanDay | null>(null)
   const [burnedOut, setBurnedOut] = useState(false)
+  const [showAll, setShowAll] = useState(false)
 
   const data = useLiveQuery(async () => {
     const monday = weekStart(today)
@@ -51,7 +52,7 @@ export function TodayPage() {
   if (data.exerciseCount === 0) {
     return (
       <section className="space-y-4">
-        <h1 className="text-2xl font-bold">Bienvenido</h1>
+        <h1 className="title text-3xl">Bienvenido</h1>
         <p className="text-slate-300">Para empezar, cargá tus datos iniciales (<code>seed.json</code>) o un backup.</p>
         <ImportFlow label="Importar datos iniciales" />
       </section>
@@ -69,6 +70,9 @@ export function TodayPage() {
     : null
   const showSuggestion = !!suggestion?.reasons.length && (burnedOut || !data.dismissedThisWeek)
 
+  const doneThisWeek = data.thisWeek.filter((x) => x.status === 'finished').length
+  const mesoProgress = week ? Math.min(1, (week.week - 1 + Math.min(1, doneThisWeek / Math.max(1, data.planDays.length))) / week.total) : 0
+
   async function begin(p: PlanDay, readiness?: Readiness, short = false) {
     const s = await startSession(db, p, today, week ? data!.meso!.id : null, readiness, Date.now(), !!week?.isDeload, short)
     navigate(`/sesion/${s.id}`)
@@ -82,13 +86,26 @@ export function TodayPage() {
         </Link>
       )}
       <header>
-        <p className="text-sm text-slate-400">
-          <span className="capitalize">{WEEKDAYS_ES[wd]}</span> {formatDDMM(today)}
-          {week && ` · Semana ${week.week} de ${week.total}`}
-          {week?.pausedWeeks ? <span className="text-slate-500"> (pausa de {week.pausedWeeks} {week.pausedWeeks === 1 ? 'semana' : 'semanas'})</span> : null}
-          {week?.isDeload && <span className="ml-2 rounded bg-sky-500/15 px-1.5 py-0.5 text-xs text-sky-300">deload</span>}
-        </p>
-        <h1 className="text-2xl font-bold">{plan?.name ?? 'Día libre'}</h1>
+        <div className="flex items-center justify-between gap-2">
+          <p className="eyebrow text-slate-400"><span>{WEEKDAYS_ES[wd]}</span> {formatDDMM(today)}</p>
+          {week && <span className="rounded-full bg-raised px-2.5 py-1 text-xs font-semibold text-slate-300">Semana {week.week} de {week.total}</span>}
+        </div>
+        <h1 className="title mt-1.5 text-4xl">{plan?.name ?? 'Día libre'}</h1>
+        {(week?.pausedWeeks || week?.isDeload) && (
+          <p className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+            {week?.isDeload && <span className="rounded-full bg-sky-500/15 px-2 py-0.5 font-semibold text-sky-300">deload</span>}
+            {week?.pausedWeeks ? <span>pausa de {week.pausedWeeks} {week.pausedWeeks === 1 ? 'semana' : 'semanas'}</span> : null}
+          </p>
+        )}
+        {week && (
+          <div className="mt-4" role="progressbar" aria-label="Avance del mesociclo" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(mesoProgress * 100)}>
+            <div className="h-1.5 overflow-hidden rounded-full bg-raised"><div className="h-full rounded-full bg-accent-solid" style={{ width: `${mesoProgress * 100}%` }} /></div>
+            <p className="mt-1.5 flex justify-between text-xs text-slate-400">
+              <span>Mesociclo</span>
+              <span>{doneThisWeek} de {data.planDays.length} sesiones esta semana</span>
+            </p>
+          </div>
+        )}
       </header>
 
       <WeekStrip today={today} planDays={data.planDays} sessions={data.thisWeek} skipped={data.marks.map((m) => m.date)} />
@@ -128,29 +145,38 @@ export function TodayPage() {
       ) : (
         <>
           {plan ? (
-            <Card>
-              <ol className="space-y-2">
-                {plan.items.map((it) => (
-                  <li key={it.exerciseId} className="flex justify-between gap-3">
+            <Card className="!py-2">
+              <p className="eyebrow flex justify-between py-2 text-slate-400">
+                <span>{plan.items.length} ejercicios · {plan.items.reduce((n, i) => n + i.sets, 0)} series</span>
+              </p>
+              <ol>
+                {(showAll ? plan.items : plan.items.slice(0, 4)).map((it) => (
+                  <li key={it.exerciseId} className="flex justify-between gap-3 border-t border-line py-2.5">
                     <span>
                       {data.exMap.get(it.exerciseId)?.name ?? it.exerciseId}
                       {it.optional && <span className="text-slate-400"> (opcional)</span>}
                     </span>
-                    <span className="tabular-nums text-slate-400">{it.sets}×</span>
+                    <span className="digits text-lg text-slate-400">{it.sets}×</span>
                   </li>
                 ))}
               </ol>
+              {plan.items.length > 4 && (
+                <button className="flex min-h-11 w-full items-center justify-between border-t border-line text-sm text-slate-400" aria-expanded={showAll} onClick={() => setShowAll(!showAll)}>
+                  <span>{showAll ? 'Ver menos' : `+ ${plan.items.length - 4} más`}</span>
+                  <span aria-hidden="true">{showAll ? '▴' : '▾'}</span>
+                </button>
+              )}
             </Card>
           ) : (
             <p className="text-slate-400">Hoy no hay entrenamiento planificado.</p>
           )}
           {plan && (
-            <Button variant="primary" className="w-full text-lg" onClick={() => setReadinessFor(plan)}>
+            <Button variant="primary" className="title w-full !min-h-16 text-2xl tracking-wider" onClick={() => setReadinessFor(plan)}>
               Empezar
             </Button>
           )}
           {week && !week.isDeload && !showSuggestion && (
-            <button className="w-full py-2 text-sm text-slate-400" onClick={() => setBurnedOut(true)}>Me siento quemado</button>
+            <button className="w-full py-2 text-left text-sm text-slate-500" onClick={() => setBurnedOut(true)}>Me siento quemado</button>
           )}
           <details className="text-sm">
             <summary className="cursor-pointer py-2 text-slate-400">Hacer otro día</summary>
@@ -179,7 +205,7 @@ function WeekStrip({ today, planDays, sessions, skipped }: { today: string; plan
   const monday = weekStart(today)
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i))
   return (
-    <ol className="grid grid-cols-7 gap-1" aria-label="Semana">
+    <ol className="grid grid-cols-7 gap-1.5" aria-label="Semana">
       {days.map((d) => {
         const plan = planDays.find((p) => p.weekday === weekdayOf(d))
         const done = sessions.find((s) => s.date === d && s.status === 'finished')
@@ -193,11 +219,11 @@ function WeekStrip({ today, planDays, sessions, skipped }: { today: string; plan
               disabled={!canSkip}
               onClick={() => plan && void toggleSkipped(db, d, plan.id)}
               aria-label={`${WEEKDAYS_ES[weekdayOf(d)]} ${formatDDMM(d)}: ${state}${canSkip ? (isSkipped ? '. Tocá para desmarcar' : '. Tocá para marcar salteado') : ''}`}
-              className={`flex h-14 w-full flex-col items-center justify-center rounded-lg text-xs ring-1 ${d === today ? 'ring-accent' : 'ring-line'} ${done ? 'bg-accent/15 text-accent' : isSkipped ? 'text-slate-500 line-through' : plan ? 'bg-surface' : 'text-slate-600'}`}
+              className={`flex h-16 w-full flex-col items-center justify-center rounded-2xl text-[11px] font-semibold ring-1 ${d === today ? 'ring-2 ring-accent' : 'ring-transparent'} ${done ? 'bg-accent-solid text-on-accent' : isSkipped ? 'bg-surface text-slate-500 line-through' : plan ? 'bg-surface text-slate-100' : 'text-slate-600'}`}
             >
               <span className="uppercase">{WEEKDAYS_ES[weekdayOf(d)]!.slice(0, 2)}</span>
-              <span className="tabular-nums">{d.slice(8)}</span>
-              <span className="h-3 leading-3">{done ? '✓' : inProgress ? '…' : plan && !isSkipped ? '•' : ''}</span>
+              <span className="digits text-lg">{d.slice(8)}</span>
+              <span className="h-3 text-[10px] leading-3">{done ? '✓' : inProgress ? '…' : plan && !isSkipped ? '•' : ''}</span>
             </button>
           </li>
         )
@@ -216,7 +242,7 @@ function ScaleRow({ label, value, set }: { label: string; value: number | null; 
             key={n}
             aria-pressed={value === n}
             onClick={() => set(n)}
-            className={`h-12 rounded-xl text-lg ring-1 ${value === n ? 'bg-accent/15 text-accent ring-accent' : 'ring-line'}`}
+            className={`digits h-14 rounded-2xl text-2xl ring-1 ${value === n ? 'bg-accent/15 text-accent ring-accent' : 'bg-raised ring-transparent'}`}
           >
             {n}
           </button>
