@@ -19,6 +19,9 @@
   --color-surface: #11151b;
   --color-raised: #181d25;
   --color-line: #232a35;
+  /* Texto secundario y apagado ajustados para cumplir contraste (4,5:1 y 3:1) sobre fondo, tarjeta y fichas. */
+  --color-slate-500: #7b8aa0;
+  --color-slate-600: #5d6b80;
   /* Acento lima: --color-accent para texto/bordes, --color-accent-solid para fondos (botones) con --color-on-accent encima. */
   --color-accent: #c8f43a;
   --color-accent-solid: #c8f43a;
@@ -55,8 +58,8 @@ html:not(.dark) {
   --color-slate-200: #1e293b;
   --color-slate-300: #334155;
   --color-slate-400: #4b5563;
-  --color-slate-500: #64748b;
-  --color-slate-600: #94a3b8;
+  --color-slate-500: #5b6b82;
+  --color-slate-600: #7b8aa0;
   --color-amber-100: #78350f;
   --color-amber-200: #78350f;
   --color-amber-300: #92400e;

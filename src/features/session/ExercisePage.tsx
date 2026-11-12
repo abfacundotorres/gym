@@ -123,17 +123,17 @@ function ExerciseScreen() {
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between gap-3">
-        <Link to={`/sesion/${session.id}`} className="-ml-1 py-2 pr-3 text-sm text-slate-400">← Sesión</Link>
-        <ol className="flex flex-1 justify-center" aria-label={`Ejercicio ${idx + 1} de ${session.items.length}`}>
+        <Link to={`/sesion/${session.id}`} aria-label="← Sesión" className="-ml-2 flex size-11 shrink-0 items-center justify-center text-2xl text-slate-300"><span aria-hidden="true">←</span></Link>
+        <ol className="flex min-w-0 flex-1 justify-center" aria-label={`Ejercicio ${idx + 1} de ${session.items.length}`}>
           {session.items.map((it, i) => (
-            <li key={i}>
+            <li key={i} className="min-w-0 max-w-[30px] flex-1">
               <button
                 aria-label={`Ir a ${exercises?.get(it.exerciseId)?.name ?? `ejercicio ${i + 1}`}`}
                 aria-current={i === idx ? 'step' : undefined}
                 onClick={() => i !== idx && navigate(`/sesion/${session.id}/${i}`, { replace: true })}
-                className="flex h-11 w-[22px] items-center justify-center"
+                className="flex h-11 w-full items-center justify-center"
               >
-                <span className={`h-1 w-[18px] rounded-full ${i === idx ? 'bg-slate-100' : notDone(it) ? 'bg-raised' : 'bg-accent-solid'}`} />
+                <span className={`h-1 w-[80%] rounded-full ${i === idx ? 'bg-slate-100' : notDone(it) ? 'bg-raised' : 'bg-accent-solid'}`} />
               </button>
             </li>
           ))}
@@ -353,7 +353,7 @@ function ExerciseScreen() {
         <div className="flex gap-2">
           <Button aria-label="← Anterior" className="w-16 shrink-0 !px-0 text-2xl" disabled={prevIdx == null} onClick={() => prevIdx != null && navigate(`/sesion/${session.id}/${prevIdx}`, { replace: true })}>←</Button>
           <Button
-            className="min-w-0 flex-1"
+            className="min-w-0 flex-1 text-[15px] leading-tight min-[360px]:text-base"
             disabled={!lastDone || !!item.skipped || editing != null}
             onClick={() => lastDone && void log({ type: lastDone.type, weight: lastDone.weight, reps: lastDone.reps, ...(lastDone.minutes != null ? { minutes: lastDone.minutes } : {}) })}
           >
@@ -457,7 +457,7 @@ function SetEditor({
                   <Chip key={f} compact active={d.flag === f} onClick={() => toggleFlag(f)}>{FLAG_LABEL[f]}</Chip>
                 ))}
                 {!(askRir || rirOpen || d.rir != null) && (
-                  <button type="button" className="min-h-10 px-1.5 text-[13px] text-slate-400" onClick={() => setRirOpen(true)}>+ RIR</button>
+                  <button type="button" className="min-h-11 px-1.5 text-[13px] text-slate-400" onClick={() => setRirOpen(true)}>+ RIR</button>
                 )}
               </div>
               {d.flag === 'rp' && (
@@ -553,7 +553,7 @@ function TodayCard({
     <div className={`rounded-2xl p-3.5 ring-1 ${tone}`} role="status">
       <p className={`eyebrow ${deload ? 'text-sky-300' : 'text-accent'}`}>{label}</p>
       {big ? (
-        <p className={`digits mt-1 ${big.length > 22 ? 'text-3xl' : 'text-4xl'} leading-[1.05]`}>{big}</p>
+        <p className={`digits mt-1 ${big.length > 22 ? 'text-3xl' : 'text-[1.7rem] min-[360px]:text-4xl'} leading-[1.05]`}>{big}</p>
       ) : (
         <p className="mt-1.5 text-lg font-semibold leading-snug">{deload ? 'Elegí el peso' : rec.message}</p>
       )}

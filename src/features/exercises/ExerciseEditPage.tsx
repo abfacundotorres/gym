@@ -45,7 +45,7 @@ function Form({ initial, used, families }: { initial: Exercise; used: number; fa
 
   return (
     <section className="space-y-4">
-      <Link to="/ejercicios" className="block py-1 text-sm text-slate-400">← Ejercicios</Link>
+      <Link to="/ejercicios" className="-ml-1 flex min-h-11 items-center pr-3 text-sm text-slate-400">← Ejercicios</Link>
       <h1 className="title text-3xl">{initial.name}</h1>
       <p className="text-xs text-slate-400">Usado en {used} {used === 1 ? 'sesión' : 'sesiones'}. Cada variante tiene su propio historial.</p>
 

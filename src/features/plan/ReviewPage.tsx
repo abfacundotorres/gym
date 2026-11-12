@@ -41,7 +41,7 @@ export function ReviewPage() {
 
   return (
     <section className="space-y-5">
-      <Link to="/plan" className="block py-1 text-sm text-slate-400">← Plan</Link>
+      <Link to="/plan" className="-ml-1 flex min-h-11 items-center pr-3 text-sm text-slate-400">← Plan</Link>
       <header>
         <h1 className="title text-3xl">Revisión del mesociclo</h1>
         <p className="text-sm text-slate-400">

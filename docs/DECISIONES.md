@@ -300,3 +300,12 @@ arriba en la pantalla del ejercicio son botones: saltan a cualquier ejercicio si
 sesión en curso con sus series y el ejercicio que sigue, y "Continuar" abre ese ejercicio. El avance de la sesión (series
 hechas contra planificadas por ejercicio, deload incluido, y cuál sigue) es `sessionProgress` en `engine/session.ts`, con
 tests; lo usan Hoy y la lista de la sesión.
+
+**D-61. Accesibilidad y pantallas chicas.** Contraste medido (WCAG): el texto secundario (`slate-500`) y el apagado
+(`slate-600`) se redefinieron en los dos temas para llegar a 4,5:1 y 3:1 sobre fondo, tarjeta y fichas; el acento lima
+y el texto sobre el botón de acento superan 4,5:1. `src/ui/contrast.test.ts` lee los colores de `src/index.css` y falla
+si un par baja del mínimo. Objetivos táctiles de 44 px de alto como mínimo (fichas, enlaces de volver, resúmenes
+desplegables, rangos de volumen); la flecha de volver en el ejercicio es un botón de 44×44 con el nombre "← Sesión", y
+las rayitas de salto se angostan (hasta 24 px) si hay muchos ejercicios en vez de desbordar. `e2e/layout.spec.ts` recorre
+las pantallas a 375 y 320 px y verifica que no haya desborde horizontal, que todo control tenga nombre accesible y que
+ningún objetivo sea menor a 24 px de ancho o 44 de alto.

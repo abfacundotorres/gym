@@ -120,7 +120,7 @@ export function Chip({ active, onClick, children, label, compact = false }: { ac
       aria-pressed={active}
       aria-label={label}
       onClick={onClick}
-      className={`${compact ? 'min-h-10 px-2.5 text-[13px]' : 'min-h-10 px-3.5 text-sm'} rounded-full font-medium ring-1 ${active ? 'bg-accent/15 text-accent ring-accent' : 'bg-raised text-slate-300 ring-transparent'}`}
+      className={`${compact ? 'min-h-11 px-2.5 text-[13px]' : 'min-h-11 px-3.5 text-sm'} rounded-full font-medium ring-1 ${active ? 'bg-accent/15 text-accent ring-accent' : 'bg-raised text-slate-300 ring-transparent'}`}
     >
       {children}
     </button>

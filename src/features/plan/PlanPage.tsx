@@ -29,7 +29,7 @@ export function PlanPage() {
     <section className="space-y-6">
       <div className="flex items-baseline justify-between">
         <h1 className="title text-3xl">Plan</h1>
-        <Link to="/ejercicios" className="py-2 pl-3 text-sm text-slate-300">Ejercicios →</Link>
+        <Link to="/ejercicios" className="flex min-h-11 items-center pl-3 text-sm text-slate-300">Ejercicios →</Link>
       </div>
 
       <div className="space-y-2">

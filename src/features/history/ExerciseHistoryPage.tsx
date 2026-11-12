@@ -39,7 +39,7 @@ export function ExerciseHistoryPage() {
 
   return (
     <section className="space-y-4">
-      <Link to="/historial?ver=ejercicios" className="-ml-1 block py-2 pr-3 text-sm text-slate-400">← Ejercicios</Link>
+      <Link to="/historial?ver=ejercicios" className="-ml-1 flex min-h-11 items-center pr-3 text-sm text-slate-400">← Ejercicios</Link>
       <header>
         <h1 className="title text-3xl">{ex.name}</h1>
         <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs font-semibold text-slate-300">
@@ -69,7 +69,7 @@ export function ExerciseHistoryPage() {
             return (
               <li key={`${h.sessionId}-${i}`} className="rounded-2xl bg-surface p-3.5">
                 <div className="mb-1 flex items-baseline justify-between text-sm">
-                  <Link to={`/sesion/${h.sessionId}/resumen`} className="digits text-xl text-slate-100">{formatDDMM(h.date)}</Link>
+                  <Link to={`/sesion/${h.sessionId}/resumen`} className="digits inline-flex min-h-11 items-center text-xl text-slate-100">{formatDDMM(h.date)}</Link>
                   <span className="text-xs text-slate-400">
                     {m.e1rm != null ? `e1RM ${num(Math.round(m.e1rm * 10) / 10)} kg` : 'sin e1RM'}
                     {averageRest(h.item.sets) != null && ` · desc. ~${formatRest(averageRest(h.item.sets)!)}`}
