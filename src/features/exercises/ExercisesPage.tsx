@@ -24,7 +24,7 @@ export function ExercisesPage() {
           <ul className="space-y-1">
             {exs.map((e) => (
               <li key={e.id}>
-                <Link to={`/ejercicios/${e.id}`} className={`flex items-center gap-3 rounded-xl bg-surface p-3 ring-1 ring-line ${e.archived ? 'opacity-60' : ''}`}>
+                <Link to={`/ejercicios/${e.id}`} className={`flex items-center gap-3 rounded-2xl bg-surface p-3.5 ${e.archived ? 'opacity-60' : ''}`}>
                   <span className="min-w-0 flex-1 truncate">{e.name}</span>
                   {e.archived && <span className="text-xs text-slate-400">archivado</span>}
                   <span className="text-xs tabular-nums text-slate-400">{e.range[0]}-{e.range[1]}</span>

@@ -13,7 +13,7 @@ import { sessionStats, summaryText } from '../../engine/session'
 import { MUSCLE_LABELS, type Muscle } from '../../engine/types'
 import { volumeByMuscle } from '../../engine/volume'
 import { copyText } from '../../lib/clipboard'
-import { Button, Card } from '../../ui/Button'
+import { Button, Card, LINK_BUTTON } from '../../ui/Button'
 import { useSessionData } from './useSessionData'
 
 export function SummaryPage() {
@@ -41,22 +41,22 @@ export function SummaryPage() {
   return (
     <section className="space-y-4">
       <header>
-        <p className="text-sm text-slate-400">{formatDDMM(session.date)}{stats.minutes != null && ` · ${stats.minutes} min`}</p>
-        <h1 className="title text-3xl">Resumen: {plan?.name ?? session.planDayId}</h1>
+        <p className="eyebrow text-slate-400">Resumen · {formatDDMM(session.date)}{stats.minutes != null && ` · ${stats.minutes} min`}</p>
+        <h1 className="title mt-1 text-4xl">{plan?.name ?? session.planDayId}</h1>
       </header>
       <div className="grid grid-cols-2 gap-2">
         <Card>
-          <div className="text-3xl font-semibold tabular-nums">{num(stats.doneSets)}<span className="text-base text-slate-400">/{stats.plannedSets}</span></div>
+          <div className="digits text-5xl">{num(stats.doneSets)}<span className="text-2xl text-slate-400">/{stats.plannedSets}</span></div>
           <div className="text-xs text-slate-400">series efectivas vs plan</div>
         </Card>
         <Card>
-          <div className="text-3xl font-semibold tabular-nums">{stats.exercisesDone}<span className="text-base text-slate-400">/{stats.exercisesPlanned}</span></div>
+          <div className="digits text-5xl">{stats.exercisesDone}<span className="text-2xl text-slate-400">/{stats.exercisesPlanned}</span></div>
           <div className="text-xs text-slate-400">ejercicios del plan</div>
         </Card>
       </div>
       {volume.length > 0 && (
         <Card>
-          <p className="mb-2 text-xs text-slate-400">Volumen del día (series por músculo)</p>
+          <p className="eyebrow mb-2 text-slate-400">Volumen del día · series por músculo</p>
           <ul className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
             {volume.map(([m, v]) => (
               <li key={m} className="flex justify-between"><span>{MUSCLE_LABELS[m as Muscle]}</span><span className="tabular-nums">{num(v.total)}</span></li>
@@ -65,8 +65,8 @@ export function SummaryPage() {
         </Card>
       )}
       {prs.length > 0 && (
-        <Card>
-          <p className="mb-2 text-xs text-slate-400">PRs</p>
+        <Card className="bg-gradient-to-br from-accent/15 to-surface ring-accent/40">
+          <p className="eyebrow mb-2 text-accent">Récords de hoy</p>
           <ul className="space-y-1 text-sm">
             {prs.map((p) => (
               <li key={p.setId} className="flex justify-between gap-3">
@@ -77,14 +77,17 @@ export function SummaryPage() {
           </ul>
         </Card>
       )}
-      <pre className="whitespace-pre-wrap break-words rounded-xl bg-surface p-3 text-xs ring-1 ring-line">{text}</pre>
+      <details className="rounded-2xl bg-surface p-3 text-sm ring-1 ring-line">
+        <summary className="cursor-pointer text-slate-400">Ver el texto del resumen</summary>
+        <pre className="mt-2 whitespace-pre-wrap break-words text-xs">{text}</pre>
+      </details>
       <Button variant="primary" className="w-full" onClick={async () => setCopied(await copyText(text))}>
         {copied ? 'Copiado ✓' : 'Copiar resumen como texto'}
       </Button>
       {copied === false && <p className="text-sm text-red-300">No se pudo copiar. Seleccioná el texto de arriba.</p>}
       <div className="grid grid-cols-2 gap-2">
-        <Link to={`/sesion/${session.id}`} className="flex min-h-12 items-center justify-center rounded-xl ring-1 ring-line">Ver / editar</Link>
-        <Link to="/" className="flex min-h-12 items-center justify-center rounded-xl ring-1 ring-line">Inicio</Link>
+        <Link to={`/sesion/${session.id}`} className={LINK_BUTTON}>Ver / editar</Link>
+        <Link to="/" className={LINK_BUTTON}>Inicio</Link>
       </div>
     </section>
   )

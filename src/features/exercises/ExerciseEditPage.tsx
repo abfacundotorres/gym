@@ -52,30 +52,30 @@ function Form({ initial, used, families }: { initial: Exercise; used: number; fa
       <Card className="space-y-3">
         <label className="block text-sm">
           <span className="text-slate-400">Nombre</span>
-          <input value={ex.name} onChange={(e) => patch({ name: e.target.value })} className="mt-1 h-12 w-full rounded-lg bg-bg px-3 ring-1 ring-line" />
+          <input value={ex.name} onChange={(e) => patch({ name: e.target.value })} className="mt-1 h-12 w-full rounded-xl bg-bg px-3 ring-1 ring-line" />
         </label>
         <label className="block text-sm">
           <span className="text-slate-400">Familia (agrupa variantes del mismo patrón)</span>
-          <input list="families" value={ex.family} onChange={(e) => patch({ family: e.target.value })} className="mt-1 h-12 w-full rounded-lg bg-bg px-3 ring-1 ring-line" />
+          <input list="families" value={ex.family} onChange={(e) => patch({ family: e.target.value })} className="mt-1 h-12 w-full rounded-xl bg-bg px-3 ring-1 ring-line" />
           <datalist id="families">{families.map((f) => <option key={f} value={f} />)}</datalist>
         </label>
         <label className="block text-sm">
           <span className="text-slate-400">Unidad</span>
-          <select value={ex.unit} onChange={(e) => patch({ unit: e.target.value as Exercise['unit'] })} className="mt-1 h-12 w-full rounded-lg bg-bg px-3 ring-1 ring-line">
+          <select value={ex.unit} onChange={(e) => patch({ unit: e.target.value as Exercise['unit'] })} className="mt-1 h-12 w-full rounded-xl bg-bg px-3 ring-1 ring-line">
             {UNITS.map((u) => <option key={u} value={u}>{UNIT_LABEL[u]}</option>)}
           </select>
           {used > 0 && ex.unit !== initial.unit && <span className="mt-1 block text-xs text-amber-300">Cambiar la unidad no convierte los pesos ya registrados.</span>}
         </label>
         {ex.unit === 'per_side' && (
-          <Stepper label="Peso de la barra / carro (kg, vacío si no se sabe)" value={ex.barKg ?? null} step={2.5} onChange={(v) => { const { barKg: _b, ...rest } = ex; setEx(v == null ? rest : { ...rest, barKg: v }); setSaved(false) }} />
+          <Stepper compact label="Peso de la barra / carro (kg, vacío si no se sabe)" value={ex.barKg ?? null} step={2.5} onChange={(v) => { const { barKg: _b, ...rest } = ex; setEx(v == null ? rest : { ...rest, barKg: v }); setSaved(false) }} />
         )}
         <div className="flex gap-2">
-          <Stepper label={ex.cardio ? 'Mín. (min)' : 'Reps mín.'} value={ex.range[0]} step={1} min={1} decimal={false} onChange={(v) => v && patch({ range: [v, Math.max(v, ex.range[1])] })} />
-          <Stepper label={ex.cardio ? 'Máx. (min)' : 'Reps máx.'} value={ex.range[1]} step={1} min={1} decimal={false} onChange={(v) => v && patch({ range: [Math.min(v, ex.range[0]), v] })} />
+          <Stepper compact label={ex.cardio ? 'Mín. (min)' : 'Reps mín.'} value={ex.range[0]} step={1} min={1} decimal={false} onChange={(v) => v && patch({ range: [v, Math.max(v, ex.range[1])] })} />
+          <Stepper compact label={ex.cardio ? 'Máx. (min)' : 'Reps máx.'} value={ex.range[1]} step={1} min={1} decimal={false} onChange={(v) => v && patch({ range: [Math.min(v, ex.range[0]), v] })} />
         </div>
         <div className="flex gap-2">
-          <Stepper label={`Incremento (${UNIT_SHORT[ex.unit]})`} value={ex.increment} step={ex.unit === 'bricks' ? 1 : 0.5} min={0.5} onChange={(v) => v && patch({ increment: v })} />
-          <Stepper label="Descanso (s)" value={ex.restSec} step={15} min={0} decimal={false} onChange={(v) => v != null && patch({ restSec: v })} />
+          <Stepper compact label={`Incremento (${UNIT_SHORT[ex.unit]})`} value={ex.increment} step={ex.unit === 'bricks' ? 1 : 0.5} min={0.5} onChange={(v) => v && patch({ increment: v })} />
+          <Stepper compact label="Descanso (s)" value={ex.restSec} step={15} min={0} decimal={false} onChange={(v) => v != null && patch({ restSec: v })} />
         </div>
         <div className="text-sm">
           <span className="text-slate-400">Aproximaciones</span>
@@ -95,7 +95,7 @@ function Form({ initial, used, families }: { initial: Exercise; used: number; fa
         ))}
         <label className="block text-sm">
           <span className="text-slate-400">Nota de seguridad (se muestra una vez por sesión)</span>
-          <textarea value={ex.safetyNote ?? ''} onChange={(e) => { const { safetyNote: _s, ...rest } = ex; setEx(e.target.value ? { ...rest, safetyNote: e.target.value } : rest); setSaved(false) }} rows={2} className="mt-1 w-full rounded-lg bg-bg p-2 ring-1 ring-line" />
+          <textarea value={ex.safetyNote ?? ''} onChange={(e) => { const { safetyNote: _s, ...rest } = ex; setEx(e.target.value ? { ...rest, safetyNote: e.target.value } : rest); setSaved(false) }} rows={2} className="mt-1 w-full rounded-xl bg-bg p-2 ring-1 ring-line" />
         </label>
         <Button variant="primary" className="w-full" disabled={!valid} onClick={async () => { await saveExercise(getDB(), { ...ex, name: ex.name.trim(), family: ex.family.trim() }); setSaved(true) }}>
           {saved ? 'Guardado ✓' : 'Guardar'}
@@ -105,7 +105,7 @@ function Form({ initial, used, families }: { initial: Exercise; used: number; fa
       <Card className="space-y-2">
         <p className="text-sm font-medium">Nueva variante de la familia</p>
         <p className="text-xs text-slate-400">Copia esta configuración con otro nombre. Empieza sin historial.</p>
-        <input value={variantName} onChange={(e) => setVariantName(e.target.value)} placeholder="Ej.: Jalón con agarre en V" className="h-12 w-full rounded-lg bg-bg px-3 ring-1 ring-line" />
+        <input value={variantName} onChange={(e) => setVariantName(e.target.value)} placeholder="Ej.: Jalón con agarre en V" className="h-12 w-full rounded-xl bg-bg px-3 ring-1 ring-line" />
         <Button className="w-full" disabled={!variantName.trim()} onClick={async () => { const v = await createVariant(getDB(), ex, variantName.trim()); navigate(`/ejercicios/${v.id}`) }}>
           Crear variante
         </Button>

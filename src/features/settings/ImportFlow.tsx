@@ -60,7 +60,7 @@ export function ImportFlow({ label = 'Importar archivo', defaultMode = 'merge' }
         </Button>
       )}
       {state.step === 'error' && (
-        <p role="alert" className="whitespace-pre-line rounded-lg bg-red-500/10 p-3 text-sm text-red-300">
+        <p role="alert" className="whitespace-pre-line rounded-xl bg-red-500/10 p-3 text-sm text-red-300">
           No se pudo importar.{'\n'}
           {state.error}
         </p>
@@ -76,7 +76,7 @@ export function ImportFlow({ label = 'Importar archivo', defaultMode = 'merge' }
                 role="radio"
                 aria-checked={state.mode === m}
                 onClick={() => void setMode(m)}
-                className={`min-h-11 rounded-lg text-sm ring-1 ${state.mode === m ? 'bg-accent/15 text-accent ring-accent' : 'ring-line'}`}
+                className={`min-h-11 rounded-xl text-sm ring-1 ${state.mode === m ? 'bg-accent/15 text-accent ring-accent' : 'ring-line'}`}
               >
                 {m === 'merge' ? 'Mezclar' : 'Reemplazar todo'}
               </button>

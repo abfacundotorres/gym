@@ -43,13 +43,13 @@ export function SettingsPage() {
       <h1 className="title text-3xl">Ajustes</h1>
 
       <div className="space-y-2">
-        <h2 className="text-lg font-semibold">Preferencias</h2>
+        <h2 className="eyebrow text-slate-400">Preferencias</h2>
         <Preferences />
-        <Link to="/ejercicios" className="block py-2 text-sm text-slate-300">Ejercicios: unidades, rangos, incrementos y descansos →</Link>
+        <Link to="/ejercicios" className="flex min-h-12 items-center justify-between rounded-2xl bg-surface px-4 text-sm"><span>Ejercicios: unidades, rangos, incrementos y descansos</span><span aria-hidden="true" className="text-slate-500">›</span></Link>
       </div>
 
       <div className="space-y-3">
-        <h2 className="text-lg font-semibold">Backup</h2>
+        <h2 className="eyebrow text-slate-400">Backup</h2>
         <p className="text-sm text-slate-400">
           {lastBackup ? `Último backup: ${formatTimestamp(lastBackup)}` : 'Todavía no hiciste ningún backup.'}
         </p>
@@ -61,12 +61,12 @@ export function SettingsPage() {
       </div>
 
       <div className="space-y-2">
-        <h2 className="text-lg font-semibold">Volumen</h2>
+        <h2 className="eyebrow text-slate-400">Volumen</h2>
         <VolumeTargets />
       </div>
 
-      <div className="space-y-3">
-        <h2 className="text-lg font-semibold">Calidad de datos</h2>
+      <details className="space-y-3">
+        <summary className="eyebrow cursor-pointer py-2 text-slate-400">Calidad de datos{flagged?.length ? ` · ${flagged.length} registros marcados` : ''}</summary>
         {!quality && !flagged?.length ? (
           <p className="text-sm text-slate-400">Sin notas.</p>
         ) : (
@@ -97,10 +97,10 @@ export function SettingsPage() {
             )}
           </>
         )}
-      </div>
+      </details>
 
       <div className="space-y-2">
-        <h2 className="text-lg font-semibold">Acerca de</h2>
+        <h2 className="eyebrow text-slate-400">Acerca de</h2>
         <About />
       </div>
     </section>

@@ -391,7 +391,7 @@ function SetEditor({
                 )}
               </div>
               {d.flag === 'rp' && (
-                <Stepper label="Reps antes de la primera pausa" value={d.repsBeforePause ?? null} step={1} decimal={false} onChange={(v) => patch({ repsBeforePause: v ?? undefined })} />
+                <Stepper compact label="Reps antes de la primera pausa" value={d.repsBeforePause ?? null} step={1} decimal={false} onChange={(v) => patch({ repsBeforePause: v ?? undefined })} />
               )}
               {askRir || rirOpen || d.rir != null ? (
                 <div className="space-y-1" role="group" aria-label="RIR">
