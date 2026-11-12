@@ -309,3 +309,22 @@ desplegables, rangos de volumen); la flecha de volver en el ejercicio es un bot�
 las rayitas de salto se angostan (hasta 24 px) si hay muchos ejercicios en vez de desbordar. `e2e/layout.spec.ts` recorre
 las pantallas a 375 y 320 px y verifica que no haya desborde horizontal, que todo control tenga nombre accesible y que
 ningún objetivo sea menor a 24 px de ancho o 44 de alto.
+
+**D-62. Almacenamiento protegido, visible.** La app ya pedía almacenamiento persistente al abrir (`usePwa`), pero no se
+veía el resultado. Ajustes → Backup muestra si el navegador lo concedió: protegido (✓), sin proteger (con aviso, "Pedir
+protección" y, si no está instalada, la sugerencia de instalarla) o sin información. Es una señal de cuánto importa el
+backup: el navegador decide solo y puede decir que no. Además, "Compartir backup" usa el menú del sistema (Drive, correo,
+WhatsApp) cuando el navegador lo permite: manda el JSON como `application/json` y, si no lo acepta, como texto plano con la
+misma extensión. Compartir con éxito cuenta como backup hecho (reinicia el recordatorio de 7 días); cancelar no. Sin
+probar en un celular real.
+
+**D-63. Pantalla de rescate.** Un `ErrorBoundary` rodea cada pantalla (se reinicia al navegar, así las pestañas y el
+descanso siguen funcionando) y otro toda la app. Si algo falla al dibujar, se muestra "Algo falló. Tus datos están a
+salvo" con Exportar backup (lee la base directamente, sin pasar por la pantalla rota), Volver a Hoy, Recargar y el detalle
+del error. No cubre errores dentro de las consultas a la base: ahí la sección puede quedar vacía en vez de mostrar el
+rescate. "No encontrado" es una pantalla real (con enlace a Hoy) y desaparece el `Placeholder` de los hitos.
+
+**D-64. Sesión que quedó abierta.** Si la sesión en curso es de un día anterior, la tarjeta de Hoy dice "Quedó sin
+terminar" y ofrece, además de Continuar, Terminar así (solo si tiene series) y Descartar (con confirmación). Terminar así
+cierra en la hora de la última serie registrada y no "ahora", para que la duración del resumen no se infle con los días
+que pasaron (`finishStaleSession`).

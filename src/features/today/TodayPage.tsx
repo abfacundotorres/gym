@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { needsBackupReminder } from '../../data/backup'
 import { getDB, SETTINGS_KEY } from '../../data/db'
-import { activeSession, startSession } from '../../data/sessionRepo'
+import { activeSession, discardSession, finishStaleSession, startSession } from '../../data/sessionRepo'
 import { addDays, formatDDMM, toISODate, weekStart, weekdayOf, WEEKDAYS_ES } from '../../engine/dates'
 import { deloadSuggestion, mesocycleEnd, mesocycleWeek, pausedWeeks, type DeloadReason } from '../../engine/periodization'
 import { deloadThisWeek, dismissDeloadSuggestion, META_DELOAD_DISMISSED, toggleSkipped } from '../../data/planRepo'
@@ -147,7 +147,10 @@ export function TodayPage() {
           session={data.active}
           plan={data.planDays.find((p) => p.id === data.active!.planDayId)}
           exMap={data.exMap}
+          stale={data.active.date < today}
           onContinue={(idx) => navigate(idx != null ? `/sesion/${data.active!.id}/${idx}` : `/sesion/${data.active!.id}`)}
+          onFinish={() => void finishStaleSession(db, data.active!)}
+          onDiscard={() => confirm('¿Descartar la sesión? Se borran todas las series registradas.') && void discardSession(db, data.active!.id)}
         />
       ) : readinessFor ? (
         <ReadinessCheck onDone={(r, short) => void begin(readinessFor, r, short)} />
@@ -212,17 +215,23 @@ export function TodayPage() {
   )
 }
 
-function ActiveSessionCard({ session, plan, exMap, onContinue }: { session: Session; plan: PlanDay | undefined; exMap: Map<string, Exercise>; onContinue: (idx: number | null) => void }) {
+function ActiveSessionCard({ session, plan, exMap, stale, onContinue, onFinish, onDiscard }: { session: Session; plan: PlanDay | undefined; exMap: Map<string, Exercise>; stale: boolean; onContinue: (idx: number | null) => void; onFinish: () => void; onDiscard: () => void }) {
   const prog = sessionProgress(session, plan)
   const next = prog.currentIndex != null ? exMap.get(session.items[prog.currentIndex]!.exerciseId)?.name : undefined
   return (
     <Card className="space-y-3 ring-2 ring-accent/60">
-      <p className="eyebrow text-accent">Sesión en curso · {formatDDMM(session.date)}</p>
+      <p className="eyebrow text-accent">{stale ? `Quedó sin terminar · ${formatDDMM(session.date)}` : `Sesión en curso · ${formatDDMM(session.date)}`}</p>
       <p className="title text-2xl">{plan?.name ?? 'Sesión'}</p>
       <p className="text-sm text-slate-300">
         <span className="tabular-nums">{prog.doneSets}/{prog.totalSets}</span> series{next && <> · sigue <span className="font-semibold">{next}</span></>}
       </p>
       <Button variant="primary" className="w-full" onClick={() => onContinue(prog.currentIndex)}>Continuar</Button>
+      {stale && (
+        <div className={prog.doneSets > 0 ? 'grid grid-cols-2 gap-2' : ''}>
+          {prog.doneSets > 0 && <Button onClick={onFinish}>Terminar así</Button>}
+          <Button variant="danger" className="w-full" onClick={onDiscard}>Descartar</Button>
+        </div>
+      )}
     </Card>
   )
 }
