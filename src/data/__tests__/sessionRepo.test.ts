@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto'
 import { afterEach, describe, expect, it } from 'vitest'
 import { createDB, type GymDB } from '../db'
-import { activeSession, addSet, deleteSet, finishSession, finishStaleSession, setItemPain, setSkipped, startSession, swapExercise, updateSet } from '../sessionRepo'
+import { activeSession, addRound, addSet, deleteSet, finishSession, finishStaleSession, groupSessionItems, ungroupSessionItems, setItemPain, setSkipped, startSession, swapExercise, updateSet } from '../sessionRepo'
 import type { PlanDay } from '../../engine/types'
 
 const plan: PlanDay = {
@@ -113,5 +113,55 @@ describe('sesión que quedó abierta', () => {
     const s = await startSession(db, plan, '2026-11-09', null, undefined, 1_000_000)
     await finishStaleSession(db, (await db.sessions.get(s.id))!)
     expect((await db.sessions.get(s.id))!.finishedAt).toBe(1_000_000)
+  })
+})
+
+describe('superseries', () => {
+  it('agrupa, guarda una ronda de una sola vez y se puede deshacer', async () => {
+    db = createDB('superset-test')
+    const s = await startSession(db, plan, '2026-11-12', null, undefined, 1_000_000)
+    const start = await groupSessionItems(db, s.id, [0, 1]) // b y a
+    expect(start).toBe(0)
+    let cur = (await db.sessions.get(s.id))!
+    expect(cur.items.map((i) => i.group !== undefined)).toEqual([true, true, false])
+    expect(cur.items[0]!.group).toBe(cur.items[1]!.group)
+
+    const t0 = 2_000_000
+    await addRound(db, s.id, [
+      { index: 0, set: { type: 'W', weight: 10, reps: 12 } },
+      { index: 1, set: { type: 'W', weight: 15, reps: 10 } },
+    ], t0)
+    await addRound(db, s.id, [
+      { index: 0, set: { type: 'W', weight: 10, reps: 11 } },
+      { index: 1, set: { type: 'W', weight: 15, reps: 9 } },
+    ], t0 + 90_000)
+    cur = (await db.sessions.get(s.id))!
+    expect(cur.items[0]!.sets.map((x) => x.reps)).toEqual([12, 11])
+    expect(cur.items[1]!.sets.map((x) => x.reps)).toEqual([10, 9])
+    // Las dos series de una ronda comparten la hora y el descanso es lo que tardó la ronda.
+    expect(cur.items[0]!.sets[0]!.doneAt).toBe(t0)
+    expect(cur.items[1]!.sets[0]!.doneAt).toBe(t0)
+    expect(cur.items.slice(0, 2).map((i) => i.sets[1]!.restSec)).toEqual([90, 90])
+
+    await ungroupSessionItems(db, s.id, cur.items[0]!.group!)
+    cur = (await db.sessions.get(s.id))!
+    expect(cur.items.every((i) => i.group === undefined)).toBe(true)
+    expect(cur.items[0]!.sets).toHaveLength(2) // las series se conservan
+  })
+
+  it('una ronda con un ejercicio inexistente no guarda nada', async () => {
+    db = createDB('superset-bad-test')
+    const s = await startSession(db, plan, '2026-11-12', null)
+    await expect(addRound(db, s.id, [
+      { index: 0, set: { type: 'W', weight: 10, reps: 12 } },
+      { index: 9, set: { type: 'W', weight: 10, reps: 12 } },
+    ])).rejects.toThrow()
+    expect((await db.sessions.get(s.id))!.items[0]!.sets).toHaveLength(0)
+  })
+
+  it('rechaza agrupar una selección inválida', async () => {
+    db = createDB('superset-invalid-test')
+    const s = await startSession(db, plan, '2026-11-12', null)
+    await expect(groupSessionItems(db, s.id, [0])).rejects.toThrow(/entre 2 y 3/)
   })
 })

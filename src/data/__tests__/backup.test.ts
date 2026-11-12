@@ -38,6 +38,25 @@ describe('backup', () => {
     expect(await exportBackup(b, NOW)).toEqual(exported)
   })
 
+  it('las superseries sobreviven al backup, y un backup viejo sin ellas se sigue leyendo', async () => {
+    const a = freshDB()
+    const data = seedData()
+    await applyImport(a, data, 'merge')
+    const base = data.sessions[0]!
+    await a.sessions.put({ ...base, id: 'app-superserie', source: 'app', items: base.items.map((it, i) => (i < 2 ? { ...it, group: 'g-1' } : it)) })
+    const exported = await exportBackup(a, NOW)
+    expect(exported.data.sessions.find((x) => x.id === 'app-superserie')!.items.filter((it) => it.group === 'g-1')).toHaveLength(2)
+
+    const b = freshDB()
+    const parsed = parseImportText(JSON.stringify(exported), NOW)
+    if (!parsed.ok) throw new Error(parsed.error)
+    await applyImport(b, parsed.data, 'replace')
+    expect((await b.sessions.get('app-superserie'))!.items.filter((it) => it.group === 'g-1')).toHaveLength(2)
+
+    // Un backup anterior a las superseries (sin el campo) importa igual.
+    expect(seedData().sessions.every((x) => x.items.every((it) => it.group === undefined))).toBe(true)
+  })
+
   it('vista previa: reemplazar vs mezclar', async () => {
     const db = freshDB()
     const data = seedData()

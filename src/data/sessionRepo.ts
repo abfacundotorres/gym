@@ -1,5 +1,6 @@
 import { newSessionItems } from '../engine/session'
 import { restBetween } from '../engine/rest'
+import { groupItems, ungroupItems } from '../engine/superset'
 import type { PlanDay, Readiness, Session, SessionItem, SetEntry } from '../engine/types'
 import type { ISODate } from '../engine/dates'
 import type { GymDB } from './db'
@@ -46,19 +47,51 @@ async function mutateItem(db: GymDB, sessionId: string, index: number, fn: (it: 
   await db.transaction('rw', db.sessions, async () => {
     const s = await db.sessions.get(sessionId)
     if (!s || !s.items[index]) throw new Error('Sesión o ejercicio inexistente')
-    const items = s.items.map((it, i) => (i === index ? fn(it) : it))
-    await db.sessions.put({ ...s, items, exerciseIds: [...new Set(items.map((i) => i.exerciseId))] })
+    await putItems(db, s, s.items.map((it, i) => (i === index ? fn(it) : it)))
   })
 }
 
+const putItems = (db: GymDB, s: Session, items: SessionItem[]) =>
+  db.sessions.put({ ...s, items, exerciseIds: [...new Set(items.map((i) => i.exerciseId))] })
+
+function appendSet(it: SessionItem, set: Omit<SetEntry, 'id'>, now: number): SessionItem {
+  const { skipped: _skipped, ...rest } = it
+  const doneAt = set.doneAt ?? now
+  // Descanso = tiempo desde la serie anterior de este mismo ejercicio (D-44). En una superserie es lo que tardó la ronda.
+  const rest_ = set.restSec ?? restBetween(it.sets.at(-1)?.doneAt, doneAt)
+  const entry: SetEntry = { ...set, id: newId(), doneAt, ...(rest_ != null ? { restSec: rest_ } : {}) }
+  return { ...rest, sets: [...it.sets, entry] }
+}
+
 export function addSet(db: GymDB, sessionId: string, index: number, set: Omit<SetEntry, 'id'>, now = Date.now()): Promise<void> {
-  return mutateItem(db, sessionId, index, (it) => {
-    const { skipped: _skipped, ...rest } = it
-    const doneAt = set.doneAt ?? now
-    // Descanso = tiempo desde la serie anterior de este mismo ejercicio (D-44).
-    const rest_ = set.restSec ?? restBetween(it.sets.at(-1)?.doneAt, doneAt)
-    const entry: SetEntry = { ...set, id: newId(), doneAt, ...(rest_ != null ? { restSec: rest_ } : {}) }
-    return { ...rest, sets: [...it.sets, entry] }
+  return mutateItem(db, sessionId, index, (it) => appendSet(it, set, now))
+}
+
+/** Guarda una ronda de superserie: una serie por ejercicio, todas juntas en una sola escritura (D-66). */
+export async function addRound(db: GymDB, sessionId: string, entries: { index: number; set: Omit<SetEntry, 'id'> }[], now = Date.now()): Promise<void> {
+  await db.transaction('rw', db.sessions, async () => {
+    const s = await db.sessions.get(sessionId)
+    if (!s) throw new Error('Sesión inexistente')
+    if (entries.some((e) => !s.items[e.index])) throw new Error('Ejercicio inexistente')
+    await putItems(db, s, s.items.map((it, i) => { const e = entries.find((x) => x.index === i); return e ? appendSet(it, e.set, now) : it }))
+  })
+}
+
+/** Agrupa los ejercicios elegidos en una superserie. Devuelve el índice donde empieza el grupo. */
+export async function groupSessionItems(db: GymDB, sessionId: string, indexes: number[]): Promise<number> {
+  return db.transaction('rw', db.sessions, async () => {
+    const s = await db.sessions.get(sessionId)
+    if (!s) throw new Error('Sesión inexistente')
+    await putItems(db, s, groupItems(s.items, indexes, `g-${newId().slice(0, 8)}`))
+    return Math.min(...indexes)
+  })
+}
+
+export async function ungroupSessionItems(db: GymDB, sessionId: string, groupId: string): Promise<void> {
+  await db.transaction('rw', db.sessions, async () => {
+    const s = await db.sessions.get(sessionId)
+    if (!s) throw new Error('Sesión inexistente')
+    await putItems(db, s, ungroupItems(s.items, groupId))
   })
 }
 

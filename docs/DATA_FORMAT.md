@@ -66,8 +66,11 @@ Unidades: `per_side` = kg de discos por lado, sin barra/carro · `per_hand` = kg
 | `items` | SessionItem[] | |
 | `exerciseIds` | string[] | derivado de `items` (índice) |
 
-**SessionItem**: `{ exerciseId, note?, sets: SetEntry[], skipped?, swappedFrom?, confidence?: 'alta'|'media'|'baja', pain?: 'molestia'|'dolor' }`
+**SessionItem**: `{ exerciseId, note?, sets: SetEntry[], skipped?, swappedFrom?, confidence?: 'alta'|'media'|'baja', pain?: 'molestia'|'dolor', group?: string }`
 (sin `confidence` = alta).
+- `group` (opcional, D-66): superserie. Los items de una sesión con el mismo `group` se hicieron juntos, en rondas; son 2 o 3 y están
+  contiguos en `items`. Sin el campo, el ejercicio es suelto. Es compatible hacia atrás: un backup anterior sin `group` se lee igual,
+  y la versión del formato no cambia. El CSV no lo incluye.
 
 **SetEntry**: `{ id, type: 'A'|'W', weight: number|null, reps: number|null, minutes?, flag?: 'rp'|'drop'|'rebote'|'asist', repsBeforePause?, rir? (0-3), note?, doneAt?: number|null, restSec?: number }`
 - `restSec`: descanso real en segundos desde la serie anterior del mismo ejercicio (D-44). Solo en series cargadas con la app.

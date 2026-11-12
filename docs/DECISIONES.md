@@ -338,3 +338,16 @@ entre ejercicios, y el ciclo de backup: exportar el JSON y restaurarlo en un nav
 sesiones y el plan. Al escribirlos aparecieron dos trampas de las pruebas, no de la app: la barra de pestañas también es
 una lista (contar `listitem` sin acotar a `main` suma 5) y el título de la lista de la sesión repite el del Resumen
 (esperarlo por texto deja pasar antes de que la app termine de navegar). Se acotan a `main` y se espera el botón del Resumen.
+
+**D-66. Superseries.** Se arman al momento, desde la lista de la sesión ("Hacer superserie"): 2 o 3 ejercicios que no estén
+salteados, completos, ya agrupados ni sean cardio. El plan no cambia. Los del grupo quedan contiguos en la lista, en el lugar
+del primero (`SessionItem.group`, opcional: backups anteriores se leen igual, el formato no cambia). Una sola pantalla: cada
+ejercicio con su objetivo de hoy y su peso y reps (prellenados como en el registro normal, editables); "Guardar ronda" guarda
+una serie de cada uno que todavía tenga series por hacer, en una sola escritura y con la misma hora. El descanso arranca al
+cerrar la ronda, no entre ejercicios, y es el más largo de los descansos del grupo. Con distinta cantidad de series (lateral
+4, posterior 3, curl 3), cada uno completa las suyas: la última ronda solo muestra los que faltan. La ronda en curso es la
+menor cantidad de series hechas entre los pendientes más uno (`groupView`). El `restSec` de cada serie es lo que tardó la
+ronda. Las series se editan y se borran en la misma pantalla. Para el motor son series efectivas comunes: no se ajusta
+nada por hacerlas en superserie. Límites de esta versión: en la pantalla del grupo no hay aproximaciones, marcas (rest-pause,
+drop), RIR, alternativa, molestia/dolor, nota ni saltear; para eso se usa "Deshacer superserie" (los ejercicios quedan sueltos
+y con sus series). Sin probar con el celular en el gimnasio.

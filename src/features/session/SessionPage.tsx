@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { getDB } from '../../data/db'
 import { useExerciseMap, useSettings } from '../../data/hooks'
-import { discardSession, finishSession } from '../../data/sessionRepo'
+import { discardSession, finishSession, groupSessionItems } from '../../data/sessionRepo'
 import { formatDDMM } from '../../engine/dates'
 import { formatLoad } from '../../engine/load'
 import { formatSet, lastExposure, sessionProgress } from '../../engine/session'
@@ -11,7 +11,9 @@ import { useWakeLock } from '../../lib/wakeLock'
 import { readinessLevel } from '../../engine/readiness'
 import { BottomBar } from '../../ui/BottomBar'
 import { Button } from '../../ui/Button'
+import { groupError, SUPERSET_MAX, SUPERSET_MIN } from '../../engine/superset'
 import { Segments } from '../../ui/Segments'
+import { Chip } from '../../ui/Stepper'
 import { todaysRecommendation } from './recommendation'
 import { useSessionData } from './useSessionData'
 
@@ -23,6 +25,9 @@ export function SessionPage() {
   const settings = useSettings()
   const [finishing, setFinishing] = useState(false)
   const [note, setNote] = useState('')
+  /** Armando una superserie: se eligen los ejercicios que van juntos (D-66). */
+  const [picking, setPicking] = useState(false)
+  const [picked, setPicked] = useState<number[]>([])
   const [now, setNow] = useState(() => Date.now())
   const history = useLiveQuery(async () => (data?.session ? getDB().sessions.where('exerciseIds').anyOf(data.session.exerciseIds).toArray() : []), [data?.session.exerciseIds.join()])
   useWakeLock(data?.session.status === 'in_progress')
@@ -44,6 +49,8 @@ export function SessionPage() {
     return { it, idx, p, w, target, complete }
   })
   const { totalSets, doneSets } = prog
+  const eligible = (r: (typeof rows)[number]) => !r.it.skipped && !r.complete && !r.it.group && exercises.get(r.it.exerciseId)?.unit !== 'minutes'
+  const pickError = groupError(session.items, picked)
   const current = prog.currentIndex != null ? rows[prog.currentIndex] : undefined
   const minutes = session.startedAt ? Math.max(0, Math.floor((now - session.startedAt) / 60000)) : null
 
@@ -79,6 +86,14 @@ export function SessionPage() {
           Poco tiempo: sin ejercicios opcionales. Si querés, dejá cada ejercicio con una serie menos.
         </p>
       )}
+      {inProgress && !finishing && !picking && rows.filter(eligible).length >= SUPERSET_MIN && (
+        <Chip active={false} onClick={() => { setPicking(true); setPicked([]) }}>Hacer superserie</Chip>
+      )}
+      {picking && (
+        <p role="status" className="rounded-2xl bg-accent/10 p-3 text-sm ring-1 ring-accent/40">
+          Elegí {SUPERSET_MIN} o {SUPERSET_MAX} ejercicios que hacés juntos. <span className="tabular-nums text-slate-300">({picked.length} elegidos)</span>
+        </p>
+      )}
       <ol className="space-y-2">
         {rows.map(({ it, idx, p, w, target, complete }) => {
           const ex = exercises.get(it.exerciseId)
@@ -87,14 +102,15 @@ export function SessionPage() {
           const todayText = isCurrent && currentRec && currentEx && currentRec.weight != null && currentRec.targets.length
             ? `Hoy: ${formatLoad(currentEx, currentRec.weight, settings.kgPerBrick)} × ${currentRec.targets.join('·')}`
             : null
-          return (
-            <li key={`${it.exerciseId}-${idx}`}>
-              <Link
-                to={`/sesion/${session.id}/${idx}`}
-                className={`flex items-center gap-3 rounded-2xl p-3 ring-1 ${isCurrent ? 'bg-surface ring-2 ring-accent' : 'bg-surface ring-transparent'} ${it.skipped ? 'opacity-50' : ''}`}
-              >
-                <span className={`digits flex size-8 shrink-0 items-center justify-center rounded-[10px] text-base ${complete ? 'bg-accent-solid text-on-accent' : 'bg-raised text-slate-400'}`}>
-                  {complete ? '✓' : idx + 1}
+          const row = rows[idx]!
+          const isPicked = picked.includes(idx)
+          const canPick = eligible(row) && (isPicked || picked.length < SUPERSET_MAX)
+          const groupStart = !!it.group && session.items[idx - 1]?.group !== it.group
+          const rowClass = `flex w-full items-center gap-3 rounded-2xl p-3 text-left ring-1 ${isCurrent ? 'bg-surface ring-2 ring-accent' : it.group ? 'bg-surface ring-accent/50' : 'bg-surface ring-transparent'} ${it.skipped ? 'opacity-50' : ''}`
+          const content = (
+            <>
+                <span className={`digits flex size-8 shrink-0 items-center justify-center rounded-[10px] text-base ${picking ? (isPicked ? 'bg-accent-solid text-on-accent' : 'bg-raised text-slate-400') : complete ? 'bg-accent-solid text-on-accent' : 'bg-raised text-slate-400'}`}>
+                  {picking ? (isPicked ? '✓' : '') : complete ? '✓' : idx + 1}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-semibold">{ex?.name ?? it.exerciseId}{p?.optional && <span className="font-normal text-slate-400"> (opcional)</span>}</div>
@@ -116,7 +132,20 @@ export function SessionPage() {
                   <Segments done={w} total={target} />
                   <span className="sr-only">{complete ? 'Completo' : `${w} de ${target} series`}</span>
                 </div>
-              </Link>
+            </>
+          )
+          return (
+            <li key={`${it.exerciseId}-${idx}`}>
+              {groupStart && <p className="eyebrow mb-1 mt-2 px-1 text-accent">Superserie</p>}
+              {picking ? (
+                <button role="checkbox" aria-checked={isPicked} disabled={!canPick} aria-label={`Elegir ${ex?.name ?? it.exerciseId}`} onClick={() => setPicked(isPicked ? picked.filter((i) => i !== idx) : [...picked, idx])} className={`${rowClass} ${isPicked ? '!ring-2 !ring-accent' : ''} ${!canPick && !isPicked ? 'opacity-40' : ''}`}>
+                  {content}
+                </button>
+              ) : (
+                <Link to={`/sesion/${session.id}/${idx}`} className={rowClass}>
+                  {content}
+                </Link>
+              )}
             </li>
           )
         })}
@@ -147,7 +176,27 @@ export function SessionPage() {
           </button>
         </div>
       )}
-      {inProgress && !finishing && (
+      {inProgress && !finishing && picking && (
+        <BottomBar>
+          <div className="flex gap-2">
+            <Button className="basis-2/5" onClick={() => { setPicking(false); setPicked([]) }}>Cancelar</Button>
+            <Button
+              variant="primary"
+              className="min-w-0 flex-1"
+              disabled={pickError != null}
+              onClick={async () => {
+                const start = await groupSessionItems(getDB(), session.id, picked)
+                setPicking(false)
+                setPicked([])
+                navigate(`/sesion/${session.id}/${start}`)
+              }}
+            >
+              Agrupar{picked.length ? ` (${picked.length})` : ''}
+            </Button>
+          </div>
+        </BottomBar>
+      )}
+      {inProgress && !finishing && !picking && (
         <BottomBar>
           <div className="flex gap-2">
             <Button variant={current ? 'secondary' : 'primary'} aria-label="Terminar sesión" className={current ? 'basis-2/5' : 'flex-1'} onClick={() => setFinishing(true)}>
@@ -155,7 +204,7 @@ export function SessionPage() {
             </Button>
             {current && (
               <Button variant="primary" className="min-w-0 flex-1 truncate" onClick={() => navigate(`/sesion/${session.id}/${current.idx}`)}>
-                <span className="block truncate">Seguir: {currentEx?.name ?? 'ejercicio'} →</span>
+                <span className="block truncate">Seguir: {current.it.group ? 'Superserie' : (currentEx?.name ?? 'ejercicio')} →</span>
               </Button>
             )}
           </div>

@@ -157,6 +157,7 @@ const session = z.object({
       swappedFrom: z.string().optional(),
       confidence: confidence.optional(),
       pain: z.enum(['molestia', 'dolor']).optional(),
+      group: z.string().optional(),
     }),
   ),
   exerciseIds: z.array(z.string()),
