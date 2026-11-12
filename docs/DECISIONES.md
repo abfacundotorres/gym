@@ -328,3 +328,13 @@ rescate. "No encontrado" es una pantalla real (con enlace a Hoy) y desaparece el
 terminar" y ofrece, además de Continuar, Terminar así (solo si tiene series) y Descartar (con confirmación). Terminar así
 cierra en la hora de la última serie registrada y no "ahora", para que la duración del resumen no se infle con los días
 que pasaron (`finishStaleSession`).
+
+**D-65. Lógica del registro en el motor y más pruebas.** Tres decisiones que estaban enterradas en `ExercisePage` pasan a
+`engine/entry.ts` (funciones puras, con tests): con qué se prellena la próxima serie (`nextSetDefaults`), qué
+aproximaciones faltan (`pendingWarmups`) y si una serie sería récord (`wouldBeRecord`). Sin cambio de comportamiento. Un
+cambio de UX: tras guardar una serie extra vuelve la tarjeta "Ejercicio completo" (antes quedaba el editor abierto).
+`e2e/flows.spec.ts` cubre saltear y deshacer, editar y borrar una serie, ejercicio completo con serie extra y saltar
+entre ejercicios, y el ciclo de backup: exportar el JSON y restaurarlo en un navegador vacío (otro contexto) con las mismas
+sesiones y el plan. Al escribirlos aparecieron dos trampas de las pruebas, no de la app: la barra de pestañas también es
+una lista (contar `listitem` sin acotar a `main` suma 5) y el título de la lista de la sesión repite el del Resumen
+(esperarlo por texto deja pasar antes de que la app termine de navegar). Se acotan a `main` y se espera el botón del Resumen.
