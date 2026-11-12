@@ -1,14 +1,16 @@
 import { useLiveQuery } from 'dexie-react-hooks'
+import { useState } from 'react'
 import { exportBackup, markBackupDone, toCSV } from '../../data/backup'
 import { getDB, META_DATA_QUALITY, SETTINGS_KEY } from '../../data/db'
 import type { DataQuality } from '../../engine/types'
 import { formatDDMM } from '../../engine/dates'
-import { downloadText } from '../../lib/download'
+import { canShareFiles, downloadText, shareTextFile } from '../../lib/download'
 import { fileStamp, formatTimestamp } from '../../lib/format'
 import { Button, Card } from '../../ui/Button'
 import { ImportFlow } from './ImportFlow'
 import { VolumeTargets } from './VolumeTargets'
 import { About } from './About'
+import { StorageStatus } from './StorageStatus'
 import { Preferences } from './Preferences'
 import { Link } from 'react-router'
 
@@ -33,6 +35,16 @@ export function SettingsPage() {
     downloadText(`gym-backup-${fileStamp()}.json`, JSON.stringify(backup, null, 1), 'application/json')
     await markBackupDone(db)
   }
+  const [shareMsg, setShareMsg] = useState<string | null>(null)
+  async function shareJSON() {
+    const backup = await exportBackup(db)
+    const r = await shareTextFile(`gym-backup-${fileStamp()}.json`, JSON.stringify(backup, null, 1), 'application/json')
+    if (r === 'shared') {
+      await markBackupDone(db)
+      setShareMsg('Backup enviado. Guardalo en un lugar fuera del celu (Drive, correo).')
+    } else if (r === 'failed') setShareMsg('No se pudo compartir. Usá "Exportar JSON".')
+    else setShareMsg(null)
+  }
   async function exportCSV() {
     const backup = await exportBackup(db)
     downloadText(`gym-series-${fileStamp()}.csv`, toCSV(backup.data), 'text/csv')
@@ -50,6 +62,7 @@ export function SettingsPage() {
 
       <div className="space-y-3">
         <h2 className="eyebrow text-slate-400">Backup</h2>
+        <StorageStatus />
         <p className="text-sm text-slate-400">
           {lastBackup ? `Último backup: ${formatTimestamp(lastBackup)}` : 'Todavía no hiciste ningún backup.'}
         </p>
@@ -57,6 +70,8 @@ export function SettingsPage() {
           <Button variant="primary" onClick={() => void exportJSON()}>Exportar JSON</Button>
           <Button onClick={() => void exportCSV()}>Exportar CSV</Button>
         </div>
+        {canShareFiles() && <Button className="w-full" onClick={() => void shareJSON()}>Compartir backup (Drive, correo…)</Button>}
+        {shareMsg && <p role="status" className="text-sm text-slate-400">{shareMsg}</p>}
         <ImportFlow />
       </div>
 

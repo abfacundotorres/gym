@@ -96,6 +96,15 @@ export async function finishSession(db: GymDB, sessionId: string, note: string, 
   await db.sessions.update(sessionId, { status: 'finished', finishedAt: now, note: note.trim() })
 }
 
+/**
+ * Cierra una sesión que quedó abierta de un día anterior: termina en la última serie registrada
+ * (no "ahora"), así la duración del resumen no se infla con los días que pasaron.
+ */
+export async function finishStaleSession(db: GymDB, session: Session): Promise<void> {
+  const last = Math.max(0, ...session.items.flatMap((i) => i.sets.map((s) => s.doneAt ?? 0)))
+  await finishSession(db, session.id, session.note ?? '', last || session.startedAt || Date.now())
+}
+
 export async function discardSession(db: GymDB, sessionId: string): Promise<void> {
   await db.sessions.delete(sessionId)
 }

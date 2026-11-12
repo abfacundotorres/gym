@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto'
 import { afterEach, describe, expect, it } from 'vitest'
 import { createDB, type GymDB } from '../db'
-import { activeSession, addSet, deleteSet, finishSession, setItemPain, setSkipped, startSession, swapExercise, updateSet } from '../sessionRepo'
+import { activeSession, addSet, deleteSet, finishSession, finishStaleSession, setItemPain, setSkipped, startSession, swapExercise, updateSet } from '../sessionRepo'
 import type { PlanDay } from '../../engine/types'
 
 const plan: PlanDay = {
@@ -95,5 +95,23 @@ describe('molestia y poco tiempo', () => {
     expect((await db.sessions.get(s.id))!.items[0]).toMatchObject({ exerciseId: 'b', pain: 'dolor' })
     await setItemPain(db, s.id, 0, null)
     expect((await db.sessions.get(s.id))!.items[0]!.pain).toBeUndefined()
+  })
+})
+
+describe('sesión que quedó abierta', () => {
+  it('se cierra en la última serie registrada, no en el momento de cerrarla', async () => {
+    db = createDB('stale-test')
+    const s = await startSession(db, plan, '2026-11-09', null, undefined, 1_000_000)
+    await addSet(db, s.id, 0, { type: 'W', weight: 25, reps: 8 }, 1_600_000)
+    await addSet(db, s.id, 1, { type: 'W', weight: 10, reps: 10 }, 2_200_000)
+    await finishStaleSession(db, (await db.sessions.get(s.id))!)
+    expect(await db.sessions.get(s.id)).toMatchObject({ status: 'finished', finishedAt: 2_200_000 })
+    expect(await activeSession(db)).toBeUndefined()
+  })
+  it('sin series cierra en el inicio', async () => {
+    db = createDB('stale-empty-test')
+    const s = await startSession(db, plan, '2026-11-09', null, undefined, 1_000_000)
+    await finishStaleSession(db, (await db.sessions.get(s.id))!)
+    expect((await db.sessions.get(s.id))!.finishedAt).toBe(1_000_000)
   })
 })

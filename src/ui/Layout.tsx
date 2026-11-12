@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from 'react-router'
 import { UpdateBanner } from './UpdateBanner'
 import { RestTimerBar } from './RestTimerBar'
 import { BottomSlotContext } from './BottomBar'
+import { ErrorBoundary } from './ErrorBoundary'
 
 const ICONS = {
   hoy: <path d="M6 4v16M18 4v16M3 8v8M21 8v8M6 12h12" />,
@@ -51,7 +52,9 @@ export function Layout() {
         <UpdateBanner />
         <main className="flex-1 px-4 pt-5" style={{ paddingBottom: barH + 24 }}>
           <div key={pathname} className="animate-page-in">
-            <Outlet />
+            <ErrorBoundary>
+              <Outlet />
+            </ErrorBoundary>
           </div>
         </main>
         <div ref={barRef} className="fixed inset-x-0 bottom-0 border-t border-line bg-bg/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
