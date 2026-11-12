@@ -14,8 +14,14 @@ for (const [width, height] of [[375, 667], [320, 568]] as const) {
     await page.getByRole('button', { name: 'Omitir y empezar' }).click()
     await expect(page.getByRole('button', { name: 'Terminar sesión' })).toBeVisible()
     const session = await page.evaluate(() => location.hash)
+    // Superserie: la pantalla del grupo también tiene que entrar en pantallas chicas.
+    await page.getByRole('button', { name: 'Hacer superserie' }).click()
+    for (const n of [/Vuelos laterales/, /Deltoide posterior/, /Curl inclinado/]) await page.getByRole('checkbox', { name: n }).click()
+    await page.getByRole('button', { name: 'Agrupar (3)' }).click()
+    await expect(page.getByRole('heading', { name: 'Superserie' })).toBeVisible()
+    const grupo = await page.evaluate(() => location.hash)
 
-    const routes = ['#/', session, `${session}/1`, '#/historial', '#/historial?ver=ejercicios', '#/historial/ej/incline_db_press', '#/volumen', '#/plan', '#/ejercicios', '#/ajustes']
+    const routes = ['#/', session, `${session}/1`, grupo, '#/historial', '#/historial?ver=ejercicios', '#/historial/ej/incline_db_press', '#/volumen', '#/plan', '#/ejercicios', '#/ajustes']
     const problems: string[] = []
     for (const hash of routes) {
       await page.goto(`./${hash}`)

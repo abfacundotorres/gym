@@ -97,6 +97,8 @@ export interface SessionItem {
   confidence?: Confidence
   /** Molestia o dolor que hubo en este ejercicio (D-52). */
   pain?: 'molestia' | 'dolor'
+  /** Superserie (D-66): los ejercicios con el mismo id se hacen juntos, en rondas. Sin campo = ejercicio suelto. */
+  group?: string
 }
 
 export interface Readiness { sleep: number; energy: number }
