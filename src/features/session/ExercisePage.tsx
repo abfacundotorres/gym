@@ -10,13 +10,12 @@ import { formatLoad, UNIT_SHORT } from '../../engine/load'
 import { formatRest } from '../../engine/format'
 import { formatSet, lastExposure } from '../../engine/session'
 import type { Recommendation } from '../../engine/progression'
+import { nextSetDefaults, pendingWarmups, wouldBeRecord, type SetDraft } from '../../engine/entry'
 import { findPRs } from '../../engine/prs'
-import { validSets, workingWeight } from '../../engine/validity'
-import { warmupSets } from '../../engine/warmup'
 import { SetBadges } from '../../ui/SetBadges'
 import { deloadSets } from '../../engine/periodization'
 import { reducedSets } from '../../engine/readiness'
-import { SET_FLAGS, type Exercise, type SetEntry, type SetFlag } from '../../engine/types'
+import { SET_FLAGS, type Exercise, type SetFlag } from '../../engine/types'
 import { haptic } from '../../lib/haptics'
 import { startRest } from '../../lib/restTimer'
 import { useWakeLock } from '../../lib/wakeLock'
@@ -28,7 +27,7 @@ import { todaysRecommendation } from './recommendation'
 import { useSessionData } from './useSessionData'
 
 const FLAG_LABEL: Record<SetFlag, string> = { rp: 'Rest-pause', drop: 'Drop', rebote: 'Rebote', asist: 'Asistida' }
-type Draft = Omit<SetEntry, 'id'>
+type Draft = SetDraft
 
 /** Cada ejercicio es una pantalla nueva (el key reinicia menú, aproximaciones y edición). */
 export function ExercisePage() {
@@ -44,7 +43,8 @@ function ExerciseScreen() {
   const data = useSessionData(id)
   const settings = useSettings()
   const exercises = useExerciseMap()
-  const [extra, setExtra] = useState(false)
+  /** Cantidad de series efectivas con la que se pidió una extra: al guardarla, vuelve la tarjeta de "completo". */
+  const [extraAt, setExtraAt] = useState<number | null>(null)
   const exerciseId = data?.session.items[idx]?.exerciseId
   const ctx = useLiveQuery(async () => {
     if (!exerciseId) return null
@@ -76,19 +76,11 @@ function ExerciseScreen() {
   const done = item.sets
   const doneW = done.filter((s) => s.type === 'W')
   const lastDone = done.at(-1)
-  const lastDoneW = doneW.at(-1)
   const prs = new Map(findPRs(ex, { item }, previous, settings.kgPerBrick).map((p) => [p.setId, p.kind]))
-  const next = {
-    weight: lastDoneW?.weight ?? rec.weight ?? lastDone?.weight ?? null,
-    reps: targets[doneW.length] ?? lastDoneW?.reps ?? rec.repCap,
-  }
-  const lastItem = previous.at(-1)?.item
+  const next = nextSetDefaults(done, rec)
   // Mientras no haya efectivas, el peso de trabajo es el que tengas en el stepper (D-43).
   const workWeight = doneW.length === 0 && typed?.exId === ex.id ? typed.weight : next.weight
-  const warmups = doneW.length === 0
-    ? warmupSets(ex, workWeight, settings.kgPerBrick, lastItem ? { sets: lastItem.sets, workingWeight: workingWeight(validSets(lastItem)) } : undefined)
-        .filter((w) => !done.some((d) => d.type === 'A' && d.weight === w.weight))
-    : []
+  const warmups = pendingWarmups(ex, workWeight, settings.kgPerBrick, previous, done)
   const restSec = settings.restSecOverrides[ex.id] ?? ex.restSec
   const isCardio = ex.unit === 'minutes'
   const options = variantOptions(ex, planItem, ctx.family)
@@ -97,13 +89,11 @@ function ExerciseScreen() {
   const nextIdx = idx < session.items.length - 1 ? idx + 1 : null
 
   async function log(d: Draft) {
-    // ¿Esta serie sería récord? Se calcula con el motor antes de guardar, solo para el aviso.
-    const probe: SetEntry = { ...d, id: '__nueva__' }
-    const isRecord = d.type === 'W' && findPRs(ex, { item: { ...item, sets: [...item.sets, probe] } }, previous, settings.kgPerBrick).some((p) => p.setId === probe.id)
+    const isRecord = wouldBeRecord(ex, item, d, previous, settings.kgPerBrick)
     setFresh(item.sets.length)
     haptic(isRecord ? 'record' : 'tap')
     if (isRecord) {
-      setRecord(formatSet(probe))
+      setRecord(formatSet({ ...d, id: '' }))
       setTimeout(() => setRecord(null), 3200)
     }
     await addSet(db, session.id, idx, d)
@@ -303,17 +293,17 @@ function ExerciseScreen() {
             })}
           </ol>
 
-          {editing == null && complete && !extra && (
+          {editing == null && complete && extraAt !== doneW.length && (
             <CompleteCard
               sets={doneW.length}
               planned={plannedSets}
               nextName={nextIdx != null ? exercises?.get(session.items[nextIdx]!.exerciseId)?.name : undefined}
               onNext={() => navigate(nextIdx != null ? `/sesion/${session.id}/${nextIdx}` : `/sesion/${session.id}`)}
-              onExtra={() => setExtra(true)}
+              onExtra={() => setExtraAt(doneW.length)}
             />
           )}
 
-          {editing == null && (!complete || extra) && (
+          {editing == null && (!complete || extraAt === doneW.length) && (
             <SetEditor
               key={`${ex.id}-${done.length}`}
               ex={ex}
