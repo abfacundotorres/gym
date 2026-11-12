@@ -56,7 +56,7 @@ export function SessionPage() {
     <section className="space-y-4">
       <header>
         <div className="flex items-center justify-between">
-          <Link to={inProgress ? '/' : '/historial'} className="-ml-1 py-2 pr-3 text-sm text-slate-400">← {inProgress ? 'Salir' : 'Historial'}</Link>
+          <Link to={inProgress ? '/' : '/historial'} className="-ml-1 flex min-h-11 items-center pr-3 text-sm text-slate-400">← {inProgress ? 'Salir' : 'Historial'}</Link>
           {totalSets > 0 && <span className="eyebrow text-accent tabular-nums">{doneSets}/{totalSets} series</span>}
         </div>
         <h1 className="title text-4xl">{plan?.name ?? session.planDayId}</h1>

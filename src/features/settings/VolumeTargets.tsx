@@ -17,7 +17,7 @@ export function VolumeTargets() {
   }
   return (
     <details>
-      <summary className="cursor-pointer py-2 text-sm text-slate-300">Rango objetivo de series por músculo y semana</summary>
+      <summary className="flex min-h-11 cursor-pointer items-center text-sm text-slate-300">Rango objetivo de series por músculo y semana</summary>
       <ul className="mt-2 space-y-1 text-sm">
         {MUSCLES.map((m) => (
           <li key={m} className="flex items-center gap-2">
@@ -29,7 +29,7 @@ export function VolumeTargets() {
                 inputMode="decimal"
                 defaultValue={settings.volumeTarget[m][i]}
                 onBlur={(e) => void set(m, i, e.target.value.replace(',', '.'))}
-                className="h-10 w-14 rounded-xl bg-bg text-center tabular-nums ring-1 ring-line"
+                className="h-11 w-14 rounded-xl bg-bg text-center tabular-nums ring-1 ring-line"
               />
             ))}
           </li>

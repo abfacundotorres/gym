@@ -47,7 +47,7 @@ export function VolumePage() {
         <p className="text-sm text-slate-300">músculos en rango esta semana{belowCount > 0 && <span className="block text-xs text-slate-400">{belowCount} por debajo</span>}</p>
       </Card>
       <details className="text-xs text-slate-400">
-        <summary className="cursor-pointer py-1">Cómo se lee</summary>
+        <summary className="flex min-h-11 cursor-pointer items-center">Cómo se lee</summary>
         <p className="mt-1">Series efectivas por músculo: 1 por primario, ½ por secundario, drop = ½. La franja gris es el rango objetivo; la línea fina y el número chico, la semana anterior.</p>
       </details>
       <ul className="space-y-1">
