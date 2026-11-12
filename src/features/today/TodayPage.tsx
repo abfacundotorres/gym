@@ -7,7 +7,8 @@ import { activeSession, startSession } from '../../data/sessionRepo'
 import { addDays, formatDDMM, toISODate, weekStart, weekdayOf, WEEKDAYS_ES } from '../../engine/dates'
 import { deloadSuggestion, mesocycleEnd, mesocycleWeek, pausedWeeks, type DeloadReason } from '../../engine/periodization'
 import { deloadThisWeek, dismissDeloadSuggestion, META_DELOAD_DISMISSED, toggleSkipped } from '../../data/planRepo'
-import type { PlanDay, Readiness } from '../../engine/types'
+import { sessionProgress } from '../../engine/session'
+import type { Exercise, PlanDay, Readiness, Session } from '../../engine/types'
 import { Button, Card } from '../../ui/Button'
 import { Chip } from '../../ui/Stepper'
 import { ImportFlow } from '../settings/ImportFlow'
@@ -142,12 +143,12 @@ export function TodayPage() {
       )}
 
       {data.active ? (
-        <Card className="space-y-3">
-          <p>Tenés una sesión a medias del {formatDDMM(data.active.date)}.</p>
-          <Button variant="primary" className="w-full" onClick={() => navigate(`/sesion/${data.active!.id}`)}>
-            Continuar
-          </Button>
-        </Card>
+        <ActiveSessionCard
+          session={data.active}
+          plan={data.planDays.find((p) => p.id === data.active!.planDayId)}
+          exMap={data.exMap}
+          onContinue={(idx) => navigate(idx != null ? `/sesion/${data.active!.id}/${idx}` : `/sesion/${data.active!.id}`)}
+        />
       ) : readinessFor ? (
         <ReadinessCheck onDone={(r, short) => void begin(readinessFor, r, short)} />
       ) : (
@@ -208,6 +209,21 @@ export function TodayPage() {
         </>
       )}
     </section>
+  )
+}
+
+function ActiveSessionCard({ session, plan, exMap, onContinue }: { session: Session; plan: PlanDay | undefined; exMap: Map<string, Exercise>; onContinue: (idx: number | null) => void }) {
+  const prog = sessionProgress(session, plan)
+  const next = prog.currentIndex != null ? exMap.get(session.items[prog.currentIndex]!.exerciseId)?.name : undefined
+  return (
+    <Card className="space-y-3 ring-2 ring-accent/60">
+      <p className="eyebrow text-accent">Sesión en curso · {formatDDMM(session.date)}</p>
+      <p className="title text-2xl">{plan?.name ?? 'Sesión'}</p>
+      <p className="text-sm text-slate-300">
+        <span className="tabular-nums">{prog.doneSets}/{prog.totalSets}</span> series{next && <> · sigue <span className="font-semibold">{next}</span></>}
+      </p>
+      <Button variant="primary" className="w-full" onClick={() => onContinue(prog.currentIndex)}>Continuar</Button>
+    </Card>
   )
 }
 

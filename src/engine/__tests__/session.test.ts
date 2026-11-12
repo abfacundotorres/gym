@@ -3,7 +3,7 @@ import fixture from '../../data/__fixtures__/seed.fixture.json'
 import { seedSchema } from '../../data/schemas'
 import { seedToData } from '../../data/seedImport'
 import { comparableKg, formatLoad } from '../load'
-import { formatSet, lastExposure, sessionStats, summaryText } from '../session'
+import { formatSet, lastExposure, sessionProgress, sessionStats, summaryText } from '../session'
 import { mesocycleWeek } from '../periodization'
 import type { Exercise } from '../types'
 import { volumeByMuscle } from '../volume'
@@ -67,5 +67,40 @@ describe('volumen (§7)', () => {
       { exerciseId: 'bench_flat_barbell', sets: 3, role: 'primary' },
       { exerciseId: 'incline_db_press', sets: 3.5, role: 'primary' },
     ])
+  })
+})
+
+describe('avance de la sesión', () => {
+  const plan = { id: 'p', weekday: 4, name: 'Día', items: [
+    { exerciseId: 'a', sets: 3, alt: [] },
+    { exerciseId: 'b', sets: 2, alt: [] },
+    { exerciseId: 'c', sets: 3, alt: [] },
+  ] }
+  const w = (n: number) => Array.from({ length: n }, (_, i) => ({ id: `s${i}`, type: 'W' as const, weight: 10, reps: 8 }))
+  const base = { id: 's', date: '2026-11-12', planDayId: 'p', mesocycleId: null, status: 'in_progress', startedAt: 1, finishedAt: null, exerciseIds: ['a', 'b', 'c'], source: 'app' }
+  const session = (items: object[], extra: object = {}) => ({ ...base, ...extra, items }) as never
+
+  it('cuenta series efectivas y marca el ejercicio actual', () => {
+    const pr = sessionProgress(session([{ exerciseId: 'a', sets: w(3) }, { exerciseId: 'b', sets: w(1) }, { exerciseId: 'c', sets: [] }]), plan as never)
+    expect(pr.items.map((i) => i.complete)).toEqual([true, false, false])
+    expect(pr.doneSets).toBe(4)
+    expect(pr.totalSets).toBe(8)
+    expect(pr.currentIndex).toBe(1)
+  })
+  it('las aproximaciones no cuentan y los salteados no son "el actual"', () => {
+    const pr = sessionProgress(session([
+      { exerciseId: 'a', sets: [{ id: 'x', type: 'A', weight: 5, reps: 10 }], skipped: true },
+      { exerciseId: 'b', sets: w(2) },
+      { exerciseId: 'c', sets: [] },
+    ]), plan as never)
+    expect(pr.items[0]!.done).toBe(0)
+    expect(pr.currentIndex).toBe(2)
+  })
+  it('sin nada pendiente no hay actual; el deload reduce las series; una alternativa usa la meta del original', () => {
+    expect(sessionProgress(session([{ exerciseId: 'a', sets: w(3) }, { exerciseId: 'b', sets: w(2) }, { exerciseId: 'c', sets: w(3) }]), plan as never).currentIndex).toBeNull()
+    const dl = sessionProgress(session([{ exerciseId: 'a', sets: w(2) }], { deload: true }), plan as never)
+    expect(dl.items[0]!.target).toBeLessThan(3)
+    const swapped = sessionProgress(session([{ exerciseId: 'a2', swappedFrom: 'a', sets: w(1) }]), plan as never)
+    expect(swapped.items[0]!.target).toBe(3)
   })
 })
