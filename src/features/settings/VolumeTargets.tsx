@@ -29,7 +29,7 @@ export function VolumeTargets() {
                 inputMode="decimal"
                 defaultValue={settings.volumeTarget[m][i]}
                 onBlur={(e) => void set(m, i, e.target.value.replace(',', '.'))}
-                className="h-10 w-14 rounded-lg bg-bg text-center tabular-nums ring-1 ring-line"
+                className="h-10 w-14 rounded-xl bg-bg text-center tabular-nums ring-1 ring-line"
               />
             ))}
           </li>

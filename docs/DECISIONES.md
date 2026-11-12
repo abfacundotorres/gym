@@ -278,3 +278,9 @@ nota de seguridad sigue visible. Los textos de la recomendación no cambian de l
 **D-57. Sin duración estimada.** El motor no calcula cuánto dura una sesión y no se inventa: Hoy no muestra tiempo
 estimado. La lista de la sesión muestra solo el tiempo transcurrido desde que empezó (dato real, `startedAt`) y las series
 hechas sobre las planificadas (con el recorte del deload aplicado).
+
+**D-58. Pantallas secundarias con el mismo sistema.** Historial (fecha en bloque, insignias bajo el nombre), Volumen
+(resumen "N de 13 músculos en rango", barras más gruesas, la explicación plegada), Resumen de sesión (cifras grandes,
+récords destacados, el texto copiable plegado), Plan, Ajustes ("Calidad de datos" plegada con su conteo) y el historial
+por ejercicio ("Próxima vez" destacada). El `Stepper` tiene dos versiones: la grande, para registrar series, y
+`compact` (una fila), para listas y formularios. No cambia ninguna regla ni dato.

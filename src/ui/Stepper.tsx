@@ -8,14 +8,48 @@ interface Props {
   min?: number
   decimal?: boolean
   suffix?: string
+  /** Versión en una fila ([−] valor [+]) para listas y formularios; la grande es para registrar series. */
+  compact?: boolean
   onChange: (v: number | null) => void
 }
 
 /** Valor grande con [−] [+] debajo. Tocar el valor permite tipearlo (teclado decimal). */
-export function Stepper({ label, value, step, min = 0, decimal = true, suffix, onChange }: Props) {
+export function Stepper({ label, value, step, min = 0, decimal = true, suffix, compact = false, onChange }: Props) {
   const [editing, setEditing] = useState(false)
   const round = (v: number) => Math.round(v * 1000) / 1000
   const bump = (d: number) => onChange(Math.max(min, round((value ?? 0) + d)))
+  const commit = (el: HTMLInputElement) => {
+    const t = el.value.trim().replace(',', '.')
+    const v = t === '' ? null : Number(t)
+    if (v === null || (Number.isFinite(v) && v >= min)) onChange(v === null ? null : round(v))
+    setEditing(false)
+  }
+  if (compact) {
+    return (
+      <div className="min-w-0 flex-1">
+        <div className="mb-1 text-xs text-slate-400">{label}</div>
+        <div className="flex items-stretch overflow-hidden rounded-xl bg-raised">
+          <button type="button" aria-label={`Menos ${label}`} className="w-11 shrink-0 text-2xl active:bg-line" onClick={() => bump(-step)}>−</button>
+          {editing ? (
+            <input
+              autoFocus
+              aria-label={label}
+              inputMode={decimal ? 'decimal' : 'numeric'}
+              defaultValue={value == null ? '' : String(value).replace('.', ',')}
+              className="digits h-12 w-full min-w-0 bg-transparent text-center text-2xl outline-none"
+              onBlur={(e) => commit(e.target)}
+              onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+            />
+          ) : (
+            <button type="button" aria-label={`${label}: ${value ?? 'sin dato'}, tocar para escribir`} className="digits h-12 w-full min-w-0 text-center text-2xl" onClick={() => setEditing(true)}>
+              {value == null ? '—' : num(value)}
+            </button>
+          )}
+          <button type="button" aria-label={`Más ${label}`} className="w-11 shrink-0 text-2xl active:bg-line" onClick={() => bump(step)}>+</button>
+        </div>
+      </div>
+    )
+  }
   return (
     <div className="min-w-0 flex-1 rounded-2xl bg-raised px-2 pb-1.5 pt-2.5 text-center">
       <div className="eyebrow !text-[10px] text-slate-400">{label}</div>

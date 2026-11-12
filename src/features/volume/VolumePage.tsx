@@ -6,7 +6,7 @@ import { addDays, formatDDMM, toISODate, weekStart } from '../../engine/dates'
 import { num } from '../../engine/format'
 import { volumeStatus, weekVolume, type VolumeStatus } from '../../engine/periodization'
 import { MUSCLES, MUSCLE_LABELS, type Muscle } from '../../engine/types'
-import { Button } from '../../ui/Button'
+import { Button, Card } from '../../ui/Button'
 
 const STATUS: Record<VolumeStatus, { label: string; bar: string; text: string }> = {
   below: { label: 'por debajo', bar: 'bg-amber-400', text: 'text-amber-300' },
@@ -27,20 +27,29 @@ export function VolumePage() {
   const prev = weekVolume(sessions, addDays(monday, -7), exercises)
   const scaleMax = Math.max(25, ...MUSCLES.map((m) => Math.max(cur[m]?.total ?? 0, settings.volumeTarget[m][1] * 1.2)))
   const pct = (v: number) => `${(v / scaleMax) * 100}%`
+  const statuses = MUSCLES.map((m) => volumeStatus(cur[m]?.total ?? 0, settings.volumeTarget[m]))
+  const inRange = statuses.filter((s) => s === 'in').length
+  const belowCount = statuses.filter((s) => s === 'below').length
 
   return (
     <section className="space-y-4">
       <h1 className="title text-3xl">Volumen</h1>
       <div className="flex items-center gap-2">
-        <Button aria-label="Semana anterior" onClick={() => setMonday(addDays(monday, -7))}>←</Button>
-        <p className="flex-1 text-center text-sm">
-          {monday === thisMonday ? 'Esta semana' : 'Semana'} {formatDDMM(monday)}–{formatDDMM(addDays(monday, 6))}
+        <Button aria-label="Semana anterior" className="w-14 !px-0 text-xl" onClick={() => setMonday(addDays(monday, -7))}>←</Button>
+        <p className="flex-1 text-center">
+          <span className="eyebrow block text-slate-400">{monday === thisMonday ? 'Esta semana' : 'Semana'}</span>
+          <span className="digits text-xl">{formatDDMM(monday)}–{formatDDMM(addDays(monday, 6))}</span>
         </p>
-        <Button aria-label="Semana siguiente" disabled={monday >= thisMonday} onClick={() => setMonday(addDays(monday, 7))}>→</Button>
+        <Button aria-label="Semana siguiente" className="w-14 !px-0 text-xl" disabled={monday >= thisMonday} onClick={() => setMonday(addDays(monday, 7))}>→</Button>
       </div>
-      <p className="text-xs text-slate-400">
-        Series efectivas por músculo: 1 por primario, ½ por secundario, drop = ½. La franja gris es el rango objetivo; la línea fina y el número chico, la semana anterior.
-      </p>
+      <Card className="flex items-center gap-4">
+        <p className="digits text-5xl text-accent">{inRange}<span className="text-2xl text-slate-400">/{MUSCLES.length}</span></p>
+        <p className="text-sm text-slate-300">músculos en rango esta semana{belowCount > 0 && <span className="block text-xs text-slate-400">{belowCount} por debajo</span>}</p>
+      </Card>
+      <details className="text-xs text-slate-400">
+        <summary className="cursor-pointer py-1">Cómo se lee</summary>
+        <p className="mt-1">Series efectivas por músculo: 1 por primario, ½ por secundario, drop = ½. La franja gris es el rango objetivo; la línea fina y el número chico, la semana anterior.</p>
+      </details>
       <ul className="space-y-1">
         {MUSCLES.map((m) => {
           const v = cur[m]?.total ?? 0
@@ -51,24 +60,24 @@ export function VolumePage() {
           return (
             <li key={m}>
               <button
-                className="w-full rounded-lg px-1 py-2 text-left active:bg-surface"
+                className="w-full rounded-xl px-2 py-2.5 text-left active:bg-surface"
                 aria-expanded={open === m}
                 onClick={() => setOpen(open === m ? null : m)}
               >
                 <div className="mb-1 flex items-baseline gap-2 text-sm">
                   <span className="flex-1">{MUSCLE_LABELS[m]}</span>
-                  <span className={`text-xs ${STATUS[st].text}`}>{STATUS[st].label}</span>
-                  <span className="w-10 text-right font-semibold tabular-nums">{num(v)}</span>
+                  <span className={`text-xs font-medium ${STATUS[st].text}`}>{STATUS[st].label}</span>
+                  <span className="digits w-10 text-right text-xl">{num(v)}</span>
                   <span className="w-12 text-right text-xs tabular-nums text-slate-500">{diff === 0 ? '=' : `${diff > 0 ? '+' : ''}${num(diff)}`}</span>
                 </div>
-                <div className="relative h-2.5 rounded-full bg-surface" aria-hidden>
+                <div className="relative h-3 rounded-full bg-raised" aria-hidden>
                   <div className="absolute inset-y-0 rounded-sm bg-slate-500/30" style={{ left: pct(target[0]), width: pct(target[1] - target[0]) }} />
                   <div className={`absolute inset-y-0 left-0 rounded-full ${STATUS[st].bar}`} style={{ width: pct(v) }} />
                   {p > 0 && <div className="absolute -inset-y-0.5 w-0.5 bg-white" style={{ left: pct(p) }} title={`Semana anterior: ${num(p)}`} />}
                 </div>
               </button>
               {open === m && (
-                <ul className="mb-2 space-y-1 rounded-lg bg-surface p-2 text-sm">
+                <ul className="mb-2 space-y-1 rounded-2xl bg-surface p-3 text-sm">
                   {(cur[m]?.from ?? []).length === 0 ? (
                     <li className="text-slate-400">Sin series esta semana. Objetivo {target[0]}-{target[1]}.</li>
                   ) : (

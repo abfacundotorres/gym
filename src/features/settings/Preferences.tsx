@@ -14,7 +14,7 @@ export function Preferences() {
   const settings = useSettings()
   const [perm, setPerm] = useState(() => ('Notification' in window ? Notification.permission : 'unsupported'))
   return (
-    <div className="space-y-3 text-sm">
+    <div className="space-y-4 rounded-2xl bg-surface p-4 text-sm">
       <div className="flex items-center gap-2" role="group" aria-label="Tema">
         <span className="flex-1">Tema</span>
         <Chip active={settings.theme === 'dark'} onClick={() => void update({ theme: 'dark' })}>Oscuro</Chip>
@@ -49,7 +49,7 @@ export function Preferences() {
             const v = Number(e.target.value.replace(',', '.'))
             if (Number.isFinite(v) && v > 0) void update({ kgPerBrick: v })
           }}
-          className="h-10 w-16 rounded-lg bg-bg text-center tabular-nums ring-1 ring-line"
+          className="h-11 w-16 rounded-xl bg-bg text-center tabular-nums ring-1 ring-line"
         />
       </div>
     </div>

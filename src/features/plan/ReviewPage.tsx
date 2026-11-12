@@ -92,7 +92,7 @@ export function ReviewPage() {
           <ul className="space-y-2">
             {review.proposals.map((p, i) => (
               <li key={i}>
-                <label className="flex items-start gap-3 rounded-xl bg-surface p-3 ring-1 ring-line">
+                <label className="flex items-start gap-3 rounded-2xl bg-surface p-3.5">
                   <input
                     type="checkbox"
                     className="mt-1 size-5 accent-[--color-accent]"

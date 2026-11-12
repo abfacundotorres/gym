@@ -17,6 +17,9 @@ export function Button({ variant = 'secondary', className = '', ...rest }: Butto
   )
 }
 
+/** Un <Link> con la misma cara que un Button secundario. */
+export const LINK_BUTTON = 'flex min-h-13 items-center justify-center rounded-2xl bg-raised px-4 font-medium ring-1 ring-line active:scale-[0.98]'
+
 export function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return <div className={`rounded-2xl bg-surface p-4 ring-1 ring-line ${className}`}>{children}</div>
 }

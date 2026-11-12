@@ -39,18 +39,21 @@ export function ExerciseHistoryPage() {
 
   return (
     <section className="space-y-4">
-      <Link to="/historial?ver=ejercicios" className="block py-1 text-sm text-slate-400">← Ejercicios</Link>
+      <Link to="/historial?ver=ejercicios" className="-ml-1 block py-2 pr-3 text-sm text-slate-400">← Ejercicios</Link>
       <header>
         <h1 className="title text-3xl">{ex.name}</h1>
-        <p className="text-sm text-slate-400">
-          {ex.range[0]}-{ex.range[1]} reps · +{num(ex.increment)}
-          {TREND_LABEL[trend] && <span className="ml-2 rounded bg-amber-500/15 px-1.5 text-xs text-amber-300">{TREND_LABEL[trend]}</span>}
-        </p>
+        <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs font-semibold text-slate-300">
+          <span className="rounded-full bg-raised px-2.5 py-1">{ex.range[0]}-{ex.range[1]} reps</span>
+          <span className="rounded-full bg-raised px-2.5 py-1">+{num(ex.increment)}</span>
+          {TREND_LABEL[trend] && <span className="rounded-full bg-amber-500/15 px-2.5 py-1 text-amber-300">{TREND_LABEL[trend]}</span>}
+        </div>
       </header>
       {history.length > 0 && (
-        <div className="rounded-xl bg-surface p-3 text-sm ring-1 ring-line">
-          <span className="text-slate-400">Próxima: </span>
-          {rec.status === 'insufficient' ? rec.message : `${rec.weight != null ? formatLoad(ex, rec.weight, K) : '—'} × ${rec.targets.join('/')}`}
+        <div className="rounded-2xl bg-gradient-to-br from-accent/15 to-surface p-3.5 ring-1 ring-accent/40">
+          <p className="eyebrow text-accent">Próxima vez</p>
+          <p className={rec.status === 'insufficient' ? 'mt-1 text-sm' : 'digits mt-1 text-3xl leading-[1.05]'}>
+            {rec.status === 'insufficient' ? rec.message : `${rec.weight != null ? formatLoad(ex, rec.weight, K) : '—'} × ${rec.targets.join('·')}`}
+          </p>
         </div>
       )}
       {e1Points.length > 0 && <LineChart title={`e1RM${unitNote}`} unit="kg" points={e1Points} />}
@@ -64,9 +67,9 @@ export function ExerciseHistoryPage() {
             const prs = new Map(findPRs(ex, h, history.slice(0, i), K).map((p) => [p.setId, p.kind]))
             const m = metrics[i]!
             return (
-              <li key={`${h.sessionId}-${i}`} className="rounded-xl bg-surface p-3 ring-1 ring-line">
+              <li key={`${h.sessionId}-${i}`} className="rounded-2xl bg-surface p-3.5">
                 <div className="mb-1 flex items-baseline justify-between text-sm">
-                  <Link to={`/sesion/${h.sessionId}/resumen`} className="tabular-nums text-slate-300 underline-offset-2 hover:underline">{formatDDMM(h.date)}</Link>
+                  <Link to={`/sesion/${h.sessionId}/resumen`} className="digits text-xl text-slate-100">{formatDDMM(h.date)}</Link>
                   <span className="text-xs text-slate-400">
                     {m.e1rm != null ? `e1RM ${num(Math.round(m.e1rm * 10) / 10)} kg` : 'sin e1RM'}
                     {averageRest(h.item.sets) != null && ` · desc. ~${formatRest(averageRest(h.item.sets)!)}`}
@@ -74,9 +77,9 @@ export function ExerciseHistoryPage() {
                     {h.item.confidence && h.item.confidence !== 'alta' && <span className="ml-2 rounded bg-amber-500/15 px-1 text-amber-300">conf. {h.item.confidence}</span>}
                   </span>
                 </div>
-                <ul className="flex flex-wrap gap-x-3 gap-y-1">
+                <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
                   {h.item.sets.map((s) => (
-                    <li key={s.id} className={`flex items-center gap-1 tabular-nums ${s.type === 'A' ? 'text-slate-500' : ''}`}>
+                    <li key={s.id} className={`flex items-center gap-1 text-lg tabular-nums ${s.type === 'A' ? 'text-slate-500' : 'font-semibold'}`}>
                       {formatSet(s)}
                       <SetBadges set={s} item={h.item} pr={prs.get(s.id)} />
                     </li>
