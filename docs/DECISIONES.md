@@ -292,3 +292,11 @@ Después de guardar, la tarjeta de la serie siguiente se desplaza hasta quedar a
 su altura real con `--bar-h`). Las pantallas entran con un fundido corto y el fin del descanso resalta la barra del
 temporizador. Con "reducir movimiento" del sistema se anulan todas las animaciones (regla global ya existente). Un día
 sin entrenamiento muestra el próximo del plan.
+
+**D-60. Velocidad en el gimnasio.** (a) Mantener apretado − o + repite el paso (a los 450 ms, cada 110 ms); un toque suma
+uno y el teclado sigue funcionando. (b) Al completar las series del plan, el editor se reemplaza por "Ejercicio completo"
+con un botón "Siguiente: <ejercicio>" y "+ Serie extra" (Repetir la anterior sigue agregando series). (c) Las rayitas de
+arriba en la pantalla del ejercicio son botones: saltan a cualquier ejercicio sin volver a la lista. (d) Hoy muestra la
+sesión en curso con sus series y el ejercicio que sigue, y "Continuar" abre ese ejercicio. El avance de la sesión (series
+hechas contra planificadas por ejercicio, deload incluido, y cuál sigue) es `sessionProgress` en `engine/session.ts`, con
+tests; lo usan Hoy y la lista de la sesión.

@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { getDB } from '../../data/db'
-import { useSettings } from '../../data/hooks'
+import { useExerciseMap, useSettings } from '../../data/hooks'
 import { addSet, deleteSet, setItemNote, setItemPain, setSkipped, swapExercise, updateSet } from '../../data/sessionRepo'
 import { familyReference, variantOptions } from '../../engine/variants'
 import { formatDDMM } from '../../engine/dates'
@@ -43,6 +43,8 @@ function ExerciseScreen() {
   const db = getDB()
   const data = useSessionData(id)
   const settings = useSettings()
+  const exercises = useExerciseMap()
+  const [extra, setExtra] = useState(false)
   const exerciseId = data?.session.items[idx]?.exerciseId
   const ctx = useLiveQuery(async () => {
     if (!exerciseId) return null
@@ -114,6 +116,7 @@ function ExerciseScreen() {
     return !it.skipped && !(target > 0 && it.sets.filter((x) => x.type === 'W').length >= target)
   }
   const doneA = done.filter((x) => x.type === 'A').length
+  const complete = plannedSets > 0 && doneW.length >= plannedSets
   const warmTotal = doneA + warmups.length
   const inProgress = session.status === 'in_progress'
 
@@ -121,9 +124,18 @@ function ExerciseScreen() {
     <section className="space-y-3">
       <div className="flex items-center justify-between gap-3">
         <Link to={`/sesion/${session.id}`} className="-ml-1 py-2 pr-3 text-sm text-slate-400">← Sesión</Link>
-        <ol className="flex flex-1 justify-center gap-1" aria-label={`Ejercicio ${idx + 1} de ${session.items.length}`}>
+        <ol className="flex flex-1 justify-center" aria-label={`Ejercicio ${idx + 1} de ${session.items.length}`}>
           {session.items.map((it, i) => (
-            <li key={i} className={`h-1 w-5 max-w-full rounded-full ${i === idx ? 'bg-slate-100' : notDone(it) ? 'bg-raised' : 'bg-accent-solid'}`} />
+            <li key={i}>
+              <button
+                aria-label={`Ir a ${exercises?.get(it.exerciseId)?.name ?? `ejercicio ${i + 1}`}`}
+                aria-current={i === idx ? 'step' : undefined}
+                onClick={() => i !== idx && navigate(`/sesion/${session.id}/${i}`, { replace: true })}
+                className="flex h-11 w-[22px] items-center justify-center"
+              >
+                <span className={`h-1 w-[18px] rounded-full ${i === idx ? 'bg-slate-100' : notDone(it) ? 'bg-raised' : 'bg-accent-solid'}`} />
+              </button>
+            </li>
           ))}
         </ol>
         {inProgress ? (
@@ -291,7 +303,17 @@ function ExerciseScreen() {
             })}
           </ol>
 
-          {editing == null && (
+          {editing == null && complete && !extra && (
+            <CompleteCard
+              sets={doneW.length}
+              planned={plannedSets}
+              nextName={nextIdx != null ? exercises?.get(session.items[nextIdx]!.exerciseId)?.name : undefined}
+              onNext={() => navigate(nextIdx != null ? `/sesion/${session.id}/${nextIdx}` : `/sesion/${session.id}`)}
+              onExtra={() => setExtra(true)}
+            />
+          )}
+
+          {editing == null && (!complete || extra) && (
             <SetEditor
               key={`${ex.id}-${done.length}`}
               ex={ex}
@@ -345,6 +367,25 @@ function ExerciseScreen() {
         </div>
       </BottomBar>
     </section>
+  )
+}
+
+/** Cuando ya hiciste las series del plan: lo siguiente es pasar de ejercicio (o sumar una extra). */
+function CompleteCard({ sets, planned, nextName, onNext, onExtra }: { sets: number; planned: number; nextName?: string; onNext: () => void; onExtra: () => void }) {
+  const root = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const t = setTimeout(() => root.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 200)
+    return () => clearTimeout(t)
+  }, [])
+  return (
+    <div ref={root} style={{ scrollMarginBottom: 'calc(var(--bar-h, 160px) + 16px)' }} className="space-y-3 rounded-2xl bg-gradient-to-br from-accent/15 to-surface p-4 text-center ring-1 ring-accent/40">
+      <p className="eyebrow text-accent">Ejercicio completo</p>
+      <p className="digits text-4xl">{sets}<span className="text-2xl text-slate-400">/{planned} series</span></p>
+      <Button variant="primary" className="w-full" onClick={onNext}>
+        <span className="block truncate">{nextName ? `Siguiente: ${nextName} →` : 'Ver la sesión →'}</span>
+      </Button>
+      <button className="min-h-11 text-sm text-slate-400" onClick={onExtra}>+ Serie extra</button>
+    </div>
   )
 }
 

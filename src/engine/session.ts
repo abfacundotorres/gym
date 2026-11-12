@@ -38,6 +38,32 @@ export function newSessionItems(plan: PlanDay, short = false): SessionItem[] {
   return plan.items.filter((i) => !i.optional).map(item).concat(short ? [] : plan.items.filter((i) => i.optional).map(item))
 }
 
+export interface ItemProgress { done: number; target: number; complete: boolean }
+export interface SessionProgress {
+  items: ItemProgress[]
+  doneSets: number
+  totalSets: number
+  /** Primer ejercicio sin salteo ni completar, o null si no queda ninguno. */
+  currentIndex: number | null
+}
+
+/** Avance de la sesión: series efectivas hechas contra las planificadas por ejercicio (deload incluido) y cuál sigue. */
+export function sessionProgress(session: Session, plan: PlanDay | undefined): SessionProgress {
+  const planned = new Map(plan?.items.map((i) => [i.exerciseId, session.deload ? deloadSets(i.sets) : i.sets]) ?? [])
+  const items = session.items.map((it): ItemProgress => {
+    const target = planned.get(it.exerciseId) ?? (it.swappedFrom ? planned.get(it.swappedFrom) : undefined) ?? 0
+    const done = it.sets.filter((s) => s.type === 'W').length
+    return { done, target, complete: target > 0 && done >= target }
+  })
+  const currentIndex = session.items.findIndex((it, i) => !it.skipped && !items[i]!.complete)
+  return {
+    items,
+    doneSets: items.reduce((n, p) => n + Math.min(p.done, p.target || p.done), 0),
+    totalSets: items.reduce((n, p) => n + p.target, 0),
+    currentIndex: currentIndex < 0 ? null : currentIndex,
+  }
+}
+
 export interface SessionStats {
   plannedSets: number
   doneSets: number

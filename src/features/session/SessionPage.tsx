@@ -6,9 +6,8 @@ import { useExerciseMap, useSettings } from '../../data/hooks'
 import { discardSession, finishSession } from '../../data/sessionRepo'
 import { formatDDMM } from '../../engine/dates'
 import { formatLoad } from '../../engine/load'
-import { formatSet, lastExposure } from '../../engine/session'
+import { formatSet, lastExposure, sessionProgress } from '../../engine/session'
 import { useWakeLock } from '../../lib/wakeLock'
-import { deloadSets } from '../../engine/periodization'
 import { readinessLevel } from '../../engine/readiness'
 import { BottomBar } from '../../ui/BottomBar'
 import { Button } from '../../ui/Button'
@@ -38,15 +37,14 @@ export function SessionPage() {
   const planned = new Map(plan?.items.map((i) => [i.exerciseId, i]) ?? [])
   const inProgress = session.status === 'in_progress'
 
+  const prog = sessionProgress(session, plan)
   const rows = session.items.map((it, idx) => {
     const p = planned.get(it.exerciseId) ?? (it.swappedFrom ? planned.get(it.swappedFrom) : undefined)
-    const w = it.sets.filter((s) => s.type === 'W').length
-    const target = p ? (session.deload ? deloadSets(p.sets) : p.sets) : 0
-    return { it, idx, p, w, target, complete: target > 0 && w >= target }
+    const { done: w, target, complete } = prog.items[idx]!
+    return { it, idx, p, w, target, complete }
   })
-  const totalSets = rows.reduce((n, r) => n + r.target, 0)
-  const doneSets = rows.reduce((n, r) => n + Math.min(r.w, r.target || r.w), 0)
-  const current = rows.find((r) => !r.it.skipped && !r.complete)
+  const { totalSets, doneSets } = prog
+  const current = prog.currentIndex != null ? rows[prog.currentIndex] : undefined
   const minutes = session.startedAt ? Math.max(0, Math.floor((now - session.startedAt) / 60000)) : null
 
   const currentEx = current ? exercises.get(current.it.exerciseId) : undefined

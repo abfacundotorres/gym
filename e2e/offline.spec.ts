@@ -37,6 +37,7 @@ test('offline: importar, registrar una sesión, recargar y que todo persista', a
   await page.getByRole('button', { name: 'Más Reps' }).click()
   await page.getByRole('button', { name: 'Guardar serie' }).click()
   await expect(page.getByRole('button', { name: /^Editar serie/ })).toHaveCount(3)
+  await expect(page.getByText('Ejercicio completo')).toBeVisible()
 
   // Ocupado → alternativa en el jalón.
   await page.getByRole('button', { name: 'Siguiente →' }).click()
