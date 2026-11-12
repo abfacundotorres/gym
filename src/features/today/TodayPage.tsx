@@ -70,6 +70,14 @@ export function TodayPage() {
     : null
   const showSuggestion = !!suggestion?.reasons.length && (burnedOut || !data.dismissedThisWeek)
 
+  const nextPlan = (() => {
+    for (let i = 1; i <= 7; i++) {
+      const date = addDays(today, i)
+      const p = data.planDays.find((x) => x.weekday === weekdayOf(date))
+      if (p) return { date, name: p.name }
+    }
+    return null
+  })()
   const doneThisWeek = data.thisWeek.filter((x) => x.status === 'finished').length
   const mesoProgress = week ? Math.min(1, (week.week - 1 + Math.min(1, doneThisWeek / Math.max(1, data.planDays.length))) / week.total) : 0
 
@@ -168,7 +176,16 @@ export function TodayPage() {
               )}
             </Card>
           ) : (
-            <p className="text-slate-400">Hoy no hay entrenamiento planificado.</p>
+            <Card className="space-y-1">
+              <p className="eyebrow text-slate-400">Hoy descansás</p>
+              {nextPlan ? (
+                <p className="text-lg">
+                  Próximo: <span className="font-semibold">{nextPlan.name}</span> · {formatDDMM(nextPlan.date)}
+                </p>
+              ) : (
+                <p className="text-slate-400">No hay entrenamientos planificados.</p>
+              )}
+            </Card>
           )}
           {plan && (
             <Button variant="primary" className="title w-full !min-h-16 text-2xl tracking-wider" onClick={() => setReadinessFor(plan)}>

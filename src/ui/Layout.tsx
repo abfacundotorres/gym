@@ -34,9 +34,14 @@ export function Layout() {
   useLayoutEffect(() => {
     const el = barRef.current
     if (!el || typeof ResizeObserver === 'undefined') return
-    const ro = new ResizeObserver(() => setBarH(el.offsetHeight))
+    const apply = () => {
+      setBarH(el.offsetHeight)
+      // Para que otras pantallas (scroll automático) sepan cuánto tapan las barras fijas.
+      document.documentElement.style.setProperty('--bar-h', `${el.offsetHeight}px`)
+    }
+    const ro = new ResizeObserver(apply)
     ro.observe(el)
-    setBarH(el.offsetHeight)
+    apply()
     return () => ro.disconnect()
   }, [])
 
@@ -45,7 +50,9 @@ export function Layout() {
       <div className="mx-auto flex min-h-full max-w-xl flex-col">
         <UpdateBanner />
         <main className="flex-1 px-4 pt-5" style={{ paddingBottom: barH + 24 }}>
-          <Outlet />
+          <div key={pathname} className="animate-page-in">
+            <Outlet />
+          </div>
         </main>
         <div ref={barRef} className="fixed inset-x-0 bottom-0 border-t border-line bg-bg/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
           <RestTimerBar />

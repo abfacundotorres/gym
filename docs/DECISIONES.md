@@ -284,3 +284,11 @@ hechas sobre las planificadas (con el recorte del deload aplicado).
 récords destacados, el texto copiable plegado), Plan, Ajustes ("Calidad de datos" plegada con su conteo) y el historial
 por ejercicio ("Próxima vez" destacada). El `Stepper` tiene dos versiones: la grande, para registrar series, y
 `compact` (una fila), para listas y formularios. No cambia ninguna regla ni dato.
+
+**D-59. Sensación al usar.** Al guardar una serie: vibración corta (`navigator.vibrate`, no hace nada donde no hay soporte)
+y la fila nueva entra con una animación breve. Si la serie es récord según el motor (`findPRs`, calculado antes de guardar
+solo para el aviso), la vibración es distinta, la fila brilla y aparece "¡Récord!" unos 3 segundos; el registro no cambia.
+Después de guardar, la tarjeta de la serie siguiente se desplaza hasta quedar a la vista sobre las barras fijas (se mide
+su altura real con `--bar-h`). Las pantallas entran con un fundido corto y el fin del descanso resalta la barra del
+temporizador. Con "reducir movimiento" del sistema se anulan todas las animaciones (regla global ya existente). Un día
+sin entrenamiento muestra el próximo del plan.
