@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { getDB } from '../../data/db'
 import { useSettings } from '../../data/hooks'
@@ -17,6 +17,7 @@ import { SetBadges } from '../../ui/SetBadges'
 import { deloadSets } from '../../engine/periodization'
 import { reducedSets } from '../../engine/readiness'
 import { SET_FLAGS, type Exercise, type SetEntry, type SetFlag } from '../../engine/types'
+import { haptic } from '../../lib/haptics'
 import { startRest } from '../../lib/restTimer'
 import { useWakeLock } from '../../lib/wakeLock'
 import { BottomBar } from '../../ui/BottomBar'
@@ -54,6 +55,9 @@ function ExerciseScreen() {
   const [swapping, setSwapping] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [warmOpen, setWarmOpen] = useState(false)
+  /** Índice de la serie recién guardada (para animarla) y aviso de récord. */
+  const [fresh, setFresh] = useState<number | null>(null)
+  const [record, setRecord] = useState<string | null>(null)
   const [typed, setTyped] = useState<{ exId: string; weight: number | null } | null>(null)
   useWakeLock(data?.session.status === 'in_progress')
 
@@ -91,6 +95,15 @@ function ExerciseScreen() {
   const nextIdx = idx < session.items.length - 1 ? idx + 1 : null
 
   async function log(d: Draft) {
+    // ¿Esta serie sería récord? Se calcula con el motor antes de guardar, solo para el aviso.
+    const probe: SetEntry = { ...d, id: '__nueva__' }
+    const isRecord = d.type === 'W' && findPRs(ex, { item: { ...item, sets: [...item.sets, probe] } }, previous, settings.kgPerBrick).some((p) => p.setId === probe.id)
+    setFresh(item.sets.length)
+    haptic(isRecord ? 'record' : 'tap')
+    if (isRecord) {
+      setRecord(formatSet(probe))
+      setTimeout(() => setRecord(null), 3200)
+    }
     await addSet(db, session.id, idx, d)
     if (d.type === 'W' && restSec > 0 && !isCardio) startRest(restSec, ex.name)
   }
@@ -253,7 +266,7 @@ function ExerciseScreen() {
                   />
                 </li>
               ) : (
-                <li key={s.id}>
+                <li key={s.id} className={fresh === i ? `rounded-2xl ${prs.get(s.id) ? 'animate-record' : 'animate-set-in'}` : undefined}>
                   <button
                     onClick={() => setEditing(s.id)}
                     aria-label={`Editar serie ${i + 1}: ${formatSet(s)}`}
@@ -286,6 +299,7 @@ function ExerciseScreen() {
               askRir={doneW.length + 1 >= plannedSets}
               onWorkWeightChange={doneW.length === 0 ? (w) => setTyped({ exId: ex.id, weight: w }) : undefined}
               kgPerBrick={settings.kgPerBrick}
+              keepInView={done.length > 0}
               initial={{ type: 'W', weight: workWeight, reps: isCardio ? null : next.reps, ...(isCardio ? { minutes: lastW.at(-1)?.minutes ?? ex.range[0] } : {}) }}
               title={`Serie ${doneW.length + 1}${doneW.length >= plannedSets ? ' (extra)' : ''}`}
               hint={lastW[doneW.length] ? `antes ${formatSet(lastW[doneW.length]!)}` : undefined}
@@ -305,6 +319,12 @@ function ExerciseScreen() {
             </ol>
           )}
         </>
+      )}
+
+      {record && (
+        <p role="status" className="animate-toast fixed inset-x-4 top-3 z-20 mx-auto max-w-xl rounded-2xl bg-accent-solid px-4 py-3 text-center font-bold text-on-accent shadow-lg">
+          ¡Récord! {record}
+        </p>
       )}
 
       <BottomBar>
@@ -329,8 +349,10 @@ function ExerciseScreen() {
 }
 
 function SetEditor({
-  ex, kgPerBrick, initial, title, hint, submitLabel, onSubmit, onCancel, onDelete, deload = false, onWorkWeightChange, askRir = false,
+  ex, kgPerBrick, initial, title, hint, submitLabel, onSubmit, onCancel, onDelete, deload = false, onWorkWeightChange, askRir = false, keepInView = false,
 }: {
+  /** Al aparecer, se asegura de que la tarjeta (con "Guardar serie") quede a la vista sobre las barras fijas. */
+  keepInView?: boolean
   ex: Exercise
   deload?: boolean
   /** Es la última serie efectiva del ejercicio: se pregunta el RIR (D-51). */
@@ -347,6 +369,13 @@ function SetEditor({
   onDelete?: () => void | Promise<void>
 }) {
   const [d, setD] = useState<Draft>(initial)
+  const root = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!keepInView) return
+    // Un instante después, cuando ya apareció la barra del descanso y se ajustó el alto del contenido.
+    const t = setTimeout(() => root.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 200)
+    return () => clearTimeout(t)
+  }, [keepInView])
   const [rirOpen, setRirOpen] = useState(false)
   const isCardio = ex.unit === 'minutes'
   const patch = (p: Partial<Draft>) => setD((cur) => ({ ...cur, ...p }))
@@ -358,7 +387,7 @@ function SetEditor({
     })
 
   return (
-    <div className="space-y-2.5 rounded-2xl bg-surface p-3 ring-1 ring-accent/50">
+    <div ref={root} style={{ scrollMarginBottom: 'calc(var(--bar-h, 160px) + 16px)' }} className="space-y-2.5 rounded-2xl bg-surface p-3 ring-1 ring-accent/50">
       <div className="flex items-center justify-between gap-2 px-1">
         <div className="flex min-w-0 items-baseline gap-2">
           {title && <span className="title text-2xl">{title}</span>}

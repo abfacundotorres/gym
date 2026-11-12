@@ -6,7 +6,7 @@ export function RestTimerBar() {
   const done = remainingMs <= 0
   const pct = Math.min(100, Math.max(0, 100 - (remainingMs / state.durationMs) * 100))
   return (
-    <div role="timer" aria-live="off" className={`relative overflow-hidden ${done ? 'bg-accent/15' : 'bg-surface'}`}>
+    <div role="timer" aria-live="off" className={`relative overflow-hidden ${done ? 'animate-alarm bg-accent/15' : 'bg-surface'}`}>
       <div className="absolute inset-y-0 left-0 bg-accent/10" style={{ width: `${pct}%` }} />
       <div className="relative mx-auto flex max-w-xl items-center gap-2 px-3 py-2">
         <div className="min-w-0 flex-1">
