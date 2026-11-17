@@ -174,6 +174,7 @@ const settings = z.object({
   volumeTarget: z.record(muscle, z.tuple([z.number().nonnegative(), z.number().nonnegative()])),
   theme: z.enum(['dark', 'light']),
   lastBackupAt: z.number().nullable(),
+  warmupRestSec: z.number().int().min(0).max(600).optional(),
 })
 
 const dataQuality = z.object({ source: z.string(), notes: z.array(z.string()), importedAt: z.number() })

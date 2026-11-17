@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import fixture from '../__fixtures__/seed.fixture.json'
 import { applyImport, exportBackup, markBackupDone, needsBackupReminder, parseImportText, previewImport, toCSV } from '../backup'
 import { createDB, type GymDB } from '../db'
+import { defaultSettings } from '../../engine/types'
 
 const NOW = 1_762_600_000_000
 let n = 0
@@ -100,5 +101,23 @@ describe('backup', () => {
     expect(needsBackupReminder(NOW - 8 * day, [NOW - day], NOW)).toBe(true)
     expect(needsBackupReminder(NOW - 8 * day, [NOW - 9 * day], NOW)).toBe(false)
     expect(needsBackupReminder(NOW - 3 * day, [NOW - day], NOW)).toBe(false)
+  })
+})
+
+describe('el descanso entre aproximaciones en los ajustes (D-71)', () => {
+  const wrap = (settings: object) => JSON.stringify({
+    format: 'gym-backup', version: 1, exportedAt: 0,
+    data: { exercises: [], planDays: [], mesocycles: [], sessions: [], dayMarks: [], dataQuality: null, settings },
+  })
+  const base = defaultSettings()
+  it('se acepta un valor válido, también cero (sin temporizador), y un backup sin el campo', () => {
+    for (const warmupRestSec of [0, 45, 600]) {
+      const r = parseImportText(wrap({ ...base, warmupRestSec }))
+      expect(r.ok && r.data.settings && (r.data.settings as { warmupRestSec?: number }).warmupRestSec, String(warmupRestSec)).toBe(warmupRestSec)
+    }
+    expect(parseImportText(wrap(base)).ok).toBe(true)
+  })
+  it('se rechaza uno fuera de rango o con decimales', () => {
+    for (const warmupRestSec of [-1, 601, 4.5]) expect(parseImportText(wrap({ ...base, warmupRestSec })).ok, String(warmupRestSec)).toBe(false)
   })
 })

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { SetDraft } from '../../engine/entry'
 import { formatLoad, UNIT_SHORT } from '../../engine/load'
+import { MAX_REST_SEC } from '../../engine/rest'
 import { SET_FLAGS, type Exercise, type SetFlag } from '../../engine/types'
 import { Button } from '../../ui/Button'
 import { Chip, Stepper } from '../../ui/Stepper'
@@ -69,6 +70,12 @@ export function SetEditor({
             <Stepper label={`Peso (${UNIT_SHORT[ex.unit]})`} value={d.weight} step={ex.increment} onChange={(v) => { patch({ weight: v }); if (d.type === 'W') onWorkWeightChange?.(v) }} />
             <Stepper label={d.flag === 'rp' ? 'Reps totales' : 'Reps'} value={d.reps} step={1} decimal={false} onChange={(v) => patch({ reps: v })} />
           </div>
+          {onDelete && (
+            <div className="flex items-end gap-2">
+              <Stepper compact label="Descanso (s)" value={d.restSec ?? null} step={15} min={0} decimal={false} onChange={(v) => patch({ restSec: v == null ? undefined : Math.min(v, MAX_REST_SEC) })} />
+              <Chip active={d.restSec == null} onClick={() => patch({ restSec: undefined })}>Sin dato</Chip>
+            </div>
+          )}
           {d.weight != null && ex.unit !== 'total' && ex.unit !== 'per_hand' && <p className="-mt-1 px-1 text-xs text-slate-400">{formatLoad(ex, d.weight, kgPerBrick)}</p>}
           {d.type === 'W' && (
             <>

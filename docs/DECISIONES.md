@@ -396,3 +396,13 @@ anotaste alguno o el mesociclo está en Cut o Bulk. **Base de datos:** primera m
 la v1 (un test abre una base creada con el esquema anterior, con datos, y verifica que se conserva todo y que la tabla nueva anda). **Backup:** campo
 `bodyweights` opcional (el formato no cambia de versión). Un backup anterior se lee igual; "Mezclar" no toca los pesos existentes y "Reemplazar todo"
 con un archivo sin pesos los borra, y la vista previa lo muestra en "Pesos corporales".
+
+**D-71. Descansos: aproximaciones y descanso real corregible.** (a) **Aproximaciones:** al anotar una serie A arranca un temporizador corto (45 s por defecto,
+`DEFAULT_WARMUP_REST_SEC`), rotulado "(aprox.)"; se cambia en Ajustes → "Descanso entre aproximaciones (s)" (`settings.warmupRestSec`, entero 0 a 600; 0 = sin
+temporizador). Las aproximaciones siguen sin entrar en el descanso medido ni en el promedio (D-19, D-44). (b) **"Saltar"/"Cerrar" marca el inicio de la serie
+siguiente:** el temporizador sigue contando mientras ya estás entrenando, y el descanso real es hasta que empezaste, no hasta que guardás. Al tocar "Saltar" se
+guarda la hora en `localStorage` (`gym.restSkip`, con la clave del ejercicio o de la superserie) y la próxima serie guardada de ese ejercicio la consume una sola vez:
+`restSec` = marca − fin de la serie previa (`restFromSkip`). La marca solo vale si es posterior a la serie previa, no es del futuro y tiene menos de 15 min
+(`MAX_SKIP_AGE_SEC`); si no, se usa el descanso entre guardados de D-44. No es un dato de la base: si se pierde, el descanso queda como antes. (c) **Corregir a mano:**
+al editar una serie, "Descanso (s)" (pasos de 15 s) y "Sin dato". Sin cambios de esquema de Dexie; `warmupRestSec` es opcional en el backup.
+

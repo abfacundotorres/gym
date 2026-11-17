@@ -31,8 +31,8 @@ test('aproximaciones: abiertas desde el principio, se ajustan antes de anotarlas
   // La fila ya anotada sale del panel aunque se haya anotado con otro peso.
   await expect(row(page, /Aproximación carga mínima/)).toHaveCount(0)
   await expect(panel.getByRole('group', { name: /^Aproximación/ })).toHaveCount(3)
-  // Una aproximación no dispara el descanso.
-  await expect(page.getByRole('timer')).toHaveCount(0)
+  // Una aproximación dispara solo el temporizador corto (D-71), rotulado como tal.
+  await expect(page.getByRole('timer')).toContainText('(aprox.)')
 })
 
 test('aproximaciones: sumar una extra y que el panel se vaya al empezar las series de trabajo', async ({ page }) => {
