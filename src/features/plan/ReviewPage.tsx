@@ -6,6 +6,7 @@ import { useExerciseMap, useSettings } from '../../data/hooks'
 import { startNextMesocycle } from '../../data/planRepo'
 import { formatDDMM, toISODate } from '../../engine/dates'
 import { num } from '../../engine/format'
+import { planChanges, resolveNextPlan } from '../../engine/nextBlock'
 import { applyProposals, mesocycleWeek, nextMesocycleStart, pausedWeeks, reviewMesocycle, withAllRotations, type Proposal } from '../../engine/periodization'
 import { formatSet } from '../../engine/session'
 import { MUSCLE_LABELS, type Phase } from '../../engine/types'
@@ -31,7 +32,10 @@ export function ReviewPage() {
   if (!data.meso) return <p className="text-slate-400">No hay un mesociclo activo.</p>
   const { meso } = data
   const paused = pausedWeeks(meso, data.sessions, today)
-  const review = reviewMesocycle(meso, data.sessions, exercises, data.planDays, settings, paused)
+  // La plantilla del bloque siguiente (D-73), si se preparó: la revisión propone ajustes encima de ella, no del plan de hoy.
+  const nextPlan = resolveNextPlan(data.planDays, meso.nextPlan, (id) => exercises.get(id) != null && !exercises.get(id)!.archived)
+  const templateChanges = planChanges(data.planDays, meso.nextPlan)
+  const review = reviewMesocycle(meso, data.sessions, exercises, data.planDays, settings, paused, nextPlan)
   const name = (id: string) => exercises.get(id)?.name ?? id
   const week = mesocycleWeek(meso, today, paused)
   const isOn = (p: Proposal, i: number) => (p.kind === 'rotate' && p.optional ? toggled.has(i) : !toggled.has(i))
@@ -43,7 +47,11 @@ export function ReviewPage() {
   const nextPhase = phaseChoice !== undefined ? phaseChoice : (meso.phase ?? null)
 
   async function begin() {
-    await startNextMesocycle(db, meso, start, applyProposals(data!.planDays, accepted), accepted.length ? `Cambios: ${accepted.map((p) => describe(p, name)).join('; ')}` : '', nextPhase)
+    const notes = [
+      templateChanges.length ? `Plantilla: ${templateChanges.length} ${templateChanges.length === 1 ? 'cambio' : 'cambios'}` : '',
+      accepted.length ? `Cambios: ${accepted.map((p) => describe(p, name)).join('; ')}` : '',
+    ].filter(Boolean).join('. ')
+    await startNextMesocycle(db, meso, start, applyProposals(nextPlan, accepted), notes, nextPhase)
     navigate('/plan', { replace: true })
   }
 
@@ -110,6 +118,18 @@ export function ReviewPage() {
             </ul>
           </Card>
         </div>
+      )}
+
+      {meso.nextPlan && (
+        <Card className="space-y-1">
+          <p className="font-medium">Tu plantilla del bloque siguiente</p>
+          <p className="text-xs text-slate-400">
+            {templateChanges.length
+              ? `${templateChanges.length} ${templateChanges.length === 1 ? 'cambio' : 'cambios'} sobre el plan de hoy; se aplican al empezar. Lo que sigue se propone encima de tu plantilla.`
+              : 'Igual que el plan de hoy. Lo que sigue se propone encima.'}
+          </p>
+          <Link to="/plan/siguiente" className="flex min-h-11 items-center text-sm text-accent">Ver o editar →</Link>
+        </Card>
       )}
 
       <div className="space-y-2">
