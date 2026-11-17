@@ -9,12 +9,13 @@ import { seedToData } from './seedImport'
 const byId = <T extends { id: string }>(a: T, b: T) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
 
 export async function readAll(db: GymDB): Promise<BackupData> {
-  const [exercises, planDays, mesocycles, sessions, dayMarks, settings, dq] = await Promise.all([
+  const [exercises, planDays, mesocycles, sessions, dayMarks, bodyweights, settings, dq] = await Promise.all([
     db.exercises.toArray(),
     db.planDays.toArray(),
     db.mesocycles.toArray(),
     db.sessions.toArray(),
     db.dayMarks.toArray(),
+    db.bodyweights.toArray(),
     db.settings.get(SETTINGS_KEY),
     db.meta.get(META_DATA_QUALITY),
   ])
@@ -24,6 +25,7 @@ export async function readAll(db: GymDB): Promise<BackupData> {
     mesocycles: mesocycles.sort(byId),
     sessions: sessions.sort(byId),
     dayMarks: dayMarks.sort(byId),
+    bodyweights: bodyweights.sort(byId),
     settings: settings?.value ?? null,
     dataQuality: (dq?.value as BackupData['dataQuality']) ?? null,
   }
@@ -70,7 +72,7 @@ export function parseImportText(text: string, now = Date.now()): ParsedImport {
 
 export type ImportMode = 'replace' | 'merge'
 export interface CollectionDiff { added: number; updated: number; unchanged: number; removed: number }
-export type ImportPreview = Record<'exercises' | 'planDays' | 'mesocycles' | 'sessions' | 'dayMarks', CollectionDiff> & {
+export type ImportPreview = Record<'exercises' | 'planDays' | 'mesocycles' | 'sessions' | 'dayMarks' | 'bodyweights', CollectionDiff> & {
   settings: 'keep' | 'replace' | 'none'
 }
 
@@ -109,21 +111,23 @@ export async function previewImport(db: GymDB, data: BackupData, mode: ImportMod
     mesocycles: diff(cur.mesocycles, data.mesocycles, mode),
     sessions: diff(cur.sessions, data.sessions, mode),
     dayMarks: diff(cur.dayMarks, data.dayMarks, mode),
+    bodyweights: diff(cur.bodyweights ?? [], data.bodyweights ?? [], mode),
     settings: data.settings ? 'replace' : cur.settings ? 'keep' : 'none',
   }
 }
 
 /** replace: borra todo y carga lo importado. merge: upsert por id (gana lo importado), no borra nada. */
 export async function applyImport(db: GymDB, data: BackupData, mode: ImportMode): Promise<void> {
-  await db.transaction('rw', [db.exercises, db.planDays, db.mesocycles, db.sessions, db.dayMarks, db.settings, db.meta], async () => {
+  await db.transaction('rw', [db.exercises, db.planDays, db.mesocycles, db.sessions, db.dayMarks, db.bodyweights, db.settings, db.meta], async () => {
     if (mode === 'replace') {
-      await Promise.all([db.exercises.clear(), db.planDays.clear(), db.mesocycles.clear(), db.sessions.clear(), db.dayMarks.clear(), db.settings.clear(), db.meta.clear()])
+      await Promise.all([db.exercises.clear(), db.planDays.clear(), db.mesocycles.clear(), db.sessions.clear(), db.dayMarks.clear(), db.bodyweights.clear(), db.settings.clear(), db.meta.clear()])
     }
     await db.exercises.bulkPut(data.exercises)
     await db.planDays.bulkPut(data.planDays)
     await db.mesocycles.bulkPut(data.mesocycles)
     await db.sessions.bulkPut(data.sessions)
     await db.dayMarks.bulkPut(data.dayMarks)
+    await db.bodyweights.bulkPut(data.bodyweights ?? [])
     if (data.settings) await db.settings.put({ key: SETTINGS_KEY, value: data.settings as Settings })
     if (data.dataQuality) await db.meta.put({ key: META_DATA_QUALITY, value: data.dataQuality })
   })

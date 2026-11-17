@@ -24,7 +24,7 @@ for (const [width, height] of [[375, 667], [320, 568]] as const) {
     await expect(page.getByRole('heading', { name: 'Superserie' })).toBeVisible()
     const grupo = await page.evaluate(() => location.hash)
 
-    const routes = ['#/', session, `${session}/1`, grupo, '#/historial', '#/historial?ver=ejercicios', '#/historial/ej/incline_db_press', '#/volumen', '#/plan', '#/ejercicios', '#/ajustes']
+    const routes = ['#/', session, `${session}/1`, grupo, '#/historial', '#/historial?ver=ejercicios', '#/historial/ej/incline_db_press', '#/volumen', '#/plan', '#/peso', '#/ejercicios', '#/ajustes']
     const problems: string[] = []
     for (const hash of routes) {
       await page.goto(`./${hash}`)

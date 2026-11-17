@@ -10,6 +10,7 @@ const LABELS: Record<Exclude<keyof ImportPreview, 'settings'>, string> = {
   mesocycles: 'Mesociclos',
   sessions: 'Sesiones',
   dayMarks: 'Días salteados',
+  bodyweights: 'Pesos corporales',
 }
 
 type State =

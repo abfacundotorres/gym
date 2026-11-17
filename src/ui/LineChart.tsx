@@ -6,7 +6,7 @@ export interface Point { x: string; y: number; label: string }
  * Gráfico de línea de una sola serie, SVG propio. Sin eje doble: cada medida va en su propio gráfico.
  * Toque/hover: punto más cercano con tooltip. Responsive por viewBox.
  */
-export function LineChart({ title, points, unit, height = 160 }: { title: string; points: Point[]; unit: string; height?: number }) {
+export function LineChart({ title, points, unit, height = 160, countLabel = 'sesiones' }: { title: string; points: Point[]; unit: string; height?: number; countLabel?: string }) {
   const [active, setActive] = useState<number | null>(null)
   const id = useId()
   if (points.length === 0) return null
@@ -33,7 +33,7 @@ export function LineChart({ title, points, unit, height = 160 }: { title: string
       <figcaption id={id} className="flex items-baseline justify-between text-sm">
         <span className="font-medium">{title}</span>
         <span className="tabular-nums text-xs text-slate-400" aria-live="polite">
-          {a ? `${a.x}: ${fmt(a.y)} ${unit}${a.label ? ` · ${a.label}` : ''}` : `${points.length} sesiones`}
+          {a ? `${a.x}: ${fmt(a.y)} ${unit}${a.label ? ` · ${a.label}` : ''}` : `${points.length} ${countLabel}`}
         </span>
       </figcaption>
       <svg

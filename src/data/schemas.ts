@@ -164,6 +164,8 @@ const session = z.object({
   exerciseIds: z.array(z.string()),
 })
 
+const bodyweight = z.object({ id: z.string(), date: isoDate, kg: z.number().min(20).max(400) })
+
 const dayMark = z.object({ id: z.string(), date: isoDate, kind: z.literal('skipped'), planDayId: z.string() })
 
 const settings = z.object({
@@ -186,6 +188,8 @@ export const backupSchema = z.object({
     mesocycles: z.array(mesocycle),
     sessions: z.array(session),
     dayMarks: z.array(dayMark),
+    /** Opcional (D-70): backups anteriores no lo traen. */
+    bodyweights: z.array(bodyweight).optional(),
     settings: settings.nullable(),
     dataQuality: dataQuality.nullable(),
   }),

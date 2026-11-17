@@ -14,6 +14,7 @@ import { PlanPage } from './features/plan/PlanPage'
 import { ReviewPage } from './features/plan/ReviewPage'
 import { ExercisesPage } from './features/exercises/ExercisesPage'
 import { ExerciseEditPage } from './features/exercises/ExerciseEditPage'
+import { BodyweightPage } from './features/body/BodyweightPage'
 
 export function App() {
   useTheme()
@@ -32,6 +33,7 @@ export function App() {
           <Route path="plan/revision" element={<ReviewPage />} />
           <Route path="ejercicios" element={<ExercisesPage />} />
           <Route path="ejercicios/:exId" element={<ExerciseEditPage />} />
+          <Route path="peso" element={<BodyweightPage />} />
           <Route path="ajustes" element={<SettingsPage />} />
           <Route path="*" element={<NotFound />} />
         </Route>
