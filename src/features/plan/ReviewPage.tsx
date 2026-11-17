@@ -6,9 +6,10 @@ import { useExerciseMap, useSettings } from '../../data/hooks'
 import { startNextMesocycle } from '../../data/planRepo'
 import { formatDDMM, toISODate } from '../../engine/dates'
 import { num } from '../../engine/format'
-import { applyProposals, mesocycleWeek, nextMesocycleStart, pausedWeeks, reviewMesocycle, type Proposal } from '../../engine/periodization'
+import { applyProposals, mesocycleWeek, nextMesocycleStart, pausedWeeks, reviewMesocycle, withAllRotations, type Proposal } from '../../engine/periodization'
 import { formatSet } from '../../engine/session'
 import { MUSCLE_LABELS, type Phase } from '../../engine/types'
+import { variantLabel } from '../../engine/variants'
 import { Button, Card } from '../../ui/Button'
 import { PhasePicker } from './PhasePicker'
 
@@ -36,6 +37,8 @@ export function ReviewPage() {
   const isOn = (p: Proposal, i: number) => (p.kind === 'rotate' && p.optional ? toggled.has(i) : !toggled.has(i))
   const accepted = review.proposals.filter((p, i) => isOn(p, i))
   const start = nextMesocycleStart(meso, today, paused)
+  const rotations = review.proposals.filter((p) => p.kind === 'rotate')
+  const allRotating = rotations.length > 0 && rotations.every((p) => accepted.includes(p))
 
   const nextPhase = phaseChoice !== undefined ? phaseChoice : (meso.phase ?? null)
 
@@ -91,8 +94,31 @@ export function ReviewPage() {
         <p className="text-sm text-slate-300">{review.stalled.length ? review.stalled.map(name).join(', ') : 'Ninguno.'}</p>
       </div>
 
+      {review.variantsUsed.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="font-semibold">Variantes que hiciste</h2>
+          <Card>
+            <ul className="space-y-2.5 text-sm">
+              {review.variantsUsed.map((v) => (
+                <li key={`${v.planDayId}-${v.exerciseId}`}>
+                  <span className="block">{name(v.exerciseId)}</span>
+                  <span className="block text-slate-400">
+                    {v.used.map((u) => `${variantLabel(name(u.exerciseId))} ×${u.sessions}`).join(' · ')}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </div>
+      )}
+
       <div className="space-y-2">
         <h2 className="font-semibold">Propuesta para el siguiente</h2>
+        {rotations.length > 1 && (
+          <Button variant="secondary" className="w-full" onClick={() => setToggled((t) => withAllRotations(review.proposals, t, !allRotating))}>
+            {allRotating ? 'Dejar solo lo sugerido' : `Rotar todas las variantes (${rotations.length})`}
+          </Button>
+        )}
         {review.proposals.length === 0 ? <p className="text-sm text-slate-400">Sin cambios: mismo plan.</p> : (
           <ul className="space-y-2">
             {review.proposals.map((p, i) => (

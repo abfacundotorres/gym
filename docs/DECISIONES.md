@@ -406,3 +406,10 @@ guarda la hora en `localStorage` (`gym.restSkip`, con la clave del ejercicio o d
 (`MAX_SKIP_AGE_SEC`); si no, se usa el descanso entre guardados de D-44. No es un dato de la base: si se pierde, el descanso queda como antes. (c) **Corregir a mano:**
 al editar una serie, "Descanso (s)" (pasos de 15 s) y "Sin dato". Sin cambios de esquema de Dexie; `warmupRestSec` es opcional en el backup.
 
+**D-72. Revisión de fin de bloque: variantes hechas y "rotar todas".** (a) **Qué variante se hizo:** la revisión suma "Variantes que hiciste": para cada ejercicio del plan con
+alternativas, cuántas sesiones del bloque (en ese día del plan, sin contar el deload anterior al cierre ni las sesiones en curso) tuvieron cada variante, la más usada primero y,
+a igual cantidad, en el orden del plan (`variantsUsedIn`). Cuenta una variante solo si tuvo series cargadas y no se salteó; si no hubo ninguna, no hay fila (no se inventa nada).
+(b) **Rotar todas con un toque:** si hay más de una rotación propuesta, un botón las tilda todas ("Rotar todas las variantes (N)") y vuelve a lo sugerido ("Dejar solo lo sugerido");
+no toca las propuestas de series (`withAllRotations`). Cada rotación sigue pudiéndose destildar a mano. Rotar es lo de siempre (D-33): la variante nueva pasa a ser la titular y la vieja queda
+como alternativa. Sin cambios de datos ni de backup.
+

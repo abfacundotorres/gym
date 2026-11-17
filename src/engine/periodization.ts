@@ -151,6 +151,55 @@ export interface MesoReview {
   volume: { muscle: Muscle; avg: number; target: [number, number]; status: VolumeStatus }[]
   stalled: string[]
   proposals: Proposal[]
+  /** Qué variante se hizo en el bloque, por ejercicio del plan con alternativas (D-72). */
+  variantsUsed: VariantUse[]
+}
+
+export interface VariantUse { planDayId: string; exerciseId: string; used: { exerciseId: string; sessions: number }[] }
+
+/**
+ * Variantes que realmente se hicieron en el bloque, para cada ejercicio del plan que tiene alternativas: cuántas sesiones
+ * con cada una (el ejercicio del plan y sus alternativas, en ese día). Sin sesiones no hay fila: no se inventa nada.
+ */
+export function variantsUsedIn(meso: Mesocycle, sessions: Session[], planDays: PlanDay[], paused: ISODate[] = []): VariantUse[] {
+  const start = weekStart(meso.startDate)
+  const end = mesocycleEnd(meso, paused)
+  const inMeso = sessions.filter((s) => s.status === 'finished' && s.date >= start && s.date < end)
+  const out: VariantUse[] = []
+  for (const day of planDays) {
+    for (const it of day.items) {
+      if (!it.alt.length) continue
+      const ids = new Set([it.exerciseId, ...it.alt])
+      const counts = new Map<string, number>()
+      for (const s of inMeso) {
+        if (s.planDayId !== day.id) continue
+        const seen = new Set(s.items.filter((i) => ids.has(i.exerciseId) && !i.skipped && i.sets.length > 0).map((i) => i.exerciseId))
+        for (const id of seen) counts.set(id, (counts.get(id) ?? 0) + 1)
+      }
+      if (!counts.size) continue
+      // La más usada primero; a igual cantidad, el orden del plan (la titular y después las alternativas).
+      const order = [it.exerciseId, ...it.alt]
+      const used = [...counts].map(([exerciseId, n]) => ({ exerciseId, sessions: n }))
+        .sort((a, b) => b.sessions - a.sessions || order.indexOf(a.exerciseId) - order.indexOf(b.exerciseId))
+      out.push({ planDayId: day.id, exerciseId: it.exerciseId, used })
+    }
+  }
+  return out
+}
+
+/**
+ * "Rotar todo lo que tenga variantes" con un toque: devuelve el conjunto de propuestas invertidas (`toggled`, mismo criterio que la
+ * pantalla: las opcionales empiezan destildadas y el resto tildadas) con todas las rotaciones tildadas o destildadas. Las de series no se tocan.
+ */
+export function withAllRotations(proposals: Proposal[], toggled: Set<number>, on: boolean): Set<number> {
+  const next = new Set(toggled)
+  proposals.forEach((p, i) => {
+    if (p.kind !== 'rotate') return
+    const wantToggled = p.optional ? on : !on
+    if (wantToggled) next.add(i)
+    else next.delete(i)
+  })
+  return next
 }
 
 export function reviewMesocycle(
@@ -250,7 +299,7 @@ export function reviewMesocycle(
       }
     }
   }
-  return { prs, volume, stalled, proposals }
+  return { prs, volume, stalled, proposals, variantsUsed: variantsUsedIn(meso, allSessions, planDays, paused) }
 }
 
 /** Aplica propuestas aceptadas al plan (puro). En una rotación, la variante vieja pasa a alternativa. */
