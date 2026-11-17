@@ -49,9 +49,10 @@ Unidades: `per_side` = kg de discos por lado, sin barra/carro · `per_hand` = kg
 `{ id, name, weekday (0=dom … 6=sáb), items: [{ exerciseId, sets, rangeOverride?, alt: [exerciseId], optional? }] }`
 
 ### Mesocycle
-`{ id, startDate, accumulationWeeks (3-8), deloadWeeks (0-2), deloadFrom?: ISO date (lunes; deload adelantado), status: 'active'|'finished', notes, phase?: 'bulk'|'cut'|'maintain' }`
+`{ id, startDate, accumulationWeeks (3-8), deloadWeeks (0-2), deloadFrom?: ISO date (lunes; deload adelantado), status: 'active'|'finished', notes, phase?: 'bulk'|'cut'|'maintain', nextPlan?: PlanDay[] }`
 - `phase` (opcional, D-69): fase declarada del mesociclo. Sin el campo, el motor se comporta como siempre. Compatible hacia atrás: un backup
   anterior se lee igual y la versión del formato no cambia.
+- `nextPlan` (opcional, D-73): plantilla del bloque siguiente, un `PlanDay[]` (mismo formato que `planDays`). Solo en el mesociclo activo; al empezar el siguiente se aplica y se borra. Un backup anterior no lo trae y se lee igual.
 
 ### Session
 | campo | tipo | notas |

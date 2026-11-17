@@ -1,6 +1,7 @@
 import { addDays, daysBetween, weekStart, type ISODate } from './dates'
 import { comparableKg } from './load'
 import { exposuresOf } from './history'
+import { promoteVariant } from './nextBlock'
 import { phaseVolumeTarget } from './phase'
 import { findPRs, type PR } from './prs'
 import { trendOf, type Trend } from './stagnation'
@@ -209,6 +210,8 @@ export function reviewMesocycle(
   planDays: PlanDay[],
   settings: Pick<Settings, 'kgPerBrick' | 'volumeTarget'>,
   paused: ISODate[] = [],
+  /** Plan sobre el que se proponen los cambios del siguiente bloque (D-73): la plantilla, si se preparó. Por defecto, el de hoy. */
+  nextPlan: PlanDay[] = planDays,
 ): MesoReview {
   const K = settings.kgPerBrick
   const start = weekStart(meso.startDate)
@@ -254,7 +257,7 @@ export function reviewMesocycle(
 
   // Propuestas
   const proposals: Proposal[] = []
-  for (const day of planDays) {
+  for (const day of nextPlan) {
     for (const it of day.items) {
       if (!stalled.includes(it.exerciseId) || !it.alt.length) continue
       const ex = exercises.get(it.exerciseId)!
@@ -265,7 +268,7 @@ export function reviewMesocycle(
   // Molestias o dolor en 2 de las últimas 3 veces (D-52): rotar variante, tildado por defecto.
   const finishedSessions = allSessions.filter((s) => s.status === 'finished')
   const alreadyRotating = (dayId: string, exId: string) => proposals.some((p) => p.kind === 'rotate' && p.planDayId === dayId && p.exerciseId === exId)
-  for (const day of planDays) {
+  for (const day of nextPlan) {
     for (const it of day.items) {
       if (it.optional || alreadyRotating(day.id, it.exerciseId)) continue
       const recent = exposuresOf(finishedSessions, it.exerciseId).slice(-3)
@@ -276,7 +279,7 @@ export function reviewMesocycle(
     }
   }
   // Rotación opcional (§6.5): el resto de los ejercicios con alternativa de la misma familia. Destildada por defecto.
-  for (const day of planDays) {
+  for (const day of nextPlan) {
     for (const it of day.items) {
       if (stalled.includes(it.exerciseId) || it.optional || alreadyRotating(day.id, it.exerciseId)) continue
       const ex = exercises.get(it.exerciseId)
@@ -288,7 +291,7 @@ export function reviewMesocycle(
     for (const v of volume) {
       if (v.status === 'in') continue
       // ejercicio del plan con este músculo como primario
-      const cands = planDays.flatMap((d) => d.items.filter((i) => !i.optional && exercises.get(i.exerciseId)?.primary.includes(v.muscle)).map((i) => ({ d, i })))
+      const cands = nextPlan.flatMap((d) => d.items.filter((i) => !i.optional && exercises.get(i.exerciseId)?.primary.includes(v.muscle)).map((i) => ({ d, i })))
       if (!cands.length) continue
       if (v.status === 'below') {
         const c = cands.reduce((a, b) => (b.i.sets < a.i.sets ? b : a))
@@ -311,7 +314,7 @@ export function applyProposals(planDays: PlanDay[], accepted: Proposal[]): PlanD
       for (const p of accepted) {
         if (p.planDayId !== d.id || p.exerciseId !== it.exerciseId) continue
         if (p.kind === 'sets') out = { ...out, sets: p.to }
-        else out = { ...out, exerciseId: p.to, alt: [it.exerciseId, ...out.alt.filter((a) => a !== p.to)] }
+        else out = promoteVariant(out, p.to)
       }
       return out
     }),

@@ -29,11 +29,23 @@ export async function startNextMesocycle(db: GymDB, prev: Mesocycle, start: ISOD
     ...(phase ? { phase } : {}),
   }
   await db.transaction('rw', db.mesocycles, db.planDays, async () => {
-    await db.mesocycles.put({ ...prev, status: 'finished' })
+    // La plantilla del bloque que se cierra ya se aplicó (o se descartó): no queda en el historial.
+    const { nextPlan: _applied, ...closed } = prev
+    await db.mesocycles.put({ ...closed, status: 'finished' })
     await db.mesocycles.put(next)
     if (plan) await db.planDays.bulkPut(plan)
   })
   return next
+}
+
+/** Guarda (o, con null, descarta) la plantilla del bloque siguiente en el mesociclo activo (D-73). */
+export async function saveNextPlan(db: GymDB, mesoId: string, plan: PlanDay[] | null): Promise<void> {
+  await db.transaction('rw', db.mesocycles, async () => {
+    const m = await db.mesocycles.get(mesoId)
+    if (!m || m.status !== 'active') return
+    const { nextPlan: _old, ...rest } = m
+    await db.mesocycles.put(plan ? { ...rest, nextPlan: plan } : rest)
+  })
 }
 
 export async function createFirstMesocycle(db: GymDB, today: ISODate): Promise<Mesocycle> {

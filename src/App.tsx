@@ -11,6 +11,7 @@ import { HistoryPage } from './features/history/HistoryPage'
 import { ExerciseHistoryPage } from './features/history/ExerciseHistoryPage'
 import { VolumePage } from './features/volume/VolumePage'
 import { PlanPage } from './features/plan/PlanPage'
+import { NextBlockPage } from './features/plan/NextBlockPage'
 import { ReviewPage } from './features/plan/ReviewPage'
 import { ExercisesPage } from './features/exercises/ExercisesPage'
 import { ExerciseEditPage } from './features/exercises/ExerciseEditPage'
@@ -31,6 +32,7 @@ export function App() {
           <Route path="volumen" element={<VolumePage />} />
           <Route path="plan" element={<PlanPage />} />
           <Route path="plan/revision" element={<ReviewPage />} />
+          <Route path="plan/siguiente" element={<NextBlockPage />} />
           <Route path="ejercicios" element={<ExercisesPage />} />
           <Route path="ejercicios/:exId" element={<ExerciseEditPage />} />
           <Route path="peso" element={<BodyweightPage />} />

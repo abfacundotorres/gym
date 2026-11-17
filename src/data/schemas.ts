@@ -120,6 +120,8 @@ const mesocycle = z.object({
   status: z.enum(['active', 'finished']),
   notes: z.string(),
   phase: z.enum(['bulk', 'cut', 'maintain']).optional(),
+  /** Opcional (D-73): la plantilla del bloque siguiente. */
+  nextPlan: z.array(planDay).optional(),
 })
 
 const setEntry = z.object({

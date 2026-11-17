@@ -413,3 +413,13 @@ a igual cantidad, en el orden del plan (`variantsUsedIn`). Cuenta una variante s
 no toca las propuestas de series (`withAllRotations`). Cada rotación sigue pudiéndose destildar a mano. Rotar es lo de siempre (D-33): la variante nueva pasa a ser la titular y la vieja queda
 como alternativa. Sin cambios de datos ni de backup.
 
+**D-73. Plantilla del bloque siguiente, preparada de antemano.** En Plan → "Preparar el bloque siguiente" (pantalla `/plan/siguiente`) se arma una **copia editable del plan de hoy**
+para el bloque que viene: series, qué variante es la titular (la anterior pasa a alternativa, igual que al rotar en la revisión) y ejercicios que se sacan. Agregar ejercicios nuevos
+no está: se hace en el Plan cuando empieza el bloque. **Dónde se guarda:** campo opcional `nextPlan` del mesociclo activo (no hay tabla ni migración de Dexie; viaja en el backup).
+**Cómo se aplica:** al "Empezar el siguiente" desde la Revisión, el plan del bloque nuevo es la plantilla ya resuelta (`resolveNextPlan`) más lo que se acepte en la revisión; la plantilla
+no queda ni en el bloque cerrado ni en el nuevo. **Qué prevalece:** la plantilla es tuya y no se pisa sin que lo aceptes: la revisión propone encima de ella (series por volumen
+sobre las series de la plantilla; no vuelve a proponer rotar lo que ya rotaste), pero lo que muestra del bloque que termina (PRs, volumen, estancados, variantes que hiciste) sigue saliendo
+del plan de hoy. **Casos borde:** los días de la plantilla se emparejan por id con los del plan de hoy (un día que la plantilla no trae queda como está; uno que ya no existe se ignora);
+se descartan los ejercicios que ya no existen o están archivados y, de las alternativas, las inutilizables. Si cambiás el plan de hoy después de preparar la plantilla, al aplicarla
+gana la plantilla (es lo que planificaste). Las notas del bloque nuevo dicen cuántos cambios traía la plantilla.
+

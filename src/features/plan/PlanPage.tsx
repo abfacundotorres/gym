@@ -6,6 +6,7 @@ import { useExerciseMap } from '../../data/hooks'
 import { createVariant } from '../../data/exerciseRepo'
 import { createFirstMesocycle, deloadThisWeek, saveMesocycle, setPlanAlt, setPlanItemSets } from '../../data/planRepo'
 import { formatDDMM, toISODate, weekStart } from '../../engine/dates'
+import { planChanges } from '../../engine/nextBlock'
 import { deloadStart, mesocycleEnd, mesocycleWeek, pausedWeeks } from '../../engine/periodization'
 import { PHASE_HINT, PHASE_LABEL } from '../../engine/phase'
 import { variantLabel } from '../../engine/variants'
@@ -70,6 +71,9 @@ export function PlanPage() {
               <Button onClick={() => setEditing(true)}>Editar</Button>
               <Link to="/plan/revision" className={LINK_BUTTON}>Revisión</Link>
             </div>
+            <Link to="/plan/siguiente" className={`${LINK_BUTTON} w-full`}>
+              {meso.nextPlan ? `Bloque siguiente · ${planChanges(data.planDays, meso.nextPlan).length} cambios` : 'Preparar el bloque siguiente'}
+            </Link>
             {week && !week.isDeload && (
               <Button variant="ghost" className="w-full text-sm" onClick={() => confirm('¿Pasar esta semana a deload? El mesociclo termina al final del deload.') && void deloadThisWeek(db, meso, today)}>
                 Hacer deload esta semana

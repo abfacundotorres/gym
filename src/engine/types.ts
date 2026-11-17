@@ -71,6 +71,8 @@ export interface Mesocycle {
   status: 'active' | 'finished'
   notes: string
   phase?: Phase
+  /** Plantilla del bloque siguiente, preparada de antemano (D-73): copia editable del plan que se aplica al empezarlo. */
+  nextPlan?: PlanDay[]
 }
 
 export interface SetEntry {
