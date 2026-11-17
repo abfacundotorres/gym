@@ -9,7 +9,8 @@ import { formatLoad } from '../../engine/load'
 import { formatSet, sessionProgress } from '../../engine/session'
 import { groupView } from '../../engine/superset'
 import { haptic } from '../../lib/haptics'
-import { startRest } from '../../lib/restTimer'
+import { restFromSkip } from '../../engine/rest'
+import { startRest, takeRestSkip } from '../../lib/restTimer'
 import { useWakeLock } from '../../lib/wakeLock'
 import { BottomBar } from '../../ui/BottomBar'
 import { Button } from '../../ui/Button'
@@ -69,8 +70,14 @@ export function SupersetPage() {
   const nextName = nextIdx != null ? exercises.get(session.items[nextIdx]!.exerciseId)?.name : undefined
   const goNext = () => navigate(nextIdx != null ? `/sesion/${session.id}/${nextIdx}` : `/sesion/${session.id}`)
 
+  const groupKey = `group:${view.group}`
+
   async function saveRound() {
-    const entries = pending.map((m) => ({ index: m.idx, set: { type: 'W' as const, weight: drafts[m.idx]!.weight, reps: drafts[m.idx]!.reps } }))
+    const skip = takeRestSkip(groupKey)
+    const entries = pending.map((m) => {
+      const r = restFromSkip(m.item.sets.at(-1)?.doneAt, skip)
+      return { index: m.idx, set: { type: 'W' as const, weight: drafts[m.idx]!.weight, reps: drafts[m.idx]!.reps, ...(r != null ? { restSec: r } : {}) } }
+    })
     const records = pending.filter((m, n) => wouldBeRecord(m.ex, m.item, entries[n]!.set, m.previous, K))
     haptic(records.length ? 'record' : 'tap')
     if (records.length) {
@@ -80,7 +87,7 @@ export function SupersetPage() {
     await addRound(db, session.id, entries)
     // Un solo descanso, al cerrar la ronda: el más largo del grupo.
     const rest = Math.max(0, ...pending.filter((m) => m.ex.unit !== 'minutes').map((m) => m.restSec))
-    if (rest > 0) startRest(rest, 'Superserie')
+    if (rest > 0) startRest(rest, 'Superserie', undefined, groupKey)
   }
 
   return (

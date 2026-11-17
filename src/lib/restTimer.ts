@@ -4,7 +4,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react'
  * Temporizador de descanso basado en timestamps: el tiempo restante se calcula
  * siempre como endsAt − ahora, así sobrevive al bloqueo de pantalla y a recargas.
  */
-export interface RestState { endsAt: number; durationMs: number; label: string; alarmed: boolean }
+export interface RestState { endsAt: number; durationMs: number; label: string; alarmed: boolean; /** A qué ejercicio (o superserie) corresponde. */ key?: string }
 
 const KEY = 'gym.restTimer'
 let state: RestState | null = read()
@@ -36,9 +36,9 @@ function unlockAudio() {
   } catch { /* sin audio */ }
 }
 
-export function startRest(seconds: number, label: string, now = Date.now()) {
+export function startRest(seconds: number, label: string, now = Date.now(), key?: string) {
   unlockAudio()
-  write({ endsAt: now + seconds * 1000, durationMs: seconds * 1000, label, alarmed: false })
+  write({ endsAt: now + seconds * 1000, durationMs: seconds * 1000, label, alarmed: false, ...(key ? { key } : {}) })
 }
 export function addRest(seconds: number) {
   if (!state) return
@@ -46,6 +46,34 @@ export function addRest(seconds: number) {
 }
 export function stopRest() {
   write(null)
+}
+
+const SKIP_KEY = 'gym.restSkip'
+
+/**
+ * "Saltar" o "Cerrar": corta el temporizador y recuerda cuándo, porque es cuando empezaste la serie siguiente (D-71).
+ * La próxima serie que se guarde de ese ejercicio usa esa hora para el descanso real (`takeRestSkip`).
+ */
+export function skipRest(now = Date.now()) {
+  const key = state?.key
+  write(null)
+  try {
+    if (key) localStorage.setItem(SKIP_KEY, JSON.stringify({ at: now, key }))
+  } catch { /* sin almacenamiento: se usa el descanso entre guardados */ }
+}
+
+/** La hora de la última marca de "Saltar" de ese ejercicio (y la consume), o undefined. Una marca de otro ejercicio no se toca. */
+export function takeRestSkip(key: string): number | undefined {
+  try {
+    const raw = localStorage.getItem(SKIP_KEY)
+    if (!raw) return undefined
+    const m = JSON.parse(raw) as { at?: unknown; key?: unknown }
+    if (m.key !== key || typeof m.at !== 'number') return undefined
+    localStorage.removeItem(SKIP_KEY)
+    return m.at
+  } catch {
+    return undefined
+  }
 }
 
 function beep() {

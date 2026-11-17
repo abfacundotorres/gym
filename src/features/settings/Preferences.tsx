@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { getSettings } from '../../data/backup'
 import { getDB, SETTINGS_KEY } from '../../data/db'
 import { useSettings } from '../../data/hooks'
+import { DEFAULT_WARMUP_REST_SEC, MAX_WARMUP_REST_SEC } from '../../engine/rest'
 import type { Settings } from '../../engine/types'
 import { Chip } from '../../ui/Stepper'
 
@@ -34,6 +35,23 @@ export function Preferences() {
         ) : (
           <Chip active={false} onClick={() => void Notification.requestPermission().then(setPerm)}>Activar</Chip>
         )}
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="flex-1">
+          Descanso entre aproximaciones
+          <span className="block text-xs text-slate-400">Segundos; 0 = sin temporizador. Una pauta general: corto, lo justo para sentirte listo.</span>
+        </span>
+        <input
+          key={settings.warmupRestSec ?? 'def'}
+          aria-label="Descanso entre aproximaciones (s)"
+          inputMode="numeric"
+          defaultValue={String(settings.warmupRestSec ?? DEFAULT_WARMUP_REST_SEC)}
+          onBlur={(e) => {
+            const v = Number(e.target.value.replace(',', '.'))
+            if (Number.isInteger(v) && v >= 0 && v <= MAX_WARMUP_REST_SEC) void update({ warmupRestSec: v })
+          }}
+          className="h-11 w-16 rounded-xl bg-bg text-center tabular-nums ring-1 ring-line"
+        />
       </div>
       <div className="flex items-center gap-2">
         <span className="flex-1">

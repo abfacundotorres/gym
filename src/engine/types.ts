@@ -134,6 +134,8 @@ export interface Settings {
   volumeTarget: Record<Muscle, [number, number]>
   theme: 'dark' | 'light'
   lastBackupAt: number | null
+  /** Descanso entre aproximaciones (s); 0 = sin temporizador. Sin campo = el de por defecto (D-71). */
+  warmupRestSec?: number
 }
 
 export function defaultSettings(): Settings {

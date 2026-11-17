@@ -17,7 +17,8 @@ import { deloadSets } from '../../engine/periodization'
 import { reducedSets } from '../../engine/readiness'
 import type { Exercise } from '../../engine/types'
 import { haptic } from '../../lib/haptics'
-import { startRest } from '../../lib/restTimer'
+import { restFromSkip, DEFAULT_WARMUP_REST_SEC } from '../../engine/rest'
+import { startRest, takeRestSkip } from '../../lib/restTimer'
 import { useWakeLock } from '../../lib/wakeLock'
 import { BottomBar } from '../../ui/BottomBar'
 import { Button } from '../../ui/Button'
@@ -101,8 +102,12 @@ function ExerciseScreen() {
       setRecord(formatSet({ ...d, id: '' }))
       setTimeout(() => setRecord(null), 3200)
     }
-    await addSet(db, session.id, idx, d)
-    if (d.type === 'W' && restSec > 0 && !isCardio) startRest(restSec, ex.name)
+    // Si tocaste "Saltar" al empezar esta serie, el descanso real se mide hasta ahí y no hasta que la guardás (D-71).
+    const skipped = restFromSkip(item.sets.at(-1)?.doneAt, takeRestSkip(ex.id))
+    await addSet(db, session.id, idx, skipped != null ? { ...d, restSec: skipped } : d)
+    const warmupRest = settings.warmupRestSec ?? DEFAULT_WARMUP_REST_SEC
+    if (d.type === 'W' && restSec > 0 && !isCardio) startRest(restSec, ex.name, undefined, ex.id)
+    else if (d.type === 'A' && warmupRest > 0 && !isCardio) startRest(warmupRest, `${ex.name} (aprox.)`, undefined, ex.id)
   }
 
   const notDone = (it: (typeof session.items)[number]) => {

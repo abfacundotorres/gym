@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { formatRest } from '../format'
-import { averageRest, MAX_REST_SEC, MIN_REST_SEC, restBetween } from '../rest'
+import { averageRest, DEFAULT_WARMUP_REST_SEC, MAX_REST_SEC, MAX_SKIP_AGE_SEC, MIN_REST_SEC, restBetween, restFromSkip } from '../rest'
 import { summaryText } from '../session'
 import type { Exercise, PlanDay, Session, SetEntry } from '../types'
 
@@ -35,5 +35,40 @@ describe('descanso real (D-44)', () => {
     const without = { ...base, items: [{ exerciseId: 'b', sets: [S(), S()] }] } as Session
     expect(summaryText(withRest, plan, ex)).toContain('Banca: 25×8, 25×8, 25×8 · desc. ~2:30')
     expect(summaryText(without, plan, ex)).not.toContain('desc.')
+  })
+})
+
+describe('descanso medido hasta "Saltar" (D-71)', () => {
+  const prev = 1_000_000
+  it('usa el momento de "Saltar" y no el de guardar la serie', () => {
+    // anterior guardada a las 0:00; "Saltar" a 1:00 (empezó la serie); la guardó a 1:40
+    expect(restFromSkip(prev, prev + 60_000, prev + 100_000)).toBe(60)
+    expect(restBetween(prev, prev + 100_000)).toBe(100) // sin marca daría esto (incluye lo que tardó la serie)
+  })
+  it('sin marca o sin serie anterior, no hay dato (se usa el descanso entre guardados)', () => {
+    expect(restFromSkip(prev, undefined, prev + 100_000)).toBeUndefined()
+    expect(restFromSkip(prev, null, prev + 100_000)).toBeUndefined()
+    expect(restFromSkip(undefined, prev + 60_000, prev + 100_000)).toBeUndefined()
+    expect(restFromSkip(null, prev + 60_000, prev + 100_000)).toBeUndefined()
+  })
+  it('una marca anterior a la serie previa es de otra serie: no vale', () => {
+    expect(restFromSkip(prev, prev - 5_000, prev + 100_000)).toBeUndefined()
+    expect(restFromSkip(prev, prev, prev + 100_000)).toBeUndefined()
+  })
+  it('una marca del futuro no vale', () => {
+    expect(restFromSkip(prev, prev + 200_000, prev + 100_000)).toBeUndefined()
+  })
+  it('una marca vieja (más de 15 min antes de guardar) ya no se refiere a esta serie', () => {
+    const skipped = prev + 60_000
+    expect(restFromSkip(prev, skipped, skipped + MAX_SKIP_AGE_SEC * 1000)).toBe(60) // justo en el límite
+    expect(restFromSkip(prev, skipped, skipped + MAX_SKIP_AGE_SEC * 1000 + 1)).toBeUndefined()
+  })
+  it('un descanso de menos de 10 s sigue sin contar como descanso', () => {
+    expect(restFromSkip(prev, prev + (MIN_REST_SEC - 1) * 1000, prev + 100_000)).toBeUndefined()
+    expect(restFromSkip(prev, prev + MIN_REST_SEC * 1000, prev + 100_000)).toBe(MIN_REST_SEC)
+  })
+  it('el descanso por defecto entre aproximaciones es corto', () => {
+    expect(DEFAULT_WARMUP_REST_SEC).toBeGreaterThan(0)
+    expect(DEFAULT_WARMUP_REST_SEC).toBeLessThanOrEqual(90)
   })
 })

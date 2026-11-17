@@ -1,4 +1,4 @@
-import { addRest, formatClock, stopRest, useRestTimer } from '../lib/restTimer'
+import { addRest, formatClock, skipRest, useRestTimer } from '../lib/restTimer'
 
 export function RestTimerBar() {
   const { state, remainingMs } = useRestTimer()
@@ -14,7 +14,7 @@ export function RestTimerBar() {
           <div className="truncate text-xs text-slate-400">{done ? '¡A la próxima serie!' : `Descanso · ${state.label}`}</div>
         </div>
         <button className="min-h-11 rounded-xl bg-raised px-3.5 text-sm font-medium" onClick={() => addRest(30)}>+30 s</button>
-        <button className="min-h-11 rounded-xl bg-raised px-3.5 text-sm font-medium" onClick={stopRest}>{done ? 'Cerrar' : 'Saltar'}</button>
+        <button className="min-h-11 rounded-xl bg-raised px-3.5 text-sm font-medium" onClick={() => skipRest()}>{done ? 'Cerrar' : 'Saltar'}</button>
       </div>
     </div>
   )

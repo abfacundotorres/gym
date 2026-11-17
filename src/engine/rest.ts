@@ -16,6 +16,25 @@ export function restBetween(prevDoneAt: number | null | undefined, now: number):
   return sec >= MIN_REST_SEC && sec <= MAX_REST_SEC ? sec : undefined
 }
 
+/** Descanso por defecto entre aproximaciones (s), editable en Ajustes; 0 = sin temporizador (D-71). Pauta general: corto. */
+export const DEFAULT_WARMUP_REST_SEC = 45
+export const MAX_WARMUP_REST_SEC = 600
+
+/** Una marca de "Saltar" más vieja que esto no se usa: ya no se refiere a la serie que se está guardando. */
+export const MAX_SKIP_AGE_SEC = 15 * 60
+
+/**
+ * Descanso real usando el momento en que tocaste "Saltar" o "Cerrar" en el temporizador, que es cuando empezaste la serie
+ * siguiente (no cuando la guardás, que es después de hacerla). Solo vale si la marca es posterior a la serie anterior, no es
+ * del futuro y es reciente; si no, `undefined` y se usa el descanso entre guardados de siempre (D-71).
+ */
+export function restFromSkip(prevDoneAt: number | null | undefined, skippedAt: number | null | undefined, now = Date.now()): number | undefined {
+  if (prevDoneAt == null || skippedAt == null) return undefined
+  // `skippedAt <= prevDoneAt` ya lo cubre `restBetween` (diferencia < MIN_REST_SEC); queda explícito como defensa en profundidad.
+  if (skippedAt <= prevDoneAt || skippedAt > now || now - skippedAt > MAX_SKIP_AGE_SEC * 1000) return undefined
+  return restBetween(prevDoneAt, skippedAt)
+}
+
 /** Promedio de descanso (s) de las series efectivas con dato, o null. */
 export function averageRest(sets: SetEntry[]): number | null {
   const xs = sets.filter((s) => s.type === 'W' && s.restSec != null).map((s) => s.restSec!)

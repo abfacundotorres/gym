@@ -89,7 +89,8 @@ Unidades: `per_side` = kg de discos por lado, sin barra/carro · `per_hand` = kg
 sin problema; con "Mezclar" no toca los pesos que ya tenés y con "Reemplazar todo" los borra (como al resto de lo que no está en el archivo).
 
 ### Settings
-`{ kgPerBrick, restSecOverrides: {exerciseId: seg}, volumeTarget: {Muscle: [min, max]}, theme: 'dark'|'light', lastBackupAt: number|null }`
+`{ kgPerBrick, restSecOverrides: {exerciseId: seg}, volumeTarget: {Muscle: [min, max]}, theme: 'dark'|'light', lastBackupAt: number|null, warmupRestSec?: number }`
+- `warmupRestSec`: descanso del temporizador tras una aproximación, 0 a 600 s; si falta, 45 (D-71).
 
 ## CSV de series (`gym-series-AAAA-MM-DD.csv`)
 
