@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import fixture from '../../data/__fixtures__/seed.fixture.json'
 import { seedSchema } from '../../data/schemas'
 import { seedToData } from '../../data/seedImport'
-import { nextSetDefaults, pendingWarmups, wouldBeRecord } from '../entry'
+import { extraWarmupDefaults, nextSetDefaults, pendingWarmups, wouldBeRecord } from '../entry'
 import { exposuresOf } from '../history'
 import type { SetEntry } from '../types'
 
@@ -84,5 +84,20 @@ describe('wouldBeRecord: aviso de récord antes de guardar', () => {
     const today = { ...item, sets: [W(25, 11)] }
     expect(wouldBeRecord(incline, today, { type: 'W', weight: 25, reps: 11 }, previous, 4.2)).toBe(false)
     expect(wouldBeRecord(incline, today, { type: 'W', weight: 25, reps: 12 }, previous, 4.2)).toBe(true)
+  })
+})
+
+describe('extraWarmupDefaults: aproximación extra', () => {
+  it('copia la última fila a la vista', () => {
+    expect(extraWarmupDefaults([{ weight: 7.5, reps: 12 }, { weight: 17.5, reps: 5 }], A(22.5, 3))).toEqual({ weight: 17.5, reps: 5 })
+  })
+  it('sin filas, copia la última aproximación anotada', () => {
+    expect(extraWarmupDefaults([], A(22.5, 3))).toEqual({ weight: 22.5, reps: 3 })
+  })
+  it('sin nada, peso vacío y 8 reps', () => {
+    expect(extraWarmupDefaults([], undefined)).toEqual({ weight: null, reps: 8 })
+  })
+  it('conserva un peso vacío a la vista (no lo reemplaza por el anotado)', () => {
+    expect(extraWarmupDefaults([{ weight: null, reps: 10 }], A(22.5, 3))).toEqual({ weight: null, reps: 10 })
   })
 })

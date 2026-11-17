@@ -21,9 +21,9 @@ import { startRest } from '../../lib/restTimer'
 import { useWakeLock } from '../../lib/wakeLock'
 import { BottomBar } from '../../ui/BottomBar'
 import { Button } from '../../ui/Button'
-import { Segments } from '../../ui/Segments'
 import { Chip } from '../../ui/Stepper'
 import { SetEditor } from './SetEditor'
+import { WarmupPanel } from './WarmupPanel'
 import { SupersetPage } from './SupersetPage'
 import { todaysRecommendation } from './recommendation'
 import { useSessionData } from './useSessionData'
@@ -60,7 +60,6 @@ function ExerciseScreen() {
   const [editing, setEditing] = useState<string | null>(null)
   const [swapping, setSwapping] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [warmOpen, setWarmOpen] = useState(false)
   /** Índice de la serie recién guardada (para animarla) y aviso de récord. */
   const [fresh, setFresh] = useState<number | null>(null)
   const [record, setRecord] = useState<string | null>(null)
@@ -113,7 +112,6 @@ function ExerciseScreen() {
   }
   const doneA = done.filter((x) => x.type === 'A').length
   const complete = plannedSets > 0 && doneW.length >= plannedSets
-  const warmTotal = doneA + warmups.length
   const inProgress = session.status === 'in_progress'
 
   return (
@@ -239,36 +237,8 @@ function ExerciseScreen() {
         </div>
       ) : (
         <>
-          {editing == null && warmTotal > 0 && (
-            <div>
-              <button
-                aria-expanded={warmOpen}
-                onClick={() => setWarmOpen(!warmOpen)}
-                className="flex min-h-11 w-full items-center justify-between gap-3 rounded-2xl border border-dashed border-line px-3.5 text-sm text-slate-400"
-              >
-                <span>Entrada en calor · {warmTotal} {warmTotal === 1 ? 'aproximación' : 'aproximaciones'}</span>
-                <span className="flex items-center gap-2"><Segments done={doneA} total={warmTotal} /><span aria-hidden="true">{warmOpen ? '▴' : '▾'}</span></span>
-              </button>
-              {warmOpen && warmups.length > 0 && (
-                <ol className="mt-2 space-y-1.5" aria-label="Aproximaciones sugeridas">
-                  {warmups.map((w) => (
-                    <li key={w.weight}>
-                      <button
-                        onClick={() => void log({ type: 'A', weight: w.weight, reps: w.reps })}
-                        aria-label={`Registrar aproximación ${formatLoad(ex, w.weight, settings.kgPerBrick)} por ${w.reps}`}
-                        className="flex min-h-12 w-full items-center gap-3 rounded-2xl bg-surface px-3.5 py-2 text-left text-slate-300"
-                      >
-                        <span className="min-w-0 flex-1">
-                          <span className="digits block text-xl">{formatLoad(ex, w.weight, settings.kgPerBrick)} × {w.reps}</span>
-                          <span className="block text-[11px] text-slate-500">{w.label}</span>
-                        </span>
-                        <span className="text-lg text-slate-500">✓</span>
-                      </button>
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </div>
+          {editing == null && doneW.length === 0 && !isCardio && (
+            <WarmupPanel ex={ex} suggestions={warmups} loggedCount={doneA} lastLogged={done.filter((x) => x.type === 'A').at(-1)} onLog={log} />
           )}
 
           <ol className="space-y-2">
