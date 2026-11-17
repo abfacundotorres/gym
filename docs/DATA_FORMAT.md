@@ -17,6 +17,7 @@ y se puede volver a importar (modo **reemplazar** o **mezclar**). El esquema exa
     "mesocycles": [Mesocycle],
     "sessions":   [Session],
     "dayMarks":   [DayMark],
+    "bodyweights": [Bodyweight],   // opcional (D-70): backups anteriores no lo traen
     "settings":   Settings | null,
     "dataQuality": { "source": string, "notes": [string], "importedAt": number } | null
   }
@@ -82,6 +83,10 @@ Unidades: `per_side` = kg de discos por lado, sin barra/carro · `per_hand` = kg
 
 ### DayMark
 `{ id, date, kind: 'skipped', planDayId }`
+
+### Bodyweight
+`{ id: 'bw-AAAA-MM-DD', date: ISO date, kg: number (20-400) }`: una medición por día, opcional (D-70). Se importa en un backup sin el campo
+sin problema; con "Mezclar" no toca los pesos que ya tenés y con "Reemplazar todo" los borra (como al resto de lo que no está en el archivo).
 
 ### Settings
 `{ kgPerBrick, restSecOverrides: {exerciseId: seg}, volumeTarget: {Muscle: [min, max]}, theme: 'dark'|'light', lastBackupAt: number|null }`

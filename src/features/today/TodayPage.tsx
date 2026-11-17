@@ -7,6 +7,7 @@ import { activeSession, discardSession, finishStaleSession, startSession } from 
 import { addDays, formatDDMM, toISODate, weekStart, weekdayOf, WEEKDAYS_ES } from '../../engine/dates'
 import { deloadSuggestion, mesocycleEnd, mesocycleWeek, pausedWeeks, type DeloadReason } from '../../engine/periodization'
 import { deloadThisWeek, dismissDeloadSuggestion, META_DELOAD_DISMISSED, toggleSkipped } from '../../data/planRepo'
+import { num } from '../../engine/format'
 import { PHASE_LABEL } from '../../engine/phase'
 import { sessionProgress } from '../../engine/session'
 import type { Exercise, PlanDay, Readiness, Session } from '../../engine/types'
@@ -41,7 +42,8 @@ export function TodayPage() {
     const appSessions = allSessions.filter((s) => s.source === 'app' && s.finishedAt != null)
     const thisWeek = allSessions.filter((s) => weekStart(s.date) === monday)
     return {
-      exerciseCount, planDays, exMap, active, meso, marks, thisWeek, allSessions,
+      exerciseCount, planDays, exMap, active, meso, marks, thisWeek, allSessions, monday,
+      latestBw: await db.bodyweights.orderBy('date').last(),
       kgPerBrick: settings?.value.kgPerBrick ?? 4.2,
       dismissedThisWeek: dismissed?.value === monday,
       lastBackupAt: settings?.value.lastBackupAt ?? null,
@@ -215,6 +217,16 @@ export function TodayPage() {
               ))}
             </div>
           </details>
+          {(data.latestBw || data.meso?.phase === 'cut' || data.meso?.phase === 'bulk') && (
+            <Link to="/peso" className="flex min-h-11 items-center justify-between gap-3 rounded-2xl bg-surface px-3.5 text-sm">
+              <span className="min-w-0 truncate">
+                {data.latestBw && data.latestBw.date >= data.monday
+                  ? <>Peso de esta semana: <span className="font-semibold">{num(data.latestBw.kg)} kg</span> ✓</>
+                  : <>Anotar el peso de esta semana{data.latestBw && <span className="text-slate-400"> (último {num(data.latestBw.kg)} kg, {formatDDMM(data.latestBw.date)})</span>}</>}
+              </span>
+              <span aria-hidden="true" className="text-slate-500">›</span>
+            </Link>
+          )}
         </>
       )}
     </section>

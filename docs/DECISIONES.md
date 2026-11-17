@@ -386,3 +386,13 @@ la fase se sugiere un bloque (cut 4+1; bulk y mantenimiento 5+1) y se aplica sol
 regla. El 5 %, el 80 % y el 4+1 son heurísticas mías, no una prescripción: están en `engine/phase.ts` para cambiarlas. El siguiente
 mesociclo hereda la fase, y en la revisión de fin de bloque se puede elegir otra. Se ve en Hoy, en el Plan, en Volumen y en el Historial
 ("manteniendo").
+
+**D-70. Peso corporal opcional.** Una medición por día (`bodyweights`: `{ id: 'bw-AAAA-MM-DD', date, kg }`, 20 a 400 kg; guardar de nuevo el mismo día
+la reemplaza). Se anota en Plan → "Peso →" (pantalla `/peso`, con el día editable para cargar uno olvidado) y se ve la tendencia: último peso, cambio por
+semana y un gráfico semanal. Es **solo descriptivo**: no entra en ningún cálculo de carga, progresión ni sugerencia, y no se compara con ninguna meta.
+La semana se promedia (lunes a domingo); el cambio por semana es la pendiente por mínimos cuadrados de las últimas 4 semanas con datos (cuenta las
+semanas reales, no inventa las que faltan) y exige al menos 3. Hoy muestra una fila discreta ("Anotar el peso de esta semana") solo si ya
+anotaste alguno o el mesociclo está en Cut o Bulk. **Base de datos:** primera migración, `db.version(2)` agrega la tabla `bodyweights` y no toca
+la v1 (un test abre una base creada con el esquema anterior, con datos, y verifica que se conserva todo y que la tabla nueva anda). **Backup:** campo
+`bodyweights` opcional (el formato no cambia de versión). Un backup anterior se lee igual; "Mezclar" no toca los pesos existentes y "Reemplazar todo"
+con un archivo sin pesos los borra, y la vista previa lo muestra en "Pesos corporales".

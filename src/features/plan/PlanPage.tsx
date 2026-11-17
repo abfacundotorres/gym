@@ -33,7 +33,10 @@ export function PlanPage() {
     <section className="space-y-6">
       <div className="flex items-baseline justify-between">
         <h1 className="title text-3xl">Plan</h1>
-        <Link to="/ejercicios" className="flex min-h-11 items-center pl-3 text-sm text-slate-300">Ejercicios →</Link>
+        <div className="flex items-center gap-1">
+          <Link to="/peso" className="flex min-h-11 items-center px-2 text-sm text-slate-300">Peso →</Link>
+          <Link to="/ejercicios" className="flex min-h-11 items-center pl-2 text-sm text-slate-300">Ejercicios →</Link>
+        </div>
       </div>
 
       <div className="space-y-2">
