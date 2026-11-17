@@ -35,11 +35,13 @@ interface Props {
   suffix?: string
   /** Versión en una fila ([−] valor [+]) para listas y formularios; la grande es para registrar series. */
   compact?: boolean
+  /** Aún más angosta, sin la etiqueta visible: varias en una fila (aproximaciones). */
+  inline?: boolean
   onChange: (v: number | null) => void
 }
 
 /** Valor grande con [−] [+] debajo. Tocar el valor permite tipearlo (teclado decimal). */
-export function Stepper({ label, value, step, min = 0, decimal = true, suffix, compact = false, onChange }: Props) {
+export function Stepper({ label, value, step, min = 0, decimal = true, suffix, compact = false, inline = false, onChange }: Props) {
   const [editing, setEditing] = useState(false)
   const round = (v: number) => Math.round(v * 1000) / 1000
   const bump = (d: number) => onChange(Math.max(min, round((value ?? 0) + d)))
@@ -51,28 +53,30 @@ export function Stepper({ label, value, step, min = 0, decimal = true, suffix, c
     if (v === null || (Number.isFinite(v) && v >= min)) onChange(v === null ? null : round(v))
     setEditing(false)
   }
-  if (compact) {
+  if (compact || inline) {
+    const btn = inline ? 'w-8' : 'w-11'
+    const val = inline ? 'h-11 text-xl' : 'h-12 text-2xl'
     return (
       <div className="min-w-0 flex-1">
-        <div className="mb-1 text-xs text-slate-400">{label}</div>
+        <div className={inline ? 'sr-only' : 'mb-1 text-xs text-slate-400'}>{label}</div>
         <div className="flex items-stretch overflow-hidden rounded-xl bg-raised">
-          <button type="button" aria-label={`Menos ${label}`} className="w-11 shrink-0 touch-manipulation select-none text-2xl active:bg-line" {...minus}>−</button>
+          <button type="button" aria-label={`Menos ${label}`} className={`${btn} shrink-0 touch-manipulation select-none text-2xl active:bg-line`} {...minus}>−</button>
           {editing ? (
             <input
               autoFocus
               aria-label={label}
               inputMode={decimal ? 'decimal' : 'numeric'}
               defaultValue={value == null ? '' : String(value).replace('.', ',')}
-              className="digits h-12 w-full min-w-0 bg-transparent text-center text-2xl outline-none"
+              className={`digits ${val} w-full min-w-0 bg-transparent text-center outline-none`}
               onBlur={(e) => commit(e.target)}
               onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
             />
           ) : (
-            <button type="button" aria-label={`${label}: ${value ?? 'sin dato'}, tocar para escribir`} className="digits h-12 w-full min-w-0 text-center text-2xl" onClick={() => setEditing(true)}>
+            <button type="button" aria-label={`${label}: ${value ?? 'sin dato'}, tocar para escribir`} className={`digits ${val} w-full min-w-0 text-center`} onClick={() => setEditing(true)}>
               {value == null ? '—' : num(value)}
             </button>
           )}
-          <button type="button" aria-label={`Más ${label}`} className="w-11 shrink-0 touch-manipulation select-none text-2xl active:bg-line" {...plus}>+</button>
+          <button type="button" aria-label={`Más ${label}`} className={`${btn} shrink-0 touch-manipulation select-none text-2xl active:bg-line`} {...plus}>+</button>
         </div>
       </div>
     )

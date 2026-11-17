@@ -363,3 +363,12 @@ ejercicio). En la sesión, cuando el plan tiene opciones, la pantalla del ejerci
 ejercicio; con series hechas, la otra variante se agrega como un ejercicio nuevo a continuación (el avisa un texto). La
 variante sin historial no recibe un peso inventado: el motor muestra la de la familia solo como referencia. El menú ⋯ conserva
 "Ocupado → alternativa" con toda la familia. Sin selector dentro de una superserie.
+
+**D-68. Aproximaciones editables, a la vista.** Antes de la primera serie efectiva, la entrada en calor está abierta (ya no
+plegada): las aproximaciones que sugiere el motor, cada una con su peso y reps (−/+ y tocar el valor para escribir) para
+ajustarlas antes de anotarlas con el ✓, y "+ Aproximación" para sumar otra, que copia la última fila a la vista (o la última
+anotada; sin nada, peso vacío y 8 reps). Una fila anotada sale del panel aunque se haya anotado con otro peso. El motor sigue
+sin sugerir un peso ya anotado como aproximación (no repite). Al guardar la primera serie de trabajo el panel desaparece y las
+aproximaciones anotadas quedan en la lista, donde se modifican o borran tocándolas. Una aproximación no dispara el descanso.
+Cuando ya no quedan sugeridas, queda solo el botón "+ Aproximación". El esquema por ejercicio (Pesadas 4, Liviana 1,
+Ninguna) no cambia. En la superserie no hay aproximaciones.

@@ -55,3 +55,15 @@ export function wouldBeRecord(
   const probe: SetEntry = { ...draft, id: '__nueva__' }
   return findPRs(ex, { item: { ...item, sets: [...item.sets, probe] } }, previous, kgPerBrick).some((p) => p.setId === probe.id)
 }
+
+/**
+ * Valores de una aproximación extra ("+ Aproximación"): copia la última fila a la vista o, si no hay ninguna, la última
+ * aproximación anotada. Sin nada de eso, queda el peso vacío y 8 reps.
+ */
+export function extraWarmupDefaults(
+  shown: { weight: number | null; reps: number | null }[],
+  lastLogged: Pick<SetEntry, 'weight' | 'reps'> | undefined,
+): { weight: number | null; reps: number | null } {
+  const base = shown.at(-1) ?? lastLogged
+  return base ? { weight: base.weight, reps: base.reps } : { weight: null, reps: 8 }
+}
