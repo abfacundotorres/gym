@@ -58,6 +58,9 @@ export interface PlanDay {
   items: PlanItem[]
 }
 
+/** Fase del mesociclo (D-69), declarada por el usuario: la app no conoce el peso corporal ni las calorías. Sin campo = sin definir. */
+export type Phase = 'bulk' | 'cut' | 'maintain'
+
 export interface Mesocycle {
   id: string
   startDate: ISODate
@@ -67,6 +70,7 @@ export interface Mesocycle {
   deloadFrom?: ISODate
   status: 'active' | 'finished'
   notes: string
+  phase?: Phase
 }
 
 export interface SetEntry {

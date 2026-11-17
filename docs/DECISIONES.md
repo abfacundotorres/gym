@@ -372,3 +372,17 @@ sin sugerir un peso ya anotado como aproximación (no repite). Al guardar la pri
 aproximaciones anotadas quedan en la lista, donde se modifican o borran tocándolas. Una aproximación no dispara el descanso.
 Cuando ya no quedan sugeridas, queda solo el botón "+ Aproximación". El esquema por ejercicio (Pesadas 4, Liviana 1,
 Ninguna) no cambia. En la superserie no hay aproximaciones.
+
+**D-69. Fase del mesociclo (bulk, cut, mantenimiento).** Se declara por mesociclo (`Mesocycle.phase`, opcional: sin el campo, el motor
+se comporta como siempre; compatible con backups anteriores). La app no conoce el peso corporal ni las calorías: la fase es una decisión
+tuya, y solo cambia cómo se **interpreta** el progreso y qué se sugiere; no toca cargas ni series. Bulk y mantenimiento: sin cambios en el
+motor. **Cut:** (a) un ejercicio que no mejora no es "estancado" sino "manteniendo" (insignia neutra), porque mantener el rendimiento en
+déficit ya es un buen resultado; (b) una baja de e1RM en las últimas tres exposiciones cuenta como regresión solo si supera el 5 %
+(`CUT_REGRESSION_TOLERANCE`); lo menor es ruido normal del déficit; (c) por eso el deload sugerido por estancamiento (D-32) y la
+rotación propuesta por estancamiento (D-33) no se disparan por "manteniendo" (sí por sueño y energía bajos, "me siento quemado" y
+molestias o dolor); (d) el volumen objetivo semanal por músculo pasa al 80 % de los rangos de Ajustes, redondeado a medias series
+(`CUT_VOLUME_FACTOR`), en Volumen y en la revisión, según la fase del mesociclo de esa semana (`phaseAt`). **Largo de bloque:** al elegir
+la fase se sugiere un bloque (cut 4+1; bulk y mantenimiento 5+1) y se aplica solo si lo aceptás ("Aplicar"); es una pauta general, no una
+regla. El 5 %, el 80 % y el 4+1 son heurísticas mías, no una prescripción: están en `engine/phase.ts` para cambiarlas. El siguiente
+mesociclo hereda la fase, y en la revisión de fin de bloque se puede elegir otra. Se ve en Hoy, en el Plan, en Volumen y en el Historial
+("manteniendo").

@@ -13,7 +13,11 @@ export const TREND_LABEL: Record<Trend, string | null> = {
   insufficient: null,
   stagnant: 'estancado',
   regressing: 'en baja',
+  maintaining: 'manteniendo',
 }
+
+/** Estancado o en baja: ámbar. Manteniendo (solo en cut): neutro, no es una alarma. */
+export const trendBadgeClass = (t: Trend) => (t === 'maintaining' ? 'bg-slate-500/15 text-slate-300' : 'bg-amber-500/15 text-amber-300')
 
 export function HistoryPage() {
   const [params, setParams] = useSearchParams()
@@ -68,8 +72,8 @@ function ByExercise() {
   const settings = useSettings()
   const data = useLiveQuery(async () => {
     const db = getDB()
-    const [exercises, sessions] = await Promise.all([db.exercises.toArray(), db.sessions.toArray()])
-    return { exercises, sessions }
+    const [exercises, sessions, meso] = await Promise.all([db.exercises.toArray(), db.sessions.toArray(), db.mesocycles.where('status').equals('active').first()])
+    return { exercises, sessions, phase: meso?.phase }
   })
   if (!data) return null
   // Familias ordenadas por uso más reciente; dentro, variantes también.
@@ -85,12 +89,13 @@ function ByExercise() {
           <ul className="space-y-1">
             {exs.map((e) => {
               const h = exposuresOf(data.sessions, e.id)
-              const trend = TREND_LABEL[trendOf(e, h, settings.kgPerBrick).trend]
+              const tr = trendOf(e, h, settings.kgPerBrick, data.phase).trend
+              const trend = TREND_LABEL[tr]
               return (
                 <li key={e.id}>
                   <Link to={`/historial/ej/${e.id}`} className="flex min-h-14 items-center gap-3 rounded-2xl bg-surface px-3.5 py-2.5 active:bg-raised">
                     <span className="min-w-0 flex-1 truncate font-medium">{e.name}</span>
-                    {trend && <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[11px] text-amber-300">{trend}</span>}
+                    {trend && <span className={`rounded px-1.5 py-0.5 text-[11px] ${trendBadgeClass(tr)}`}>{trend}</span>}
                     <span className="text-xs tabular-nums text-slate-400">{h.length ? formatDDMM(h.at(-1)!.date) : 'sin datos'}</span>
                     <span aria-hidden="true" className="text-slate-500">›</span>
                   </Link>

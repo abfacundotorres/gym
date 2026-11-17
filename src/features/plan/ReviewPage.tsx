@@ -8,8 +8,9 @@ import { formatDDMM, toISODate } from '../../engine/dates'
 import { num } from '../../engine/format'
 import { applyProposals, mesocycleWeek, nextMesocycleStart, pausedWeeks, reviewMesocycle, type Proposal } from '../../engine/periodization'
 import { formatSet } from '../../engine/session'
-import { MUSCLE_LABELS } from '../../engine/types'
+import { MUSCLE_LABELS, type Phase } from '../../engine/types'
 import { Button, Card } from '../../ui/Button'
+import { PhasePicker } from './PhasePicker'
 
 export function ReviewPage() {
   const db = getDB()
@@ -23,6 +24,8 @@ export function ReviewPage() {
     planDays: await db.planDays.orderBy('weekday').toArray(),
   }))
   const [toggled, setToggled] = useState<Set<number>>(new Set())
+  /** Fase del próximo bloque: sin tocar, hereda la del actual. */
+  const [phaseChoice, setPhaseChoice] = useState<Phase | null | undefined>(undefined)
   if (!data || !exercises) return null
   if (!data.meso) return <p className="text-slate-400">No hay un mesociclo activo.</p>
   const { meso } = data
@@ -34,8 +37,10 @@ export function ReviewPage() {
   const accepted = review.proposals.filter((p, i) => isOn(p, i))
   const start = nextMesocycleStart(meso, today, paused)
 
+  const nextPhase = phaseChoice !== undefined ? phaseChoice : (meso.phase ?? null)
+
   async function begin() {
-    await startNextMesocycle(db, meso, start, applyProposals(data!.planDays, accepted), accepted.length ? `Cambios: ${accepted.map((p) => describe(p, name)).join('; ')}` : '')
+    await startNextMesocycle(db, meso, start, applyProposals(data!.planDays, accepted), accepted.length ? `Cambios: ${accepted.map((p) => describe(p, name)).join('; ')}` : '', nextPhase)
     navigate('/plan', { replace: true })
   }
 
@@ -109,6 +114,11 @@ export function ReviewPage() {
           </ul>
         )}
       </div>
+
+      <Card>
+        <PhasePicker value={nextPhase ?? undefined} onChange={(p) => setPhaseChoice(p ?? null)} />
+        <p className="mt-2 text-xs text-slate-400">Es la fase del bloque que empieza. Podés cambiarla después en Plan → Editar.</p>
+      </Card>
 
       <Button variant="primary" className="w-full" onClick={() => confirm(`¿Cerrar este mesociclo y empezar el siguiente el ${formatDDMM(start)}?`) && void begin()}>
         Empezar el siguiente ({formatDDMM(start)})

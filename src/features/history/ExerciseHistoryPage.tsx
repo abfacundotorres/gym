@@ -14,7 +14,7 @@ import { formatSet } from '../../engine/session'
 import { trendOf } from '../../engine/stagnation'
 import { LineChart } from '../../ui/LineChart'
 import { SetBadges } from '../../ui/SetBadges'
-import { TREND_LABEL } from './HistoryPage'
+import { TREND_LABEL, trendBadgeClass } from './HistoryPage'
 
 export function ExerciseHistoryPage() {
   const { exId } = useParams()
@@ -23,7 +23,8 @@ export function ExerciseHistoryPage() {
     const db = getDB()
     const [ex, sessions, plans] = await Promise.all([db.exercises.get(exId!), db.sessions.where('exerciseIds').equals(exId!).toArray(), db.planDays.toArray()])
     const plannedSets = plans.flatMap((p) => p.items).find((i) => i.exerciseId === exId)?.sets ?? 3
-    return { ex, sessions, plannedSets }
+    const phase = (await db.mesocycles.where('status').equals('active').first())?.phase
+    return { ex, sessions, plannedSets, phase }
   }, [exId])
   if (!data || (data.ex && data.ex.id !== exId)) return null
   if (!data.ex) return <p className="text-slate-400">Ejercicio no encontrado.</p>
@@ -31,7 +32,7 @@ export function ExerciseHistoryPage() {
   const K = settings.kgPerBrick
   const history = exposuresOf(data.sessions, ex.id).filter((h) => data.sessions.find((s) => s.id === h.sessionId)?.status === 'finished')
   const metrics = history.map((h) => exposureMetrics(ex, h.item, h.date, h.sessionId, K))
-  const trend = trendOf(ex, history, K).trend
+  const trend = trendOf(ex, history, K, data.phase).trend
   const rec = recommend(ex, data.plannedSets, history, { kgPerBrick: K })
   const e1Points = metrics.filter((m) => m.e1rm != null).map((m) => ({ x: formatDDMM(m.date), y: m.e1rm!, label: m.workingWeight != null ? formatLoad(ex, m.workingWeight, K) : '' }))
   const repPoints = metrics.filter((m) => m.totalReps > 0).map((m) => ({ x: formatDDMM(m.date), y: m.totalReps, label: '' }))
@@ -45,7 +46,7 @@ export function ExerciseHistoryPage() {
         <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs font-semibold text-slate-300">
           <span className="rounded-full bg-raised px-2.5 py-1">{ex.range[0]}-{ex.range[1]} reps</span>
           <span className="rounded-full bg-raised px-2.5 py-1">+{num(ex.increment)}</span>
-          {TREND_LABEL[trend] && <span className="rounded-full bg-amber-500/15 px-2.5 py-1 text-amber-300">{TREND_LABEL[trend]}</span>}
+          {TREND_LABEL[trend] && <span className={`rounded-full px-2.5 py-1 ${trendBadgeClass(trend)}`}>{TREND_LABEL[trend]}</span>}
         </div>
       </header>
       {history.length > 0 && (
