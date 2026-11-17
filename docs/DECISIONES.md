@@ -351,3 +351,15 @@ ronda. Las series se editan y se borran en la misma pantalla. Para el motor son 
 nada por hacerlas en superserie. Límites de esta versión: en la pantalla del grupo no hay aproximaciones, marcas (rest-pause,
 drop), RIR, alternativa, molestia/dolor, nota ni saltear; para eso se usa "Deshacer superserie" (los ejercicios quedan sueltos
 y con sus series). Sin probar con el celular en el gimnasio.
+
+**D-67. Variantes que se alternan.** Una variante es un ejercicio de la misma familia, con su propio historial y su propia
+progresión (no se mezclan mancuernas con máquina). Las opciones de cada ejercicio del plan (`PlanItem.alt`, ya existente) se
+arman en Plan → "Variantes": agregar una que ya existe de la familia, o crear una nueva ahí mismo con su unidad (mancuerna
+por mano, barra por lado, polea en kg o máquina en ladrillos). Crear copia la configuración (rango, descanso, músculos,
+aproximaciones); con otra unidad el paso de carga pasa a uno razonable (ladrillos 1, resto 2,5; se cambia en Ejercicios) y se
+descarta el peso de la barra o del carro. Las opciones valen en todos los días donde aparece el ejercicio (es el mismo
+ejercicio). En la sesión, cuando el plan tiene opciones, la pantalla del ejercicio muestra un selector con el nombre corto
+(lo que va entre paréntesis: "Mancuernas", "Máquina") y se cambia con un toque. Cambiar sin series hechas reemplaza el
+ejercicio; con series hechas, la otra variante se agrega como un ejercicio nuevo a continuación (el avisa un texto). La
+variante sin historial no recibe un peso inventado: el motor muestra la de la familia solo como referencia. El menú ⋯ conserva
+"Ocupado → alternativa" con toda la familia. Sin selector dentro de una superserie.

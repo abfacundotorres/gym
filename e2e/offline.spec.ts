@@ -43,7 +43,7 @@ test('offline: importar, registrar una sesión, recargar y que todo persista', a
   await page.getByRole('button', { name: 'Siguiente →' }).click()
   await page.getByRole('button', { name: 'Más opciones' }).click()
   await page.getByRole('button', { name: 'Ocupado → alternativa' }).click()
-  await page.getByRole('button', { name: 'Jalón agarre neutro' }).click()
+  await page.getByRole('button', { name: 'Jalón agarre neutro', exact: true }).click() // el del menú; la ficha del selector se llama "Variante …"
   await expect(page.getByRole('heading', { name: 'Jalón agarre neutro' })).toBeVisible()
   await expect(page.getByText(/En lugar de Jalón supino/)).toBeVisible()
 

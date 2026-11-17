@@ -10,6 +10,9 @@ for (const [width, height] of [[375, 667], [320, 568]] as const) {
     await page.goto('./')
     await page.locator('input[type=file]').setInputFiles(seed)
     await page.getByRole('button', { name: 'Importar', exact: true }).click()
+    // Siempre el mismo día (el jueves): "el de hoy" cambia con el calendario y los domingos o días libres ni existe.
+    await page.getByText('Hacer otro día').click()
+    await page.getByRole('button', { name: 'Jueves: Full body' }).click()
     await page.getByRole('button', { name: 'Empezar' }).click()
     await page.getByRole('button', { name: 'Omitir y empezar' }).click()
     await expect(page.getByRole('button', { name: 'Terminar sesión' })).toBeVisible()
@@ -26,6 +29,8 @@ for (const [width, height] of [[375, 667], [320, 568]] as const) {
     for (const hash of routes) {
       await page.goto(`./${hash}`)
       await page.waitForTimeout(250)
+      // En el Plan se abre un panel de variantes (el más largo) para medirlo también.
+      if (hash === '#/plan') await page.getByRole('button', { name: /Variantes/ }).first().click()
       const r = await page.evaluate(() => {
         const visible = (el: Element) => { const b = el.getBoundingClientRect(); const s = getComputedStyle(el); return b.width > 0 && b.height > 0 && s.visibility !== 'hidden' && s.display !== 'none' }
         const noName: string[] = []

@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router'
 import { getDB } from '../../data/db'
 import { useExerciseMap, useSettings } from '../../data/hooks'
 import { addSet, deleteSet, setItemNote, setItemPain, setSkipped, swapExercise, updateSet } from '../../data/sessionRepo'
-import { familyReference, variantOptions } from '../../engine/variants'
+import { familyReference, planVariants, variantLabel, variantOptions } from '../../engine/variants'
 import { formatDDMM } from '../../engine/dates'
 import { formatLoad } from '../../engine/load'
 import { formatRest } from '../../engine/format'
@@ -88,6 +88,8 @@ function ExerciseScreen() {
   const restSec = settings.restSecOverrides[ex.id] ?? ex.restSec
   const isCardio = ex.unit === 'minutes'
   const options = variantOptions(ex, planItem, ctx.family)
+  // Las variantes del plan (p. ej. mancuernas y máquina) se eligen con un toque, sin pasar por el menú.
+  const variants = exercises ? planVariants(ex.id, planItem, [...exercises.values()]) : []
   const famRef = rec.status === 'no_history' ? familyReference(ex, ctx.family, ctx.history, session.date) : null
   const prevIdx = idx > 0 ? idx - 1 : null
   const nextIdx = idx < session.items.length - 1 ? idx + 1 : null
@@ -153,6 +155,27 @@ function ExerciseScreen() {
           {!isCardio && <span className="rounded-full bg-raised px-2.5 py-1">descanso {formatRest(restSec)}</span>}
         </div>
         {fewer && plannedSets > reducedSets(plannedSets) && <p className="text-xs text-slate-400">Hoy podés dejarlo en {reducedSets(plannedSets)} series.</p>}
+        {inProgress && variants.length > 1 && (
+          <div role="group" aria-label="Variante" className="flex flex-wrap gap-1.5 pt-1">
+            {variants.map((v) => (
+              <Chip
+                key={v.id}
+                active={v.id === ex.id}
+                label={`Variante ${v.name}`}
+                onClick={async () => {
+                  if (v.id === ex.id) return
+                  const to = await swapExercise(db, session.id, idx, v.id)
+                  navigate(`/sesion/${session.id}/${to}`, { replace: true })
+                }}
+              >
+                {variantLabel(v.name)}
+              </Chip>
+            ))}
+          </div>
+        )}
+        {inProgress && variants.length > 1 && item.sets.length > 0 && (
+          <p className="text-xs text-slate-400">Ya hiciste series con esta variante: la otra se agrega como un ejercicio nuevo, a continuación.</p>
+        )}
         {item.swappedFrom && <p className="text-xs text-slate-400">En lugar de {ctx.family.find((f) => f.id === item.swappedFrom)?.name ?? item.swappedFrom}</p>}
       </header>
 

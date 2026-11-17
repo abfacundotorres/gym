@@ -49,6 +49,25 @@ export async function setPlanItemSets(db: GymDB, planDayId: string, exerciseId: 
   })
 }
 
+/**
+ * Agrega o quita una opción (variante) a un ejercicio del plan, en todos los días donde aparece: es el mismo ejercicio,
+ * y las opciones son las que se ofrecen para elegir en cada sesión (D-67).
+ */
+export async function setPlanAlt(db: GymDB, exerciseId: string, altId: string, on: boolean): Promise<void> {
+  if (altId === exerciseId) return
+  await db.transaction('rw', db.planDays, async () => {
+    for (const d of await db.planDays.toArray()) {
+      if (!d.items.some((i) => i.exerciseId === exerciseId)) continue
+      const items = d.items.map((i) => {
+        if (i.exerciseId !== exerciseId) return i
+        const alt = on ? (i.alt.includes(altId) ? i.alt : [...i.alt, altId]) : i.alt.filter((a) => a !== altId)
+        return { ...i, alt }
+      })
+      await db.planDays.put({ ...d, items })
+    }
+  })
+}
+
 export async function toggleSkipped(db: GymDB, date: ISODate, planDayId: string): Promise<void> {
   const id = `skip-${date}`
   if (await db.dayMarks.get(id)) await db.dayMarks.delete(id)
