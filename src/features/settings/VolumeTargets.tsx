@@ -18,6 +18,7 @@ export function VolumeTargets() {
   return (
     <details>
       <summary className="flex min-h-11 cursor-pointer items-center text-sm text-slate-300">Rango objetivo de series por músculo y semana</summary>
+      <p className="mt-1 text-xs text-slate-400">Estos son los rangos base. En un mesociclo en Cut se usa el 80 % (las series que sugiere la fase son una pauta general; podés bajar o subir estos valores).</p>
       <ul className="mt-2 space-y-1 text-sm">
         {MUSCLES.map((m) => (
           <li key={m} className="flex items-center gap-2">

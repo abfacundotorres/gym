@@ -119,6 +119,7 @@ const mesocycle = z.object({
   deloadFrom: isoDate.optional(),
   status: z.enum(['active', 'finished']),
   notes: z.string(),
+  phase: z.enum(['bulk', 'cut', 'maintain']).optional(),
 })
 
 const setEntry = z.object({

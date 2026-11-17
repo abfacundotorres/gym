@@ -5,6 +5,7 @@ import { useExerciseMap, useSettings } from '../../data/hooks'
 import { addDays, formatDDMM, toISODate, weekStart } from '../../engine/dates'
 import { num } from '../../engine/format'
 import { volumeStatus, weekVolume, type VolumeStatus } from '../../engine/periodization'
+import { PHASE_LABEL, phaseAt, phaseVolumeTarget } from '../../engine/phase'
 import { MUSCLES, MUSCLE_LABELS, type Muscle } from '../../engine/types'
 import { Button, Card } from '../../ui/Button'
 
@@ -21,13 +22,17 @@ export function VolumePage() {
   const settings = useSettings()
   const exercises = useExerciseMap()
   const sessions = useLiveQuery(() => getDB().sessions.where('date').between(addDays(monday, -7), addDays(monday, 6), true, true).toArray(), [monday])
-  if (!sessions || !exercises) return null
+  const mesos = useLiveQuery(() => getDB().mesocycles.toArray())
+  if (!sessions || !exercises || !mesos) return null
+  // El objetivo es el de la fase del mesociclo de esa semana (en cut, 80 % de los rangos de Ajustes).
+  const phase = phaseAt(mesos, monday)
+  const targetOf = (m: Muscle) => phaseVolumeTarget(settings.volumeTarget[m], phase)
 
   const cur = weekVolume(sessions, monday, exercises)
   const prev = weekVolume(sessions, addDays(monday, -7), exercises)
-  const scaleMax = Math.max(25, ...MUSCLES.map((m) => Math.max(cur[m]?.total ?? 0, settings.volumeTarget[m][1] * 1.2)))
+  const scaleMax = Math.max(25, ...MUSCLES.map((m) => Math.max(cur[m]?.total ?? 0, targetOf(m)[1] * 1.2)))
   const pct = (v: number) => `${(v / scaleMax) * 100}%`
-  const statuses = MUSCLES.map((m) => volumeStatus(cur[m]?.total ?? 0, settings.volumeTarget[m]))
+  const statuses = MUSCLES.map((m) => volumeStatus(cur[m]?.total ?? 0, targetOf(m)))
   const inRange = statuses.filter((s) => s === 'in').length
   const belowCount = statuses.filter((s) => s === 'below').length
 
@@ -46,6 +51,9 @@ export function VolumePage() {
         <p className="digits text-5xl text-accent">{inRange}<span className="text-2xl text-slate-400">/{MUSCLES.length}</span></p>
         <p className="text-sm text-slate-300">músculos en rango esta semana{belowCount > 0 && <span className="block text-xs text-slate-400">{belowCount} por debajo</span>}</p>
       </Card>
+      {phase === 'cut' && (
+        <p role="status" className="rounded-xl bg-accent/10 px-3 py-2 text-xs text-slate-300">Objetivo ajustado a {PHASE_LABEL[phase]}: 80 % de los rangos de Ajustes.</p>
+      )}
       <details className="text-xs text-slate-400">
         <summary className="flex min-h-11 cursor-pointer items-center">Cómo se lee</summary>
         <p className="mt-1">Series efectivas por músculo: 1 por primario, ½ por secundario, drop = ½. La franja gris es el rango objetivo; la línea fina y el número chico, la semana anterior.</p>
@@ -54,7 +62,7 @@ export function VolumePage() {
         {MUSCLES.map((m) => {
           const v = cur[m]?.total ?? 0
           const p = prev[m]?.total ?? 0
-          const target = settings.volumeTarget[m]
+          const target = targetOf(m)
           const st = volumeStatus(v, target)
           const diff = v - p
           return (

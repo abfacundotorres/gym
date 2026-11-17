@@ -7,6 +7,7 @@ import { activeSession, discardSession, finishStaleSession, startSession } from 
 import { addDays, formatDDMM, toISODate, weekStart, weekdayOf, WEEKDAYS_ES } from '../../engine/dates'
 import { deloadSuggestion, mesocycleEnd, mesocycleWeek, pausedWeeks, type DeloadReason } from '../../engine/periodization'
 import { deloadThisWeek, dismissDeloadSuggestion, META_DELOAD_DISMISSED, toggleSkipped } from '../../data/planRepo'
+import { PHASE_LABEL } from '../../engine/phase'
 import { sessionProgress } from '../../engine/session'
 import type { Exercise, PlanDay, Readiness, Session } from '../../engine/types'
 import { Button, Card } from '../../ui/Button'
@@ -67,7 +68,7 @@ export function TodayPage() {
   const mesoEnded = !!data.meso && !week && today >= mesocycleEnd(data.meso, paused)
   const finished = data.allSessions.filter((s) => s.status === 'finished')
   const suggestion = week && !week.isDeload
-    ? deloadSuggestion(data.planDays.flatMap((p) => p.items.map((i) => i.exerciseId)), data.exMap, finished, data.kgPerBrick, burnedOut)
+    ? deloadSuggestion(data.planDays.flatMap((p) => p.items.map((i) => i.exerciseId)), data.exMap, finished, data.kgPerBrick, burnedOut, data.meso?.phase)
     : null
   const showSuggestion = !!suggestion?.reasons.length && (burnedOut || !data.dismissedThisWeek)
 
@@ -97,7 +98,12 @@ export function TodayPage() {
       <header>
         <div className="flex items-center justify-between gap-2">
           <p className="eyebrow text-slate-400"><span>{WEEKDAYS_ES[wd]}</span> {formatDDMM(today)}</p>
-          {week && <span className="rounded-full bg-raised px-2.5 py-1 text-xs font-semibold text-slate-300">Semana {week.week} de {week.total}</span>}
+          {week && (
+            <span className="flex items-center gap-1.5">
+              {data.meso?.phase && <span className="rounded-full bg-accent/15 px-2.5 py-1 text-xs font-semibold text-accent">{PHASE_LABEL[data.meso.phase]}</span>}
+              <span className="rounded-full bg-raised px-2.5 py-1 text-xs font-semibold text-slate-300">Semana {week.week} de {week.total}</span>
+            </span>
+          )}
         </div>
         <h1 className="title mt-1.5 text-4xl">{plan?.name ?? 'Día libre'}</h1>
         {(week?.pausedWeeks || week?.isDeload) && (

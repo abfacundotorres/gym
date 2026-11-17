@@ -1,6 +1,6 @@
 import { weekStart, type ISODate } from '../engine/dates'
 import { startDeloadNow } from '../engine/periodization'
-import type { Mesocycle, PlanDay } from '../engine/types'
+import type { Mesocycle, Phase, PlanDay } from '../engine/types'
 import type { GymDB } from './db'
 
 export const META_DELOAD_DISMISSED = 'deloadDismissedWeek'
@@ -18,7 +18,7 @@ export async function deloadThisWeek(db: GymDB, meso: Mesocycle, today: ISODate)
 }
 
 /** Cierra el mesociclo actual, aplica el plan nuevo y abre el siguiente. */
-export async function startNextMesocycle(db: GymDB, prev: Mesocycle, start: ISODate, plan: PlanDay[] | null, notes = ''): Promise<Mesocycle> {
+export async function startNextMesocycle(db: GymDB, prev: Mesocycle, start: ISODate, plan: PlanDay[] | null, notes = '', phase: Phase | null = prev.phase ?? null): Promise<Mesocycle> {
   const next: Mesocycle = {
     id: `meso-${start}`,
     startDate: start,
@@ -26,6 +26,7 @@ export async function startNextMesocycle(db: GymDB, prev: Mesocycle, start: ISOD
     deloadWeeks: prev.deloadWeeks,
     status: 'active',
     notes,
+    ...(phase ? { phase } : {}),
   }
   await db.transaction('rw', db.mesocycles, db.planDays, async () => {
     await db.mesocycles.put({ ...prev, status: 'finished' })

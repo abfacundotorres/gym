@@ -7,10 +7,12 @@ import { createVariant } from '../../data/exerciseRepo'
 import { createFirstMesocycle, deloadThisWeek, saveMesocycle, setPlanAlt, setPlanItemSets } from '../../data/planRepo'
 import { formatDDMM, toISODate, weekStart } from '../../engine/dates'
 import { deloadStart, mesocycleEnd, mesocycleWeek, pausedWeeks } from '../../engine/periodization'
+import { PHASE_HINT, PHASE_LABEL } from '../../engine/phase'
 import { variantLabel } from '../../engine/variants'
 import type { Exercise, Mesocycle, PlanItem, Unit } from '../../engine/types'
 import { Button, Card, LINK_BUTTON } from '../../ui/Button'
 import { Chip, Stepper } from '../../ui/Stepper'
+import { PhasePicker } from './PhasePicker'
 
 export function PlanPage() {
   const db = getDB()
@@ -44,8 +46,12 @@ export function PlanPage() {
           <Card className="space-y-3">
             <div className="flex items-baseline justify-between">
               <p className="digits text-3xl">{week ? `Semana ${week.week} de ${week.total}` : today < meso.startDate ? 'Todavía no empezó' : 'Terminado'}</p>
-              {week?.isDeload && <span className="rounded-full bg-sky-500/15 px-2.5 py-1 text-xs font-semibold text-sky-300">deload</span>}
+              <div className="flex items-center gap-1.5">
+                {meso.phase && <span className="rounded-full bg-accent/15 px-2.5 py-1 text-xs font-semibold text-accent">{PHASE_LABEL[meso.phase]}</span>}
+                {week?.isDeload && <span className="rounded-full bg-sky-500/15 px-2.5 py-1 text-xs font-semibold text-sky-300">deload</span>}
+              </div>
             </div>
+            {meso.phase && <p className="text-xs text-slate-400">{PHASE_HINT[meso.phase]}</p>}
             <p className="text-sm text-slate-400">
               Desde el {formatDDMM(meso.startDate)} · {meso.deloadFrom ? 'deload adelantado' : `${meso.accumulationWeeks} de acumulación + ${meso.deloadWeeks} de deload`}
               <br />
@@ -182,6 +188,12 @@ function MesoForm({ meso, onDone }: { meso: Mesocycle; onDone: () => void }) {
         <Stepper compact label="Semanas de acumulación" value={m.accumulationWeeks} step={1} min={3} decimal={false} onChange={(v) => v && v <= 8 && setM({ ...m, accumulationWeeks: v })} />
         <Stepper compact label="Deload" value={m.deloadWeeks} step={1} min={0} decimal={false} onChange={(v) => v != null && v <= 2 && setM({ ...m, deloadWeeks: v })} />
       </div>
+      <PhasePicker
+        value={m.phase}
+        onChange={(phase) => { const { phase: _p, ...rest } = m; setM(phase ? { ...rest, phase } : rest) }}
+        current={{ accumulationWeeks: m.accumulationWeeks, deloadWeeks: m.deloadWeeks }}
+        onApply={(s) => setM({ ...m, ...s })}
+      />
       {m.deloadFrom && (
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked onChange={() => { const { deloadFrom: _d, ...rest } = m; setM(rest) }} />

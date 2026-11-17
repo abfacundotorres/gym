@@ -1,9 +1,10 @@
 import { addDays, daysBetween, weekStart, type ISODate } from './dates'
 import { comparableKg } from './load'
 import { exposuresOf } from './history'
+import { phaseVolumeTarget } from './phase'
 import { findPRs, type PR } from './prs'
 import { trendOf, type Trend } from './stagnation'
-import type { Exercise, Mesocycle, Muscle, PlanDay, Session, Settings } from './types'
+import type { Exercise, Mesocycle, Muscle, Phase, PlanDay, Session, Settings } from './types'
 import { volumeByMuscle } from './volume'
 
 // ---------- Semanas ----------
@@ -113,9 +114,10 @@ export function deloadSuggestion(
   sessions: Session[],
   kgPerBrick: number,
   burnedOut = false,
+  phase?: Phase,
 ): DeloadSuggestion {
   const ids = [...new Set(planExerciseIds)].filter((id) => exercises.get(id) && !exercises.get(id)!.cardio)
-  const trends: [string, Trend][] = ids.map((id) => [id, trendOf(exercises.get(id)!, exposuresOf(sessions, id), kgPerBrick).trend])
+  const trends: [string, Trend][] = ids.map((id) => [id, trendOf(exercises.get(id)!, exposuresOf(sessions, id), kgPerBrick, phase).trend])
   const stalled = trends.filter(([, t]) => t === 'stagnant' || t === 'regressing').map(([id]) => id)
   const stagnantShare = ids.length ? stalled.length / ids.length : 0
   const readinessAvg = readinessAverage(sessions)
@@ -188,7 +190,7 @@ export function reviewMesocycle(
   const muscles = Object.keys(settings.volumeTarget) as Muscle[]
   const volume = muscles.map((m) => {
     const avg = weeks.length ? (totals.get(m) ?? 0) / weeks.length : 0
-    const target = settings.volumeTarget[m]
+    const target = phaseVolumeTarget(settings.volumeTarget[m], meso.phase)
     return { muscle: m, avg: Math.round(avg * 10) / 10, target, status: volumeStatus(avg, target) }
   })
 
@@ -197,7 +199,7 @@ export function reviewMesocycle(
   const stalled = planIds.filter((id) => {
     const ex = exercises.get(id)
     if (!ex || ex.cardio) return false
-    const t = trendOf(ex, exposuresOf(allSessions.filter((s) => s.status === 'finished' && s.date < mesocycleEnd(meso, paused)), id), K).trend
+    const t = trendOf(ex, exposuresOf(allSessions.filter((s) => s.status === 'finished' && s.date < mesocycleEnd(meso, paused)), id), K, meso.phase).trend
     return t === 'stagnant' || t === 'regressing'
   })
 
