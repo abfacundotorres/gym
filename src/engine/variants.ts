@@ -17,6 +17,33 @@ export function variantOptions(current: Exercise, planItem: Pick<PlanItem, 'alt'
   })
 }
 
+/** Nombre corto para elegir entre variantes: lo que va entre paréntesis ("Mancuernas") o, si no hay, el nombre entero. */
+export function variantLabel(name: string): string {
+  const m = name.match(/\(([^()]+)\)\s*$/)
+  const label = (m?.[1] ?? name).trim()
+  return label.charAt(0).toUpperCase() + label.slice(1)
+}
+
+/**
+ * Variantes entre las que se elige en el ejercicio: la del plan y sus opciones, en ese orden. Sin inexistentes ni
+ * archivadas; la actual siempre está (aunque se haya llegado a ella por otro camino).
+ */
+export function planVariants(currentId: string, planItem: Pick<PlanItem, 'exerciseId' | 'alt'> | undefined, exercises: Exercise[]): Exercise[] {
+  const byId = new Map(exercises.map((e) => [e.id, e]))
+  const ids = [...new Set([...(planItem ? [planItem.exerciseId, ...planItem.alt] : []), currentId])]
+  return ids.flatMap((id) => {
+    const e = byId.get(id)
+    return e && (!e.archived || id === currentId) ? [e] : []
+  })
+}
+
+/** Ajustes al crear una variante con otra unidad (p. ej. de mancuernas a máquina): paso de carga razonable y sin barra. */
+export function variantOverrides(base: Pick<Exercise, 'unit'>, unit: Exercise['unit']): Partial<Exercise> {
+  if (unit === base.unit) return {}
+  const increment: Record<Exercise['unit'], number> = { per_hand: 2.5, per_side: 2.5, total: 2.5, bricks: 1, minutes: 5 }
+  return { unit, increment: increment[unit] }
+}
+
 export interface FamilyReference { exerciseId: string; date: string; weight: number }
 
 /**
