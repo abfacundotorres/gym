@@ -1,5 +1,6 @@
 import { weekStart, type ISODate } from '../engine/dates'
 import { startDeloadNow } from '../engine/periodization'
+import { addPlanItem, moveItem, removePlanItem } from '../engine/planEdit'
 import type { Mesocycle, Phase, PlanDay } from '../engine/types'
 import type { GymDB } from './db'
 
@@ -109,3 +110,18 @@ export async function setRangeOverride(db: GymDB, exerciseId: string, range: [nu
     }
   })
 }
+
+/** Cambios al plan de hoy (D-83): sumar, sacar y reordenar ejercicios de un día. Usan las funciones puras de `engine/planEdit`. */
+async function editDay(db: GymDB, dayId: string, f: (days: PlanDay[]) => PlanDay[]): Promise<void> {
+  await db.transaction('rw', db.planDays, async () => {
+    const before = await db.planDays.toArray()
+    const after = f(before)
+    const next = after.find((d) => d.id === dayId)
+    if (next && JSON.stringify(next) !== JSON.stringify(before.find((d) => d.id === dayId))) await db.planDays.put(next)
+  })
+}
+
+export const addExerciseToDay = (db: GymDB, dayId: string, exerciseId: string) => editDay(db, dayId, (days) => addPlanItem(days, dayId, exerciseId))
+export const removeExerciseFromDay = (db: GymDB, dayId: string, exerciseId: string) => editDay(db, dayId, (days) => removePlanItem(days, dayId, exerciseId))
+export const moveExerciseInDay = (db: GymDB, dayId: string, exerciseId: string, dir: -1 | 1) =>
+  editDay(db, dayId, (days) => days.map((d) => (d.id === dayId ? { ...d, items: moveItem(d.items, exerciseId, dir) } : d)))

@@ -88,6 +88,13 @@ describe('plantilla del bloque siguiente (D-73)', () => {
       const ch = planChanges(plan(), d)
       expect(ch).toEqual([{ kind: 'removed', planDayId: 'q', exerciseId: 'curl_cable_low' }])
     })
+
+    it('un ejercicio que la plantilla trae y el plan de hoy ya no (se sacó después) figura como agregado (D-83)', () => {
+      const current = plan()
+      const d = startDraft(plan())
+      current[0]!.items.splice(1, 1) // hoy se saca el curl del día p
+      expect(planChanges(current, d)).toEqual([{ kind: 'added', planDayId: 'p', exerciseId: 'curl_cable_low' }])
+    })
   })
 
   describe('la revisión propone encima de la plantilla', () => {

@@ -17,7 +17,10 @@ export function ExercisesPage() {
     <section className="space-y-4">
       <Link to="/plan" className="-ml-1 flex min-h-11 items-center pr-3 text-sm text-slate-400">← Plan</Link>
       <h1 className="title text-3xl">Ejercicios</h1>
-      <Chip active={showArchived} onClick={() => setShowArchived(!showArchived)}>Mostrar archivados</Chip>
+      <div className="flex flex-wrap items-center gap-2">
+        <Chip active={showArchived} onClick={() => setShowArchived(!showArchived)}>Mostrar archivados</Chip>
+        <Link to="/ejercicio-nuevo" className="flex min-h-11 items-center rounded-full bg-accent-solid px-4 text-sm font-bold text-on-accent">+ Ejercicio nuevo</Link>
+      </div>
       {[...families.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([fam, exs]) => (
         <div key={fam}>
           <h2 className="mb-1 text-xs uppercase tracking-wide text-slate-500">{fam.replace(/_/g, ' ')}</h2>
