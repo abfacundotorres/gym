@@ -91,3 +91,21 @@ export async function dismissDeloadSuggestion(db: GymDB, today: ISODate): Promis
   await db.meta.put({ key: META_DELOAD_DISMISSED, value: weekStart(today) })
 }
 
+
+/**
+ * Cambia (o, con null, quita) el rango de reps del plan para un ejercicio, en todos los días donde aparece (D-81). Sin rango del plan
+ * rige el del ejercicio. Es la misma idea que las variantes: es el mismo ejercicio en todos los días.
+ */
+export async function setRangeOverride(db: GymDB, exerciseId: string, range: [number, number] | null): Promise<void> {
+  await db.transaction('rw', db.planDays, async () => {
+    for (const d of await db.planDays.toArray()) {
+      if (!d.items.some((i) => i.exerciseId === exerciseId)) continue
+      const items = d.items.map((i) => {
+        if (i.exerciseId !== exerciseId) return i
+        const { rangeOverride: _old, ...rest } = i
+        return range ? { ...rest, rangeOverride: range } : rest
+      })
+      await db.planDays.put({ ...d, items })
+    }
+  })
+}

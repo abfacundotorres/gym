@@ -166,6 +166,7 @@ export function PeriodSummaryPage() {
 
           <Button className="w-full" onClick={async () => setCopied(await copyText(text))}>Copiar resumen como texto</Button>
           {copied != null && <p role="status" className="text-sm text-slate-400">{copied ? 'Copiado.' : 'No se pudo copiar. Mantené apretado el texto para seleccionarlo.'}</p>}
+          <Link to="/calibracion" className="flex min-h-12 items-center justify-between rounded-2xl bg-surface px-4 text-sm"><span>¿Las sugerencias de carga te quedan bien? Calibración</span><span aria-hidden="true" className="text-slate-500">›</span></Link>
           <details className="text-sm">
             <summary className="flex min-h-11 cursor-pointer items-center text-slate-400">Ver el texto</summary>
             <pre className="mt-2 whitespace-pre-wrap rounded-xl bg-surface p-3 text-xs text-slate-300">{text}</pre>
