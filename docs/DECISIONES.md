@@ -482,3 +482,11 @@ veía en el historial por ejercicio y en las series de la sesión (`@2`). **Sin 
 (el deload sí suma en el total de series hechas y se marca en la lista). "Copiar resumen como texto" (`summaryText`) trae lo mismo que la pantalla. Es **descriptivo**: no propone nada ni compara con metas más allá de los rangos de series; una semana de deload lo aclara. Solo cuenta sesiones terminadas.
 **Sin cambios de datos.**
 
+**D-81. Calibración con tus datos.** Pantalla `/calibracion` (desde Resumen). Por ejercicio, la app **recalcula qué te habría sugerido antes de cada sesión** (`recommend` con el historial de ese momento, sin deload ni vuelta, y con "mantené el peso" en los
+días de sueño y energía bajos) y lo compara con el **peso de trabajo** que usaste: seguiste la sugerencia, usaste menos o usaste más (`evaluateSuggestions`, `calibrate`, últimas 6 comparaciones; hacen falta 4 o más para mostrar un ejercicio). De las veces que sugirió **subir**, cuenta
+en cuántas no subiste. **Es una aproximación, no un veredicto:** usa las series planificadas de hoy y el rango base del ejercicio (no el del plan, para que aplicar un cambio no mueva lo medido), y no sabe por qué elegiste otro peso (técnica, cansancio,
+discos disponibles); la primera sesión de un ejercicio no se compara y las que no tenían datos suficientes tampoco. **Propuesta (`rangeProposal`), con la única palanca que ya existe, el tope de reps del plan:** si en 3 o más sugerencias de subir no subiste en el 60 % o más,
+**amplía el tope en 1** (hasta 2 sobre el del ejercicio): sumás reps antes de que te pida subir de peso; si en 4 o más comparaciones trabajaste con más peso del sugerido en el 60 % o más, **acorta el tope en 1** (nunca más de 1 por debajo del del ejercicio ni a un rango
+de menos de 3 reps): te pide subir antes; si coinciden, gana ampliar. Se aplica con un toque en todos los días del plan donde está el ejercicio (`rangeOverride`, el mismo campo de siempre, sin cambios de datos) y **"Restablecer rango" lo quita**; no se propone para ejercicios
+que no están en el plan. Los umbrales (4, 6, 60 %, 3, 2) son pautas mías y están como constantes en `engine/calibration.ts`; no se ajustan en Reglas. No cambia nada solo.
+
