@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './base'
 import { fileURLToPath } from 'node:url'
 
 const seed = fileURLToPath(new URL('../src/data/__fixtures__/seed.fixture.json', import.meta.url))

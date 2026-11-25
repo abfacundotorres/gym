@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from './base'
 import { fileURLToPath } from 'node:url'
 
 const seed = fileURLToPath(new URL('../src/data/__fixtures__/seed.fixture.json', import.meta.url))
@@ -37,7 +37,6 @@ test('aproximaciones: temporizador corto al anotar una, y se apaga con 0 en Ajus
 })
 
 test('descanso real: "Saltar" marca cuándo empezaste la serie, no cuándo la guardás', async ({ page }) => {
-  await page.clock.install({ time: new Date('2026-11-17T10:00:00') })
   await openPress(page)
   await page.getByRole('button', { name: 'Guardar serie' }).click() // serie 1
   await page.clock.fastForward(60_000) // 1:00 de descanso...
@@ -50,7 +49,6 @@ test('descanso real: "Saltar" marca cuándo empezaste la serie, no cuándo la gu
 })
 
 test('descanso real: sin "Saltar" es el tiempo entre guardados, como siempre', async ({ page }) => {
-  await page.clock.install({ time: new Date('2026-11-17T10:00:00') })
   await openPress(page)
   await page.getByRole('button', { name: 'Guardar serie' }).click()
   await page.clock.fastForward(100_000)

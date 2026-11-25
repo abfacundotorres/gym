@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from './base'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
@@ -59,12 +59,12 @@ test('peso corporal: accesos desde Plan y Hoy, y el peso viaja en el backup', as
   await page.goto('./#/plan')
   await page.getByRole('link', { name: 'Peso →' }).click()
   await expect(page.getByRole('heading', { name: 'Peso corporal' })).toBeVisible()
-  await anotar(page, '2026-11-02', '83')
-  await anotar(page, '2026-11-09', '82,5')
+  await anotar(page, '2026-10-26', '83')
+  await anotar(page, '2026-11-02', '82,5')
 
   // Ahora Hoy ofrece anotar el de esta semana (el último es viejo) y recuerda el último.
   await page.goto('./#/')
-  await expect(page.getByRole('link', { name: /Anotar el peso de esta semana.*último 82,5 kg, 09\/11/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Anotar el peso de esta semana.*último 82,5 kg, 02\/11/ })).toBeVisible()
 
   // Backup: el archivo trae los pesos y se restauran en un navegador vacío.
   await page.goto('./#/ajustes')
@@ -72,7 +72,7 @@ test('peso corporal: accesos desde Plan y Hoy, y el peso viaja en el backup', as
   await page.getByRole('button', { name: 'Exportar JSON' }).click()
   const file = (await (await download).path())!
   const backup = JSON.parse(readFileSync(file, 'utf8'))
-  expect(backup.data.bodyweights.map((b: { date: string; kg: number }) => [b.date, b.kg])).toEqual([['2026-11-02', 83], ['2026-11-09', 82.5]])
+  expect(backup.data.bodyweights.map((b: { date: string; kg: number }) => [b.date, b.kg])).toEqual([['2026-10-26', 83], ['2026-11-02', 82.5]])
 
   const other = await browser.newContext({ baseURL: testInfo.project.use.baseURL, viewport: { width: 412, height: 915 } })
   const p2 = await other.newPage()

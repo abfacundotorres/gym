@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router'
 import { getDB } from '../../data/db'
 import { useExerciseMap, useSettings } from '../../data/hooks'
 import { discardSession, finishSession, groupSessionItems } from '../../data/sessionRepo'
+import { comebackFor } from '../../engine/comeback'
 import { formatDDMM } from '../../engine/dates'
 import { formatLoad } from '../../engine/load'
 import { formatSet, lastExposure, sessionProgress } from '../../engine/session'
@@ -41,6 +42,7 @@ export function SessionPage() {
   const { session, plan } = data
   const planned = new Map(plan?.items.map((i) => [i.exerciseId, i]) ?? [])
   const inProgress = session.status === 'in_progress'
+  const comeback = comebackFor(session.comebackDays)
 
   const prog = sessionProgress(session, plan)
   const rows = session.items.map((it, idx) => {
@@ -76,12 +78,17 @@ export function SessionPage() {
           </div>
         )}
       </header>
-      {inProgress && !session.deload && readinessLevel(session.readiness) === 'low' && (
+      {inProgress && comeback && (
+        <p role="status" className="rounded-2xl bg-sky-500/10 p-3 text-sm text-sky-200 ring-1 ring-sky-500/30">
+          Vuelta tras {comeback.days} días: ~{Math.round(comeback.loadFactor * 100)} % de la carga, menos series y {comeback.rir} en reserva.{session.deload ? ' Es semana de deload: se usa la reducción más fuerte.' : ''}
+        </p>
+      )}
+      {inProgress && !session.deload && session.comebackDays == null && readinessLevel(session.readiness) === 'low' && (
         <p role="status" className="rounded-2xl bg-amber-500/10 p-3 text-sm text-amber-100 ring-1 ring-amber-500/30">
           Sueño y energía bajos hoy: mantené los pesos y, si querés, dejá cada ejercicio con una serie menos. Es una sugerencia, vos decidís.
         </p>
       )}
-      {inProgress && !session.deload && session.short && (
+      {inProgress && !session.deload && session.comebackDays == null && session.short && (
         <p role="status" className="rounded-2xl bg-sky-500/10 p-3 text-sm text-sky-200 ring-1 ring-sky-500/30">
           Poco tiempo: sin ejercicios opcionales. Si querés, dejá cada ejercicio con una serie menos.
         </p>

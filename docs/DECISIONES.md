@@ -423,3 +423,13 @@ del plan de hoy. **Casos borde:** los días de la plantilla se emparejan por id 
 se descartan los ejercicios que ya no existen o están archivados y, de las alternativas, las inutilizables. Si cambiás el plan de hoy después de preparar la plantilla, al aplicarla
 gana la plantilla (es lo que planificaste). Las notas del bloque nuevo dicen cuántos cambios traía la plantilla.
 
+**D-74. Volver tras una pausa.** Al empezar una sesión, si pasaron **10 días o más** desde la última sesión terminada (`COMEBACK_MIN_DAYS`; con tres sesiones por semana es haber faltado a una semana), el chequeo previo
+suma el chip "Vuelta tras N días", **activado por defecto y desactivable** (entonces se entrena como siempre). Según los días: **10-20** carga ×0,95 y una serie menos; **21-41** ×0,9 y dos tercios de las series;
+**42 o más** ×0,8 y la mitad; nunca menos de 2 series ni más de las planificadas (`comebackFor`, `comebackSets`). Con 2 o 3 repeticiones en reserva según el tramo. Los umbrales y factores son pautas generales mías, no una
+prescripción: con pausas cortas se pierde poco y lo que más pesa es volver de golpe con todo el volumen. **Cómo se calcula:** parte del **último peso de trabajo**, sin la subida que habría tocado (no se progresa al volver; si no, ×0,9 sobre
+un peso ya subido sería el 100 % de la última vez), con las **mismas reps** de la última vez; sin una última vez válida no se inventa un peso (queda para elegir a mano). **No se suma, gana la más fuerte:** con deload en la
+misma semana se usa la reducción más fuerte de las dos (carga y series); si la última vez hubo dolor (D-52, −10 %), también; en una sesión de vuelta no se aplica el "día bajo" ni la serie menos de D-49 (ya se redujo). **Guardado:**
+`Session.comebackDays` (los días al empezar), opcional en el backup. **No es base de progresión**, PR ni tendencia (igual que el deload, D-29); sí cuenta para el volumen semanal. **Límites a propósito:** solo la primera sesión de vuelta:
+la segunda parte de la última sesión normal antes de la pausa (con pausas de 42 días o más conviene bajar a mano); y la app solo ve fechas, no sabe si la pausa fue por lesión o por vacaciones (para una lesión sigue
+estando la marca de molestia o dolor por ejercicio, D-52).
+

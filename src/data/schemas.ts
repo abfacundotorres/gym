@@ -145,6 +145,8 @@ const session = z.object({
   mesocycleId: z.string().nullable(),
   readiness: z.object({ sleep: z.number().int().min(1).max(5), energy: z.number().int().min(1).max(5) }).optional(),
   deload: z.boolean().optional(),
+  /** Opcional (D-74): sesión de vuelta tras una pausa, con los días sin entrenar al empezar. */
+  comebackDays: z.number().int().min(1).optional(),
   short: z.boolean().optional(),
   note: z.string(),
   startedAt: z.number().nullable(),

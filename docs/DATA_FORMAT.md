@@ -63,6 +63,7 @@ Unidades: `per_side` = kg de discos por lado, sin barra/carro · `per_hand` = kg
 | `readiness?` | `{ sleep 1-5, energy 1-5 }` | |
 | `deload?` | boolean | la sesión se hizo en semana de deload |
 | `short?` | boolean | se empezó con "poco tiempo hoy" (sin ejercicios opcionales) |
+| `comebackDays?` | entero ≥ 1 | sesión de vuelta tras una pausa (D-74): los días sin entrenar al empezar. Menos series y carga; no es base de progresión. Un backup anterior no lo trae y se lee igual |
 | `note` | string | |
 | `startedAt`, `finishedAt` | number\|null | null en datos importados |
 | `status` | `in_progress` \| `finished` | |
