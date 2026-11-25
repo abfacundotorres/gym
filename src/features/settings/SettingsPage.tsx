@@ -121,6 +121,7 @@ export function SettingsPage() {
       <div className="space-y-2">
         <h2 className="eyebrow text-slate-400">Acerca de</h2>
         <About />
+        <Link to="/diagnostico" className="flex min-h-12 items-center justify-between rounded-2xl bg-surface px-4 text-sm"><span>Diagnóstico: revisar que los datos estén completos</span><span aria-hidden="true" className="text-slate-500">›</span></Link>
       </div>
     </section>
   )
