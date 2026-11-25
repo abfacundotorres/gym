@@ -9,14 +9,7 @@ import { exerciseZones } from '../../engine/zones'
 import { Button, Card } from '../../ui/Button'
 import { Chip, Stepper } from '../../ui/Stepper'
 import { ZoneChips } from '../zones/ZoneChips'
-
-const UNIT_LABEL: Record<Exercise['unit'], string> = {
-  per_side: 'Por lado (discos)',
-  per_hand: 'Por mano (mancuerna)',
-  total: 'Total (polea/pila)',
-  bricks: 'Ladrillos',
-  minutes: 'Minutos (cardio)',
-}
+import { UNIT_LABEL } from './unitLabels'
 
 export function ExerciseEditPage() {
   const { exId } = useParams()

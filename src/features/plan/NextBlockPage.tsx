@@ -60,6 +60,7 @@ export function NextBlockPage() {
                     {c.kind === 'sets' && `${name(c.exerciseId)}: ${c.from} → ${c.to} series`}
                     {c.kind === 'variant' && `${name(c.exerciseId)} → ${name(c.to)}`}
                     {c.kind === 'removed' && `${name(c.exerciseId)}: se saca`}
+                    {c.kind === 'added' && `${name(c.exerciseId)}: se agrega`}
                   </li>
                 ))}
               </ul>

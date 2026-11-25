@@ -28,7 +28,8 @@ E2E offline con @playwright/test (`e2e/`). Deploy estático en GitHub Pages por 
 - Tipos de dominio: `src/engine/types.ts`.
 - Motor (`src/engine/`): `validity` (qué cuenta para progresión), `progression` (doble progresión),
   `warmup`, `e1rm`, `prs`, `stagnation`, `volume`, `load` (unidades y carga comparable), `history`, `session`,
-  `periodization` (semanas y pausas, deload, sugerencias, revisión de mesociclo), `variants`, `readiness`.
+  `periodization` (semanas y pausas, deload, sugerencias, revisión de mesociclo), `variants`, `readiness`,
+  `planEdit` (sumar, sacar y reordenar ejercicios del plan; ejercicio nuevo).
 - `src/features/<pantalla>/` — pantallas.
 - `src/ui/` — componentes reutilizables (Stepper, Chip, Segments, BottomBar, gráficos SVG propios). Estilo: D-54 (acento lima, Archivo empaquetada, utilidades `title`/`digits`/`eyebrow` en `src/index.css`).
 - `src/lib/` — integración con el navegador (PWA, timer, wake lock, clipboard).

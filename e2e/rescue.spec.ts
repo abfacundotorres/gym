@@ -52,5 +52,5 @@ test('si una pantalla falla, aparece el rescate y se puede exportar el backup', 
   expect((await download).suggestedFilename()).toMatch(/^gym-backup-.*\.json$/)
   // La navegación sigue disponible y otra pantalla que no usa el dato roto funciona.
   await page.getByRole('link', { name: 'Plan' }).click()
-  await expect(page.getByRole('heading', { name: 'Plan' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Plan', exact: true })).toBeVisible()
 })

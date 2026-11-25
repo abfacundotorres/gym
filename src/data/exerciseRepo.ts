@@ -1,3 +1,4 @@
+import { buildExercise, type NewExerciseInput } from '../engine/planEdit'
 import type { Exercise } from '../engine/types'
 import { variantOverrides } from '../engine/variants'
 import type { GymDB } from './db'
@@ -29,6 +30,15 @@ export async function createVariant(db: GymDB, base: Exercise, name: string, uni
     delete ex.barKg
     delete ex.sledKg
   }
+  await db.exercises.add(ex)
+  return ex
+}
+
+/** Ejercicio nuevo desde cero (D-83), con id único a partir del nombre. Sin historial. */
+export async function createExercise(db: GymDB, input: Omit<NewExerciseInput, 'id'>): Promise<Exercise> {
+  let id = slugify(input.name)
+  for (let i = 2; await db.exercises.get(id); i++) id = `${slugify(input.name)}_${i}`
+  const ex = buildExercise({ ...input, id })
   await db.exercises.add(ex)
   return ex
 }

@@ -4,7 +4,7 @@ import { Link } from 'react-router'
 import { getDB } from '../../data/db'
 import { useExerciseMap, useRules } from '../../data/hooks'
 import { createVariant } from '../../data/exerciseRepo'
-import { createFirstMesocycle, deloadThisWeek, saveMesocycle, setPlanAlt, setPlanItemSets } from '../../data/planRepo'
+import { createFirstMesocycle, deloadThisWeek, moveExerciseInDay, removeExerciseFromDay, saveMesocycle, setPlanAlt, setPlanItemSets } from '../../data/planRepo'
 import { formatDDMM, toISODate, weekStart } from '../../engine/dates'
 import { planChanges } from '../../engine/nextBlock'
 import { deloadStart, mesocycleEnd, mesocycleWeek, pausedWeeks } from '../../engine/periodization'
@@ -14,6 +14,7 @@ import type { Exercise, Mesocycle, PlanItem, Unit } from '../../engine/types'
 import { Button, Card, LINK_BUTTON } from '../../ui/Button'
 import { Chip, Stepper } from '../../ui/Stepper'
 import { ZonePlanSection } from '../zones/ZonePlanSection'
+import { AddExercisePanel } from './AddExercisePanel'
 import { PhasePicker } from './PhasePicker'
 
 export function PlanPage() {
@@ -26,6 +27,7 @@ export function PlanPage() {
     sessions: await db.sessions.toArray(),
   }))
   const [editing, setEditing] = useState(false)
+  const [organizing, setOrganizing] = useState(false)
   const rules = useRules()
   if (!data || !exercises) return null
   const { meso } = data
@@ -88,12 +90,26 @@ export function PlanPage() {
 
       <ZonePlanSection planDays={data.planDays} exercises={exercises} />
 
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="eyebrow text-slate-400">Ejercicios del plan</h2>
+        <Chip active={organizing} onClick={() => setOrganizing(!organizing)}>{organizing ? 'Listo' : 'Editar ejercicios'}</Chip>
+      </div>
+      {organizing && (
+        <p className="-mt-4 text-xs text-slate-400">
+          Sumá, sacá o reordená. Sacar un ejercicio del plan no borra su historial. No toques el plan en medio de una sesión: las series planificadas se calculan con el plan de hoy.
+          {meso?.nextPlan ? ' La plantilla del bloque siguiente no cambia con esto: ahí te marca las diferencias.' : ''}
+        </p>
+      )}
+
       {data.planDays.map((d) => (
         <div key={d.id} className="space-y-2">
           <h2 className="title text-2xl">{d.name}</h2>
           <ul className="space-y-2">
-            {d.items.map((it) => <PlanItemRow key={it.exerciseId} dayId={d.id} item={it} exercises={exercises} />)}
+            {d.items.map((it, i) => (
+              <PlanItemRow key={it.exerciseId} dayId={d.id} item={it} exercises={exercises} organizing={organizing} first={i === 0} last={i === d.items.length - 1} only={d.items.length === 1} dayName={d.name} />
+            ))}
           </ul>
+          {organizing && <AddExercisePanel day={d} exercises={exercises} />}
         </div>
       ))}
     </section>
@@ -102,7 +118,7 @@ export function PlanPage() {
 
 const UNIT_CHIP: Partial<Record<Unit, string>> = { per_hand: 'Mancuerna · por mano', per_side: 'Barra · por lado', total: 'Polea · kg', bricks: 'Máquina · ladrillos' }
 
-function PlanItemRow({ dayId, item, exercises }: { dayId: string; item: PlanItem; exercises: Map<string, Exercise> }) {
+function PlanItemRow({ dayId, dayName, item, exercises, organizing, first, last, only }: { dayId: string; dayName: string; item: PlanItem; exercises: Map<string, Exercise>; organizing: boolean; first: boolean; last: boolean; only: boolean }) {
   const [open, setOpen] = useState(false)
   const ex = exercises.get(item.exerciseId)
   const range = item.rangeOverride ?? ex?.range
@@ -123,6 +139,21 @@ function PlanItemRow({ dayId, item, exercises }: { dayId: string; item: PlanItem
           <Stepper compact label="Series" value={item.sets} step={1} min={1} decimal={false} onChange={(v) => v && v <= 8 && void setPlanItemSets(getDB(), dayId, item.exerciseId, v)} />
         </div>
       </div>
+      {organizing && (
+        <div className="mt-2 grid grid-cols-3 gap-2 border-t border-line pt-2">
+          <Button className="min-h-11 text-sm" disabled={first} aria-label={`Subir ${ex?.name ?? item.exerciseId}`} onClick={() => void moveExerciseInDay(getDB(), dayId, item.exerciseId, -1)}>↑ Subir</Button>
+          <Button className="min-h-11 text-sm" disabled={last} aria-label={`Bajar ${ex?.name ?? item.exerciseId}`} onClick={() => void moveExerciseInDay(getDB(), dayId, item.exerciseId, 1)}>↓ Bajar</Button>
+          <Button
+            variant="danger"
+            className="min-h-11 text-sm"
+            disabled={only}
+            aria-label={`Sacar ${ex?.name ?? item.exerciseId} de ${dayName}`}
+            onClick={() => confirm(`¿Sacar ${ex?.name ?? item.exerciseId} de ${dayName}? El historial se conserva.`) && void removeExerciseFromDay(getDB(), dayId, item.exerciseId)}
+          >
+            Sacar
+          </Button>
+        </div>
+      )}
       {open && ex && <VariantsPanel item={item} base={ex} exercises={exercises} />}
     </li>
   )
