@@ -22,7 +22,8 @@ E2E offline con @playwright/test (`e2e/`). Deploy estático en GitHub Pages por 
 - `src/engine/` — lógica de negocio, **funciones puras de TS sin dependencias**
   (ESLint prohíbe imports que no sean relativos). Tests en `src/engine/__tests__/`.
 - `src/data/` — Dexie (`db.ts`, migraciones: agregar `db.version(n)`, nunca editar las viejas),
-  zod (`schemas.ts`), conversión del seed (`seedImport.ts`), backup/CSV (`backup.ts`).
+  zod (`schemas.ts`), conversión del seed (`seedImport.ts`), backup/CSV (`backup.ts`),
+  copia previa a migrar (`safety.ts`, `boot.ts`; al agregar `db.version(n)` subir `SCHEMA_VERSION`).
   Fixture de tests: `src/data/__fixtures__/seed.fixture.json`.
 - Tipos de dominio: `src/engine/types.ts`.
 - Motor (`src/engine/`): `validity` (qué cuenta para progresión), `progression` (doble progresión),

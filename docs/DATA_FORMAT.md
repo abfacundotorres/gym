@@ -114,3 +114,9 @@ Se convierte con `src/data/seedImport.ts`, aplicando las correcciones de `docs/D
 - `planChanges?` (D-77): los cambios al plan hechos por esta molestia, para poder deshacerlos: `{ kind: 'swap', planDayId, from, to }` (la variante `to` pasó a ser la titular) o `{ kind: 'sets', planDayId, exerciseId, from, to }`. Se borra al deshacerlos o al elegir "Dejar así".
 - Una zona tiene a lo sumo una molestia activa. Un backup anterior no trae la colección y se lee igual; al importar, "Reemplazar todo" con un archivo sin ella las borra y "Mezclar" no las toca.
 
+
+## Copias automáticas (D-82)
+
+Aparte del backup que exportás, la app guarda sola una copia antes de migrar la base a una versión nueva del esquema. Vive en **otra base de IndexedDB, `gym-safety`**
+(tabla `snapshots`, clave `id`), no en `gym`: `{ id, takenAt, fromVersion, toVersion, sessions, backup }`, donde `backup` es **exactamente el formato de arriba**
+(`format: "gym-backup"`, `version: 1`), así que lo que se descarga desde Ajustes se importa como cualquier backup. No es parte del export, no cambia el formato y se conservan las últimas 2.
