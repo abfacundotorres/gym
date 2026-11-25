@@ -11,6 +11,7 @@ const LABELS: Record<Exclude<keyof ImportPreview, 'settings'>, string> = {
   sessions: 'Sesiones',
   dayMarks: 'Días salteados',
   bodyweights: 'Pesos corporales',
+  zoneIssues: 'Molestias por zona',
 }
 
 type State =

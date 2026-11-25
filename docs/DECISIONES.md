@@ -443,3 +443,14 @@ pantalla Volumen: primarios 1, secundarios 0,5); el promedio usa solo semanas co
 entrena); no se avisa en una sesión de deload ni de vuelta. Se muestran los dos mayores saltos. **Depende de que cargues el RIR:** sin RIR, los avisos 1 y 2 no se disparan. **Fuera de alcance:** el resumen final, y
 los avisos por zona del cuerpo (siguiente paso).
 
+**D-76. Molestias por zona del cuerpo.** Se anotan por zona (cuello, hombro, codo, muñeca, espalda alta, lumbar, cadera, rodilla, tobillo) con intensidad (molestia o dolor) y "desde cuándo", de dos maneras: **suelta**
+(Hoy → "Anotar una molestia", como una contractura fuera de la sesión) y **desde un ejercicio** (al marcar molestia o dolor, D-52, se puede elegir la zona). Se cierran con "Ya pasó" y el registro queda. **Base de datos:**
+`db.version(3)` agrega la tabla `zoneIssues` y no toca lo anterior (un test abre una base v2 con datos y verifica que se conserva todo); **backup:** `zoneIssues` y `Exercise.zones` opcionales (el formato no cambia de versión).
+Una zona tiene a lo sumo una molestia activa: volver a anotarla conserva la fecha más vieja y el dolor no baja solo. **Qué ejercicios cargan cada zona** (`engine/zones.ts`): se deduce por músculos: **mucho** si la zona tiene un músculo
+primario suyo, **algo** si es secundario. Es una aproximación mía: el catálogo no tiene cuello, trapecio ni antebrazo, así que el cuello se asocia a espalda alta y deltoides y la muñeca no se deduce de nada. Por eso **se corrige a mano**:
+en Ejercicios → editar, "Zonas que carga"; si se corrigen, manda esa lista (cuenta como mucho) y "Volver a deducirlas" la quita. **Qué hace con una zona activa:** (a) en la lista de la sesión, un aviso por zona con los
+ejercicios de hoy que la cargan (mucho y algo) y "Ya pasó", y "Carga <zona>" en cada fila; (b) en cada ejercicio que la carga, antes de la primera serie de trabajo: el aviso, dejar 1 o 2 en reserva o una serie menos, y las
+**variantes de la misma familia que la cargan menos** (las del plan primero) para cambiar con un toque; con dolor, recomienda consultar a un profesional. **Lo que NO hace:** no cambia las sugerencias de carga ni la progresión (para eso
+sigue estando la marca por ejercicio, D-52), no diagnostica ni predice, y no propone cambios al plan (eso queda para el siguiente paso). Una variante que se sugiere solo aparece si sus zonas difieren de las del ejercicio actual,
+es decir, casi siempre después de corregirlas a mano.
+

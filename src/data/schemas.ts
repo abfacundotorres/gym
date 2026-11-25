@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { MUSCLES, SET_FLAGS, UNITS } from '../engine/types'
+import { MUSCLES, SET_FLAGS, UNITS, ZONES } from '../engine/types'
 
 const muscle = z.enum(MUSCLES)
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -94,6 +94,8 @@ const exercise = z.object({
   safetyNote: z.string().optional(),
   note: z.string().optional(),
   archived: z.boolean().optional(),
+  /** Opcional (D-76): zonas que carga, corregidas a mano. */
+  zones: z.array(z.enum(ZONES)).optional(),
 })
 
 const planDay = z.object({
@@ -168,6 +170,17 @@ const session = z.object({
   exerciseIds: z.array(z.string()),
 })
 
+const zoneIssue = z.object({
+  id: z.string(),
+  zone: z.enum(ZONES),
+  severity: z.enum(['molestia', 'dolor']),
+  startedOn: isoDate,
+  resolvedOn: isoDate.optional(),
+  note: z.string().optional(),
+  exerciseId: z.string().optional(),
+  sessionId: z.string().optional(),
+})
+
 const bodyweight = z.object({ id: z.string(), date: isoDate, kg: z.number().min(20).max(400) })
 
 const dayMark = z.object({ id: z.string(), date: isoDate, kind: z.literal('skipped'), planDayId: z.string() })
@@ -195,6 +208,8 @@ export const backupSchema = z.object({
     dayMarks: z.array(dayMark),
     /** Opcional (D-70): backups anteriores no lo traen. */
     bodyweights: z.array(bodyweight).optional(),
+    /** Opcional (D-76): molestias por zona. */
+    zoneIssues: z.array(zoneIssue).optional(),
     settings: settings.nullable(),
     dataQuality: dataQuality.nullable(),
   }),

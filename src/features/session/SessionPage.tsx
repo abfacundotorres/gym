@@ -2,13 +2,15 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { getDB } from '../../data/db'
-import { useExerciseMap, useSettings } from '../../data/hooks'
+import { useActiveZones, useExerciseMap, useSettings } from '../../data/hooks'
 import { discardSession, finishSession, groupSessionItems } from '../../data/sessionRepo'
+import { resolveZone } from '../../data/zoneRepo'
 import { comebackFor } from '../../engine/comeback'
 import { addDays, formatDDMM, weekStart } from '../../engine/dates'
 import { num } from '../../engine/format'
 import { FAILURE_SESSION_MIN, failureToday, volumeSpikes } from '../../engine/risk'
-import { MUSCLE_LABELS } from '../../engine/types'
+import { MUSCLE_LABELS, ZONE_LABELS } from '../../engine/types'
+import { loadingItems, zoneLoad } from '../../engine/zones'
 import { formatLoad } from '../../engine/load'
 import { formatSet, lastExposure, sessionProgress } from '../../engine/session'
 import { useWakeLock } from '../../lib/wakeLock'
@@ -28,6 +30,7 @@ export function SessionPage() {
   const data = useSessionData(id)
   const exercises = useExerciseMap()
   const settings = useSettings()
+  const activeZ = useActiveZones()
   const [finishing, setFinishing] = useState(false)
   const [note, setNote] = useState('')
   /** Armando una superserie: se eligen los ejercicios que van juntos (D-66). */
@@ -97,6 +100,27 @@ export function SessionPage() {
           Vuelta tras {comeback.days} días: ~{Math.round(comeback.loadFactor * 100)} % de la carga, menos series y {comeback.rir} en reserva.{session.deload ? ' Es semana de deload: se usa la reducción más fuerte.' : ''}
         </p>
       )}
+      {inProgress && activeZ.map((z) => {
+        const loading = loadingItems(session.items, exercises, z.zone)
+        const names = (load: 'high' | 'medium') => loading.filter((l) => l.load === load).map((l) => (exercises.get(l.item.exerciseId)?.name ?? l.item.exerciseId).replace(/\s*\(.*\)\s*$/, '')).join(', ')
+        return (
+          <div key={z.zone} role="status" className="flex items-start gap-3 rounded-2xl bg-amber-500/10 p-3 text-sm text-amber-100 ring-1 ring-amber-500/30">
+            <p className="min-w-0 flex-1">
+              <span className="font-semibold">{ZONE_LABELS[z.zone]}</span> {z.severity === 'dolor' ? 'con dolor' : 'molesto'} desde el {formatDDMM(z.since)}.{' '}
+              {loading.length === 0 ? 'Ningún ejercicio de hoy la carga.' : (
+                <>
+                  {names('high') && <>La cargan mucho: {names('high')}. </>}
+                  {names('medium') && <>Algo: {names('medium')}. </>}
+                  Si querés, dejá reservas o elegí variantes que la carguen menos.
+                </>
+              )}
+            </p>
+            <button type="button" aria-label={`Ya pasó: ${ZONE_LABELS[z.zone]}`} className="-my-1 -mr-1 min-h-11 shrink-0 rounded-xl px-2.5 text-[13px] font-medium text-amber-200" onClick={() => void resolveZone(getDB(), z.zone, session.date)}>
+              Ya pasó
+            </button>
+          </div>
+        )
+      })}
       {failed.length >= FAILURE_SESSION_MIN && (
         <RiskNote id={`fail-session:${session.id}`}>
           Ya llevás {failed.length} ejercicios compuestos al fallo hoy ({failed.map((id) => (exercises.get(id)?.name ?? id).replace(/\s*\(.*\)\s*$/, '')).join(' y ')}). Para los que siguen, si querés, dejá 1 o 2 en reserva.
@@ -145,6 +169,9 @@ export function SessionPage() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-semibold">{ex?.name ?? it.exerciseId}{p?.optional && <span className="font-normal text-slate-400"> (opcional)</span>}</div>
+                  {!it.skipped && ex && activeZ.some((z) => zoneLoad(ex, z.zone)) && (
+                    <div className="truncate text-xs text-amber-300">Carga {activeZ.filter((z) => zoneLoad(ex, z.zone)).map((z) => ZONE_LABELS[z.zone].toLowerCase()).join(', ')}</div>
+                  )}
                   <div className="truncate text-xs text-slate-400">
                     {it.skipped ? (
                       'Salteado'

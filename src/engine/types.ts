@@ -13,6 +13,30 @@ export const MUSCLE_LABELS: Record<Muscle, string> = {
   quads: 'Cuádriceps', hamstrings: 'Isquios', glutes: 'Glúteos', calves: 'Gemelos', lower_back: 'Lumbar',
 }
 
+/** Zonas del cuerpo para anotar molestias (D-76). El catálogo de músculos no tiene cuello ni antebrazo: la relación con los ejercicios es aproximada y se corrige a mano. */
+export const ZONES = ['neck', 'shoulder', 'elbow', 'wrist', 'upper_back', 'lower_back', 'hip', 'knee', 'ankle'] as const
+export type Zone = (typeof ZONES)[number]
+
+export const ZONE_LABELS: Record<Zone, string> = {
+  neck: 'Cuello', shoulder: 'Hombro', elbow: 'Codo', wrist: 'Muñeca', upper_back: 'Espalda alta',
+  lower_back: 'Lumbar', hip: 'Cadera', knee: 'Rodilla', ankle: 'Tobillo',
+}
+
+export type PainLevel = 'molestia' | 'dolor'
+
+/** Molestia de una zona, anotada suelta o desde un ejercicio. Activa mientras no tenga `resolvedOn`. */
+export interface ZoneIssue {
+  id: string
+  zone: Zone
+  severity: PainLevel
+  startedOn: ISODate
+  resolvedOn?: ISODate
+  note?: string
+  /** Ejercicio y sesión desde donde se marcó, si vino de ahí. */
+  exerciseId?: string
+  sessionId?: string
+}
+
 export const UNITS = ['per_side', 'per_hand', 'total', 'bricks', 'minutes'] as const
 export type Unit = (typeof UNITS)[number]
 
@@ -40,6 +64,8 @@ export interface Exercise {
   safetyNote?: string
   note?: string
   archived?: boolean
+  /** Zonas que carga, si se corrigieron a mano (D-76). Sin el campo se deducen de los músculos. */
+  zones?: Zone[]
 }
 
 export interface PlanItem {
