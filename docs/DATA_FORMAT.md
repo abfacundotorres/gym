@@ -18,6 +18,7 @@ y se puede volver a importar (modo **reemplazar** o **mezclar**). El esquema exa
     "sessions":   [Session],
     "dayMarks":   [DayMark],
     "bodyweights": [Bodyweight],   // opcional (D-70): backups anteriores no lo traen
+    "zoneIssues": [ZoneIssue],     // opcional (D-76): molestias por zona del cuerpo
     "settings":   Settings | null,
     "dataQuality": { "source": string, "notes": [string], "importedAt": number } | null
   }
@@ -40,6 +41,7 @@ Las colecciones vienen ordenadas por `id`. Fechas: `'YYYY-MM-DD'` (hora local). 
 | `restSec` | number | |
 | `warmup` | `heavy` \| `light` \| `none` | |
 | `safetyNote?`, `note?` | string | |
+| `zones?` | Zone[] | zonas que carga, corregidas a mano (D-76): `neck, shoulder, elbow, wrist, upper_back, lower_back, hip, knee, ankle`. Sin el campo se deducen de los músculos |
 
 Unidades: `per_side` = kg de discos por lado, sin barra/carro · `per_hand` = kg por mancuerna ·
 `total` = kg de la pila/polea · `bricks` = ladrillos (kg = ladrillos × `settings.kgPerBrick`) ·
@@ -104,3 +106,9 @@ Solo exportación (para planillas). Una fila por serie, UTF-8, separador `,`, co
 
 El import también acepta el `seed.json` original (formato de tuplas `[tipo, peso, reps, marca?, repsAntesDePausa?]`).
 Se convierte con `src/data/seedImport.ts`, aplicando las correcciones de `docs/DECISIONES.md` (D-09, D-10).
+
+### ZoneIssue (D-76)
+`{ id, zone: Zone, severity: 'molestia'|'dolor', startedOn: ISO date, resolvedOn?: ISO date, note?: string, exerciseId?: string, sessionId?: string }`
+- Activa mientras no tenga `resolvedOn` ("Ya pasó" la cierra; el registro queda). `exerciseId` y `sessionId` solo si se marcó desde un ejercicio.
+- Una zona tiene a lo sumo una molestia activa. Un backup anterior no trae la colección y se lee igual; al importar, "Reemplazar todo" con un archivo sin ella las borra y "Mezclar" no las toca.
+

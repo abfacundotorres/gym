@@ -4,9 +4,11 @@ import { Link, useNavigate, useParams } from 'react-router'
 import { getDB } from '../../data/db'
 import { createVariant, saveExercise } from '../../data/exerciseRepo'
 import { UNIT_SHORT } from '../../engine/load'
-import { MUSCLES, MUSCLE_LABELS, UNITS, type Exercise, type Muscle } from '../../engine/types'
+import { MUSCLES, MUSCLE_LABELS, UNITS, type Exercise, type Muscle, type Zone } from '../../engine/types'
+import { exerciseZones } from '../../engine/zones'
 import { Button, Card } from '../../ui/Button'
 import { Chip, Stepper } from '../../ui/Stepper'
+import { ZoneChips } from '../zones/ZoneChips'
 
 const UNIT_LABEL: Record<Exercise['unit'], string> = {
   per_side: 'Por lado (discos)',
@@ -93,6 +95,27 @@ function Form({ initial, used, families }: { initial: Exercise; used: number; fa
             </div>
           </div>
         ))}
+        {(
+          <div className="text-sm">
+            <span className="text-slate-400">Zonas que carga (para avisarte si te molesta alguna)</span>
+            <div className="mt-1">
+              <ZoneChips
+                label="Zonas que carga"
+                selected={exerciseZones(ex)}
+                onToggle={(z: Zone) => {
+                  const cur = exerciseZones(ex)
+                  patch({ zones: cur.includes(z) ? cur.filter((x) => x !== z) : [...cur, z] })
+                }}
+              />
+            </div>
+            <p className="mt-1 text-xs text-slate-400">
+              {ex.zones ? 'Corregidas a mano: manda tu lista.' : 'Se deducen de los músculos que trabaja (aproximado).'}
+              {ex.zones && (
+                <button type="button" className="ml-1 min-h-11 px-1 text-accent" onClick={() => { const { zones: _z, ...rest } = ex; setEx(rest); setSaved(false) }}>Volver a deducirlas</button>
+              )}
+            </p>
+          </div>
+        )}
         <label className="block text-sm">
           <span className="text-slate-400">Nota de seguridad (se muestra una vez por sesión)</span>
           <textarea value={ex.safetyNote ?? ''} onChange={(e) => { const { safetyNote: _s, ...rest } = ex; setEx(e.target.value ? { ...rest, safetyNote: e.target.value } : rest); setSaved(false) }} rows={2} className="mt-1 w-full rounded-xl bg-bg p-2 ring-1 ring-line" />

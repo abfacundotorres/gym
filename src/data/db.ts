@@ -1,6 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie'
 import type { Bodyweight } from '../engine/bodyweight'
-import type { DataQuality, Exercise, Mesocycle, PlanDay, Session, Settings } from '../engine/types'
+import type { DataQuality, Exercise, Mesocycle, PlanDay, Session, Settings, ZoneIssue } from '../engine/types'
 
 export interface DayMark { id: string; date: string; kind: 'skipped'; planDayId: string }
 export interface KV<T = unknown> { key: string; value: T }
@@ -12,6 +12,7 @@ export type GymDB = Dexie & {
   sessions: EntityTable<Session, 'id'>
   dayMarks: EntityTable<DayMark, 'id'>
   bodyweights: EntityTable<Bodyweight, 'id'>
+  zoneIssues: EntityTable<ZoneIssue, 'id'>
   settings: EntityTable<KV<Settings>, 'key'>
   meta: EntityTable<KV, 'key'>
 }
@@ -34,10 +35,12 @@ export function createDB(name = 'gym'): GymDB {
   })
   // v2 (D-70): peso corporal opcional. Solo agrega una tabla: los datos de la v1 no se tocan.
   db.version(2).stores({ bodyweights: 'id, date' })
+  // v3 (D-76): molestias por zona del cuerpo. Solo agrega una tabla: los datos anteriores no se tocan.
+  db.version(3).stores({ zoneIssues: 'id, zone, startedOn' })
   return db
 }
 
-export const TABLES = ['exercises', 'planDays', 'mesocycles', 'sessions', 'dayMarks', 'bodyweights', 'settings', 'meta'] as const
+export const TABLES = ['exercises', 'planDays', 'mesocycles', 'sessions', 'dayMarks', 'bodyweights', 'zoneIssues', 'settings', 'meta'] as const
 
 let instance: GymDB | null = null
 export function getDB(): GymDB {

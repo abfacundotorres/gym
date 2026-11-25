@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { getDB } from '../../data/db'
-import { useExerciseMap, useSettings } from '../../data/hooks'
+import { useActiveZones, useExerciseMap, useSettings } from '../../data/hooks'
 import { addSet, deleteSet, setItemNote, setItemPain, setSkipped, swapExercise, updateSet } from '../../data/sessionRepo'
 import { familyReference, planVariants, variantLabel, variantOptions } from '../../engine/variants'
 import { formatDDMM } from '../../engine/dates'
@@ -17,7 +17,10 @@ import { sessionSets } from '../../engine/comeback'
 import { FAILURE_SESSION_MIN, FAILURE_STREAK_MIN, failureStreak, failureToday, isCompound } from '../../engine/risk'
 import type { Comeback } from '../../engine/comeback'
 import { reducedSets } from '../../engine/readiness'
-import type { Exercise } from '../../engine/types'
+import { ZONE_LABELS, type Exercise } from '../../engine/types'
+import { lighterVariants, zoneLoad } from '../../engine/zones'
+import { markZone } from '../../data/zoneRepo'
+import { ZoneChips } from '../zones/ZoneChips'
 import { haptic } from '../../lib/haptics'
 import { restFromSkip, DEFAULT_WARMUP_REST_SEC } from '../../engine/rest'
 import { startRest, takeRestSkip } from '../../lib/restTimer'
@@ -51,6 +54,7 @@ function ExerciseScreen() {
   const data = useSessionData(id)
   const settings = useSettings()
   const exercises = useExerciseMap()
+  const activeZ = useActiveZones()
   /** Cantidad de series efectivas con la que se pidió una extra: al guardarla, vuelve la tarjeta de "completo". */
   const [extraAt, setExtraAt] = useState<number | null>(null)
   const exerciseId = data?.session.items[idx]?.exerciseId
@@ -126,8 +130,42 @@ function ExerciseScreen() {
   const notStarted = inProgress && !item.sets.some((x) => x.type === 'W')
   const streak = notStarted && !isCardio ? failureStreak(previous) : 0
   const failed = exercises ? failureToday(session, exercises) : []
+  // Zonas con molestia activa que este ejercicio carga (D-76), con variantes que la cargan menos.
+  const planOrder = planVariants(ex.id, planItem, [...(exercises?.values() ?? [])]).map((v) => v.id)
+  const zoneHits = notStarted && !isCardio ? activeZ.flatMap((z) => { const load = zoneLoad(ex, z.zone); return load ? [{ z, load }] : [] }) : []
   const riskNotes = (
     <>
+      {zoneHits.map(({ z, load }) => {
+        const lighter = lighterVariants(ex, z.zone, ctx.family, planOrder)
+        return (
+          <div key={z.zone} role="status" className="space-y-2 rounded-2xl bg-amber-500/10 p-3 text-sm text-amber-100 ring-1 ring-amber-500/30">
+            <p>
+              {ZONE_LABELS[z.zone]} {z.severity === 'dolor' ? 'con dolor' : 'molesto'}: este ejercicio la carga {load === 'high' ? 'mucho' : 'algo'}. Si querés, dejá 1 o 2 en reserva o hacé una serie menos.
+            </p>
+            {lighter.length > 0 && (
+              <div role="group" aria-label={`Variantes que cargan menos ${ZONE_LABELS[z.zone].toLowerCase()}`} className="space-y-1.5">
+                <p className="text-xs text-amber-200">Cargan menos esa zona:</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {lighter.map((v) => (
+                    <Chip
+                      key={v.exercise.id}
+                      active={false}
+                      label={`Cambiar a ${v.exercise.name}`}
+                      onClick={async () => {
+                        const to = await swapExercise(db, session.id, idx, v.exercise.id)
+                        navigate(`/sesion/${session.id}/${to}`, { replace: true })
+                      }}
+                    >
+                      {variantLabel(v.exercise.name)}
+                    </Chip>
+                  ))}
+                </div>
+              </div>
+            )}
+            {z.severity === 'dolor' && <p className="text-xs text-amber-200">Si el dolor sigue, consultá a un profesional.</p>}
+          </div>
+        )
+      })}
       {streak >= FAILURE_STREAK_MIN && (
         <RiskNote id={`fail-streak:${session.id}:${ex.id}`}>
           Las últimas {streak} veces terminaste este ejercicio al fallo (RIR 0). Probá dejar 1 o 2 en reserva y mirá cómo responde.
@@ -233,6 +271,16 @@ function ExerciseScreen() {
               <span className="text-sm text-slate-400">¿Algo te molesta?</span>
               <Chip active={item.pain === 'molestia'} onClick={() => void setItemPain(db, session.id, idx, item.pain === 'molestia' ? null : 'molestia')}>Molestia</Chip>
               <Chip active={item.pain === 'dolor'} onClick={() => void setItemPain(db, session.id, idx, item.pain === 'dolor' ? null : 'dolor')}>Dolor</Chip>
+              {item.pain && (
+                <div className="basis-full space-y-1.5">
+                  <span className="text-sm text-slate-400">¿En qué zona? (opcional)</span>
+                  <ZoneChips
+                    label="Zona de la molestia"
+                    selected={activeZ.map((z) => z.zone)}
+                    onToggle={(zone) => void markZone(db, { zone, severity: item.pain!, startedOn: session.date, exerciseId: ex.id, sessionId: session.id })}
+                  />
+                </div>
+              )}
             </div>
           )}
           <Button variant="ghost" className="w-full" disabled={done.length > 0 || item.skipped} onClick={() => { void setSkipped(db, session.id, idx, true); setMenuOpen(false) }}>

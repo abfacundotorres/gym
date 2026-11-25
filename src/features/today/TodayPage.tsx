@@ -15,6 +15,7 @@ import type { Exercise, PlanDay, Readiness, Session } from '../../engine/types'
 import { Button, Card } from '../../ui/Button'
 import { Chip } from '../../ui/Stepper'
 import { ImportFlow } from '../settings/ImportFlow'
+import { ZonesCard } from '../zones/ZonesCard'
 
 export function TodayPage() {
   const db = getDB()
@@ -153,6 +154,8 @@ export function TodayPage() {
           </div>
         </Card>
       )}
+
+      <ZonesCard today={today} />
 
       {data.active ? (
         <ActiveSessionCard
