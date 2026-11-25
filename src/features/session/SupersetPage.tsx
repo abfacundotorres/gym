@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { getDB } from '../../data/db'
-import { useExerciseMap, useSettings } from '../../data/hooks'
+import { useExerciseMap, useRules, useSettings } from '../../data/hooks'
 import { addRound, deleteSet, ungroupSessionItems, updateSet } from '../../data/sessionRepo'
 import { nextSetDefaults, wouldBeRecord } from '../../engine/entry'
 import { formatLoad } from '../../engine/load'
@@ -34,6 +34,7 @@ export function SupersetPage() {
   const data = useSessionData(id)
   const exercises = useExerciseMap()
   const settings = useSettings()
+  const rules = useRules()
   const history = useLiveQuery(async () => (data?.session ? db.sessions.where('exerciseIds').anyOf(data.session.exerciseIds).toArray() : []), [data?.session.exerciseIds.join()])
   const [menuOpen, setMenuOpen] = useState(false)
   const [editing, setEditing] = useState<{ idx: number; setId: string } | null>(null)
@@ -43,16 +44,16 @@ export function SupersetPage() {
 
   if (!data || !exercises || !history) return null
   const { session, plan } = data
-  const view = groupView(session, plan, idx)
+  const view = groupView(session, plan, idx, rules)
   if (!view) return null
-  const prog = sessionProgress(session, plan)
+  const prog = sessionProgress(session, plan, rules)
   const K = settings.kgPerBrick
 
   const members = view.indexes.map((i) => {
     const item = session.items[i]!
     const ex = exercises.get(item.exerciseId)!
     const planItem = plan?.items.find((p) => p.exerciseId === item.exerciseId || p.exerciseId === item.swappedFrom)
-    const { rec, previous } = todaysRecommendation(ex, session, planItem, history, K)
+    const { rec, previous } = todaysRecommendation(ex, session, planItem, history, K, rules)
     const { done, target, complete } = prog.items[i]!
     return { idx: i, item, ex, rec, previous, done, target, complete, defaults: nextSetDefaults(item.sets, rec), restSec: settings.restSecOverrides[ex.id] ?? ex.restSec }
   })

@@ -415,7 +415,8 @@ como alternativa. Sin cambios de datos ni de backup.
 
 **D-73. Plantilla del bloque siguiente, preparada de antemano.** En Plan → "Preparar el bloque siguiente" (pantalla `/plan/siguiente`) se arma una **copia editable del plan de hoy**
 para el bloque que viene: series, qué variante es la titular (la anterior pasa a alternativa, igual que al rotar en la revisión) y ejercicios que se sacan. Agregar ejercicios nuevos
-no está: se hace en el Plan cuando empieza el bloque. **Dónde se guarda:** campo opcional `nextPlan` del mesociclo activo (no hay tabla ni migración de Dexie; viaja en el backup).
+no está, ni acá ni en el Plan: **hoy la app no permite agregar, sacar ni reordenar los ejercicios de un día, ni crear ejercicios nuevos** (solo series y variantes); eso exige re-importar
+un archivo. (Una versión anterior de esta nota decía que se hacía en el Plan: era un error.) **Dónde se guarda:** campo opcional `nextPlan` del mesociclo activo (no hay tabla ni migración de Dexie; viaja en el backup).
 **Cómo se aplica:** al "Empezar el siguiente" desde la Revisión, el plan del bloque nuevo es la plantilla ya resuelta (`resolveNextPlan`) más lo que se acepte en la revisión; la plantilla
 no queda ni en el bloque cerrado ni en el nuevo. **Qué prevalece:** la plantilla es tuya y no se pisa sin que lo aceptes: la revisión propone encima de ella (series por volumen
 sobre las series de la plantilla; no vuelve a proponer rotar lo que ya rotaste), pero lo que muestra del bloque que termina (PRs, volumen, estancados, variantes que hiciste) sigue saliendo
@@ -461,4 +462,11 @@ Un ejercicio tiene a lo sumo una propuesta por día: la de la zona más urgente 
 **"Dejar así"** (se conserva el plan y se olvida el registro). Deshacer respeta lo que se cambió después: unas series que editaste a mano o una variante que ya no es la titular **no se tocan**, y los cambios encadenados se deshacen del último al primero.
 Solo se aplican y se anotan los cambios que todavía modifican el plan (una propuesta desactualizada no hace nada). **Limitaciones a propósito:** no cambia la sesión en curso ni las sugerencias de carga, no toca el plan del bloque siguiente (D-73) y la elección de
 qué proponer es una regla simple mía (variante o una serie menos), no un programa de rehabilitación. Con muchos ejercicios que cargan la zona salen varias propuestas; "Aplicar todas" las aplica juntas.
+
+**D-78. Reglas ajustables y deload con opciones.** Los umbrales que puse yo (no son prescripciones) se ven y se cambian en **Ajustes → "Reglas del motor"**, cada uno con su valor por defecto: **vuelta tras una pausa** (días mínimos, 7 a 21; carga de vuelta por tramo,
+corta, media y larga, 50 a 100 %), **avisos** (compuestos al fallo por sesión, 2 a 5; veces seguidas al fallo, 2 a 6; salto de volumen, 20 a 200 % sobre el promedio y 1 a 10 series de más) y **deload** (tipo). Se guardan **solo los que cambiás**
+(`Settings.rules`, opcional, sin migración de la base); un valor inválido o fuera de rango vuelve a su valor por defecto sin tirar el resto (`resolveRules`), y "Restablecer las reglas" borra el campo. El motor recibe las reglas por parámetro
+(con los valores de siempre por defecto) y las pantallas las leen con `useRules()`. **Deload con tipo:** "Como ahora" (la mitad de las series y −10 % de carga), "Más liviano" (la mitad de las series y −20 %) y **"Semana sin pesas"**: es el descanso
+planificado, así que la semana de deload sin sesiones **no cuenta como pausa ni corre el mesociclo** (`pausedWeeks`); Hoy lo dice ("Semana sin pesas: descansá") y, si entrenás igual, la sesión sale liviana (−20 %). Con la vuelta tras una pausa o un dolor
+marcado (D-74, D-52) sigue ganando la reducción más fuerte. **No se pueden cambiar** (a propósito, para no llenar la pantalla): los límites de los tramos de pausa (21 y 42 días), las series de la vuelta por tramo, ni qué cuenta como "compuesto".
 

@@ -1,3 +1,4 @@
+import { DEFAULT_RULES, type Rules } from './rules'
 import { sessionProgress } from './session'
 import type { PlanDay, Session, SessionItem } from './types'
 
@@ -54,10 +55,10 @@ export interface GroupView {
 }
 
 /** Estado de la superserie a la que pertenece el ejercicio `index`, o null si es un ejercicio suelto. */
-export function groupView(session: Session, plan: PlanDay | undefined, index: number): GroupView | null {
+export function groupView(session: Session, plan: PlanDay | undefined, index: number, rules: Rules = DEFAULT_RULES): GroupView | null {
   const group = session.items[index]?.group
   if (!group) return null
-  const prog = sessionProgress(session, plan)
+  const prog = sessionProgress(session, plan, rules)
   const indexes = session.items.flatMap((it, i) => (it.group === group ? [i] : []))
   const pending = indexes.filter((i) => !prog.items[i]!.complete)
   const rounds = Math.max(1, ...indexes.map((i) => prog.items[i]!.target))

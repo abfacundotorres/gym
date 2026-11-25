@@ -1,5 +1,6 @@
 import { exposuresOf, type ExerciseExposure } from '../../engine/history'
 import { comebackFor, sessionLoadFactor, sessionSets } from '../../engine/comeback'
+import { DEFAULT_RULES, type Rules } from '../../engine/rules'
 import { deloadWeight } from '../../engine/periodization'
 import { recommend, type Recommendation } from '../../engine/progression'
 import { validSets, workingWeight } from '../../engine/validity'
@@ -16,15 +17,16 @@ export function todaysRecommendation(
   planItem: PlanItem | undefined,
   history: Session[],
   kgPerBrick: number,
+  rules: Rules = DEFAULT_RULES,
 ) {
   const deload = !!session.deload
-  const comeback = comebackFor(session.comebackDays)
-  const factor = sessionLoadFactor(session) // deload o vuelta: carga reducida y menos series; no se suman, gana la más fuerte
+  const comeback = comebackFor(session.comebackDays, rules)
+  const factor = sessionLoadFactor(session, rules) // deload o vuelta: carga reducida y menos series; no se suman, gana la más fuerte
   const reduced = factor != null
   const lowDay = !reduced && readinessLevel(session.readiness) === 'low'
   const fewer = !reduced && suggestFewerSets(session.readiness, session.short)
   const fullSets = planItem?.sets ?? 3
-  const plannedSets = sessionSets(session, fullSets)
+  const plannedSets = sessionSets(session, fullSets, rules)
   const previous: ExerciseExposure[] = exposuresOf(history, ex.id, { before: session.date, excludeSessionId: session.id })
   const baseRec = recommend(ex, reduced ? fullSets : plannedSets, previous, { kgPerBrick, range: planItem?.rangeOverride, hold: lowDay })
   let rec: Recommendation = baseRec

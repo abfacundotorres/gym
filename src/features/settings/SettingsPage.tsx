@@ -12,6 +12,7 @@ import { VolumeTargets } from './VolumeTargets'
 import { About } from './About'
 import { StorageStatus } from './StorageStatus'
 import { Preferences } from './Preferences'
+import { RulesSettings } from './RulesSettings'
 import { Link } from 'react-router'
 
 export function SettingsPage() {
@@ -57,6 +58,7 @@ export function SettingsPage() {
       <div className="space-y-2">
         <h2 className="eyebrow text-slate-400">Preferencias</h2>
         <Preferences />
+        <RulesSettings />
         <Link to="/ejercicios" className="flex min-h-12 items-center justify-between rounded-2xl bg-surface px-4 text-sm"><span>Ejercicios: unidades, rangos, incrementos y descansos</span><span aria-hidden="true" className="text-slate-500">›</span></Link>
       </div>
 

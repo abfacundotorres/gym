@@ -35,6 +35,8 @@ for (const [width, height] of [[375, 667], [320, 568]] as const) {
       await page.waitForTimeout(250)
       // En el Plan se abre un panel de variantes (el más largo) para medirlo también.
       if (hash === '#/plan') await page.getByRole('button', { name: /Variantes/ }).first().click()
+      // En Ajustes se abre el panel de reglas (el más largo) para medirlo también.
+      if (hash === '#/ajustes') await page.getByText('Reglas del motor: vuelta, avisos y deload').click()
       const r = await page.evaluate(() => {
         const visible = (el: Element) => { const b = el.getBoundingClientRect(); const s = getComputedStyle(el); return b.width > 0 && b.height > 0 && s.visibility !== 'hidden' && s.display !== 'none' }
         const noName: string[] = []

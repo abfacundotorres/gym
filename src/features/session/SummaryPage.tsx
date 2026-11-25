@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { getDB } from '../../data/db'
-import { useSettings } from '../../data/hooks'
+import { useRules, useSettings } from '../../data/hooks'
 import { exposuresOf } from '../../engine/history'
 import { findPRs } from '../../engine/prs'
 import { formatSet } from '../../engine/session'
@@ -21,6 +21,7 @@ export function SummaryPage() {
   const data = useSessionData(id)
   const exercises = useExerciseMap()
   const settings = useSettings()
+  const rules = useRules()
   const [copied, setCopied] = useState<boolean | null>(null)
   const history = useLiveQuery(
     async () => (data ? getDB().sessions.where('exerciseIds').anyOf(data.session.exerciseIds).toArray() : []),
@@ -28,7 +29,7 @@ export function SummaryPage() {
   )
   if (!data || !exercises || !history) return null
   const { session, plan } = data
-  const stats = sessionStats(session, plan)
+  const stats = sessionStats(session, plan, rules)
   const volume = Object.entries(volumeByMuscle(session.items, exercises)).sort((a, b) => b[1].total - a[1].total)
   const prs = session.items.flatMap((it) => {
     const ex = exercises.get(it.exerciseId)

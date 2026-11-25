@@ -1,5 +1,6 @@
 // Tipos de dominio compartidos por el motor, la capa de datos y la UI.
 import type { ISODate } from './dates'
+import type { Rules } from './rules'
 
 export const MUSCLES = [
   'chest', 'lats', 'upper_back', 'delt_front', 'delt_side', 'delt_rear', 'biceps',
@@ -173,6 +174,8 @@ export interface Settings {
   lastBackupAt: number | null
   /** Descanso entre aproximaciones (s); 0 = sin temporizador. Sin campo = el de por defecto (D-71). */
   warmupRestSec?: number
+  /** Reglas del motor que se cambiaron (solo esas; el resto, por defecto) (D-78). */
+  rules?: Partial<Rules>
 }
 
 export function defaultSettings(): Settings {

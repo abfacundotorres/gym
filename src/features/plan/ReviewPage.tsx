@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { getDB } from '../../data/db'
-import { useExerciseMap, useSettings } from '../../data/hooks'
+import { useExerciseMap, useRules, useSettings } from '../../data/hooks'
 import { startNextMesocycle } from '../../data/planRepo'
 import { formatDDMM, toISODate } from '../../engine/dates'
 import { num } from '../../engine/format'
@@ -19,6 +19,7 @@ export function ReviewPage() {
   const navigate = useNavigate()
   const today = toISODate(new Date())
   const settings = useSettings()
+  const rules = useRules()
   const exercises = useExerciseMap()
   const data = useLiveQuery(async () => ({
     meso: await db.mesocycles.where('status').equals('active').first(),
@@ -31,7 +32,7 @@ export function ReviewPage() {
   if (!data || !exercises) return null
   if (!data.meso) return <p className="text-slate-400">No hay un mesociclo activo.</p>
   const { meso } = data
-  const paused = pausedWeeks(meso, data.sessions, today)
+  const paused = pausedWeeks(meso, data.sessions, today, rules)
   // La plantilla del bloque siguiente (D-73), si se preparó: la revisión propone ajustes encima de ella, no del plan de hoy.
   const nextPlan = resolveNextPlan(data.planDays, meso.nextPlan, (id) => exercises.get(id) != null && !exercises.get(id)!.archived)
   const templateChanges = planChanges(data.planDays, meso.nextPlan)
