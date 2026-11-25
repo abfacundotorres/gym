@@ -4,7 +4,7 @@ import { getDB } from '../../data/db'
 import { useRules, useSettings } from '../../data/hooks'
 import { exposuresOf } from '../../engine/history'
 import { findPRs } from '../../engine/prs'
-import { formatSet } from '../../engine/session'
+import { formatSet, rirCoverage } from '../../engine/session'
 import { Link, useParams } from 'react-router'
 import { useExerciseMap } from '../../data/hooks'
 import { formatDDMM } from '../../engine/dates'
@@ -30,6 +30,7 @@ export function SummaryPage() {
   if (!data || !exercises || !history) return null
   const { session, plan } = data
   const stats = sessionStats(session, plan, rules)
+  const rir = rirCoverage(session, exercises)
   const volume = Object.entries(volumeByMuscle(session.items, exercises)).sort((a, b) => b[1].total - a[1].total)
   const prs = session.items.flatMap((it) => {
     const ex = exercises.get(it.exerciseId)
@@ -55,6 +56,11 @@ export function SummaryPage() {
           <div className="text-xs text-slate-400">ejercicios del plan</div>
         </Card>
       </div>
+      {rir.total > 0 && rir.withRir < rir.total && (
+        <p role="status" className="px-1 text-sm text-slate-400">
+          RIR cargado en {rir.withRir} de {rir.total} {rir.total === 1 ? 'ejercicio' : 'ejercicios'}. Con el RIR, los avisos de fallo y la progresión son más precisos.
+        </p>
+      )}
       {volume.length > 0 && (
         <Card>
           <p className="eyebrow mb-2 text-slate-400">Volumen del día · series por músculo</p>

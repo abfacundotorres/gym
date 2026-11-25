@@ -111,3 +111,22 @@ export function summaryText(session: Session, plan: PlanDay | undefined, exercis
 }
 
 
+
+export interface RirCoverage { withRir: number; total: number }
+
+/**
+ * Cuántos de los ejercicios que se trabajaron en la sesión (con alguna serie efectiva, sin salteados ni cardio) tienen el RIR
+ * cargado en alguna serie efectiva (D-79). Sin RIR, los avisos de fallo (D-75) y parte de la progresión (D-51) no tienen en qué basarse.
+ */
+export function rirCoverage(session: Pick<Session, 'items'>, exercises?: Map<string, Exercise>): RirCoverage {
+  let total = 0
+  let withRir = 0
+  for (const it of session.items) {
+    if (it.skipped || exercises?.get(it.exerciseId)?.unit === 'minutes') continue
+    const work = it.sets.filter((s) => s.type === 'W' && s.minutes == null)
+    if (work.length === 0) continue
+    total++
+    if (work.some((s) => s.rir != null)) withRir++
+  }
+  return { withRir, total }
+}

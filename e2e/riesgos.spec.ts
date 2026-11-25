@@ -48,7 +48,6 @@ async function setActiveItems(page: Page, items: Row[]) {
 
 /** Guarda una serie de trabajo con RIR 0 en el ejercicio abierto. */
 async function saveAtFailure(page: Page) {
-  await page.getByRole('button', { name: '+ RIR' }).click()
   await page.getByRole('group', { name: 'RIR' }).getByRole('button', { name: '0', exact: true }).click()
   await page.getByRole('button', { name: 'Guardar serie' }).click()
   await expect(page.getByRole('button', { name: /^Editar serie 1/ })).toBeVisible()

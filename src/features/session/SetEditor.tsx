@@ -38,7 +38,6 @@ export function SetEditor({
     const t = setTimeout(() => root.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 200)
     return () => clearTimeout(t)
   }, [keepInView])
-  const [rirOpen, setRirOpen] = useState(false)
   const isCardio = ex.unit === 'minutes'
   const patch = (p: Partial<Draft>) => setD((cur) => ({ ...cur, ...p }))
   const toggleFlag = (f: SetFlag) =>
@@ -83,23 +82,19 @@ export function SetEditor({
                 {SET_FLAGS.filter((f) => !deload || (f !== 'rp' && f !== 'drop')).map((f) => (
                   <Chip key={f} compact active={d.flag === f} onClick={() => toggleFlag(f)}>{FLAG_LABEL[f]}</Chip>
                 ))}
-                {!(askRir || rirOpen || d.rir != null) && (
-                  <button type="button" className="min-h-11 px-1.5 text-[13px] text-slate-400" onClick={() => setRirOpen(true)}>+ RIR</button>
-                )}
               </div>
               {d.flag === 'rp' && (
                 <Stepper compact label="Reps antes de la primera pausa" value={d.repsBeforePause ?? null} step={1} decimal={false} onChange={(v) => patch({ repsBeforePause: v ?? undefined })} />
               )}
-              {askRir || rirOpen || d.rir != null ? (
-                <div className="space-y-1" role="group" aria-label="RIR">
-                  <span className="block text-xs text-slate-400">{askRir ? 'Última serie: ¿cuántas reps te quedaron? (RIR)' : 'RIR (reps en reserva)'}</span>
-                  <div className="flex gap-2">
-                    {[0, 1, 2, 3].map((r) => (
-                      <Chip key={r} active={d.rir === r} onClick={() => patch({ rir: d.rir === r ? undefined : r })}>{r === 3 ? '3+' : r}</Chip>
-                    ))}
-                  </div>
+              {/* RIR siempre a la vista, a un toque (D-79): de él dependen los avisos de fallo y parte de la progresión. */}
+              <div className="space-y-1" role="group" aria-label="RIR">
+                <span className="block text-xs text-slate-400">{askRir ? 'Última serie: ¿cuántas reps te quedaron? (RIR)' : 'RIR: reps que te quedaron (opcional)'}</span>
+                <div className="flex gap-2">
+                  {[0, 1, 2, 3].map((r) => (
+                    <Chip key={r} active={d.rir === r} onClick={() => patch({ rir: d.rir === r ? undefined : r })}>{r === 3 ? '3+' : r}</Chip>
+                  ))}
                 </div>
-              ) : null}
+              </div>
             </>
           )}
         </>
