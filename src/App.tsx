@@ -12,6 +12,7 @@ import { ExerciseHistoryPage } from './features/history/ExerciseHistoryPage'
 import { VolumePage } from './features/volume/VolumePage'
 import { PlanPage } from './features/plan/PlanPage'
 import { NextBlockPage } from './features/plan/NextBlockPage'
+import { PeriodSummaryPage } from './features/summary/PeriodSummaryPage'
 import { ReviewPage } from './features/plan/ReviewPage'
 import { ExercisesPage } from './features/exercises/ExercisesPage'
 import { ExerciseEditPage } from './features/exercises/ExerciseEditPage'
@@ -30,6 +31,7 @@ export function App() {
           <Route path="historial" element={<HistoryPage />} />
           <Route path="historial/ej/:exId" element={<ExerciseHistoryPage />} />
           <Route path="volumen" element={<VolumePage />} />
+          <Route path="resumen" element={<PeriodSummaryPage />} />
           <Route path="plan" element={<PlanPage />} />
           <Route path="plan/revision" element={<ReviewPage />} />
           <Route path="plan/siguiente" element={<NextBlockPage />} />

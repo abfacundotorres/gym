@@ -475,3 +475,10 @@ RIR está siempre a la vista** (0, 1, 2 y 3+, opcional, tocar de nuevo lo quita)
 En el **resumen de la sesión**, si quedaron ejercicios trabajados sin RIR en ninguna serie efectiva, una línea lo dice ("RIR cargado en 1 de 2 ejercicios", `rirCoverage`); con todos cargados o sin ejercicios trabajados, no dice nada. El RIR ya se
 veía en el historial por ejercicio y en las series de la sesión (`@2`). **Sin cambios de datos.**
 
+**D-80. Resumen por semana o por bloque.** Pantalla `/resumen` (desde Historial → "Resumen →" y Plan → "Resumen →") que junta lo que ya se calcula en otras pantallas, con las mismas reglas: **sesiones** (hechas, y de cuántas del plan en la semana; cada una lleva a su resumen),
+**series por músculo contra tu rango** de Ajustes (con el 80 % en cut, D-69), **PRs** (contra todo lo anterior, como en la revisión del mesociclo), **RIR cargado** y **avisos** (sesiones con compuestos al fallo y, solo en la semana, saltos de volumen, con las reglas de D-78),
+**molestias** que se superponen con el período (D-76) y **peso** (el de la semana y el cambio contra la anterior; en el bloque, el último y el cambio desde el primero, D-70). **Semana:** de lunes a domingo, con "←" y "→" hasta la primera semana con sesiones; las series son las de esa semana.
+**Bloque:** del lunes en que empezó hasta su final (corrido por las semanas pausadas, D-50, y por el modo de deload, D-78) o hasta hoy si no terminó; si hay más de uno se elige; las series por músculo son **el promedio semanal de las semanas con sesiones sin contar el deload**
+(el deload sí suma en el total de series hechas y se marca en la lista). "Copiar resumen como texto" (`summaryText`) trae lo mismo que la pantalla. Es **descriptivo**: no propone nada ni compara con metas más allá de los rangos de series; una semana de deload lo aclara. Solo cuenta sesiones terminadas.
+**Sin cambios de datos.**
+
