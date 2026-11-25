@@ -17,6 +17,7 @@ import { PeriodSummaryPage } from './features/summary/PeriodSummaryPage'
 import { ReviewPage } from './features/plan/ReviewPage'
 import { ExercisesPage } from './features/exercises/ExercisesPage'
 import { ExerciseEditPage } from './features/exercises/ExerciseEditPage'
+import { DiagnosticPage } from './features/diagnostic/DiagnosticPage'
 import { NewExercisePage } from './features/exercises/NewExercisePage'
 import { BodyweightPage } from './features/body/BodyweightPage'
 
@@ -42,6 +43,7 @@ export function App() {
           <Route path="ejercicios/:exId" element={<ExerciseEditPage />} />
           <Route path="ejercicio-nuevo" element={<NewExercisePage />} />
           <Route path="peso" element={<BodyweightPage />} />
+          <Route path="diagnostico" element={<DiagnosticPage />} />
           <Route path="ajustes" element={<SettingsPage />} />
           <Route path="*" element={<NotFound />} />
         </Route>
