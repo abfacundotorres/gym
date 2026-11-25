@@ -5,7 +5,10 @@ import { getDB } from '../../data/db'
 import { useExerciseMap, useSettings } from '../../data/hooks'
 import { discardSession, finishSession, groupSessionItems } from '../../data/sessionRepo'
 import { comebackFor } from '../../engine/comeback'
-import { formatDDMM } from '../../engine/dates'
+import { addDays, formatDDMM, weekStart } from '../../engine/dates'
+import { num } from '../../engine/format'
+import { FAILURE_SESSION_MIN, failureToday, volumeSpikes } from '../../engine/risk'
+import { MUSCLE_LABELS } from '../../engine/types'
 import { formatLoad } from '../../engine/load'
 import { formatSet, lastExposure, sessionProgress } from '../../engine/session'
 import { useWakeLock } from '../../lib/wakeLock'
@@ -15,6 +18,7 @@ import { Button } from '../../ui/Button'
 import { groupError, SUPERSET_MAX, SUPERSET_MIN } from '../../engine/superset'
 import { Segments } from '../../ui/Segments'
 import { Chip } from '../../ui/Stepper'
+import { RiskNote } from './RiskNote'
 import { todaysRecommendation } from './recommendation'
 import { useSessionData } from './useSessionData'
 
@@ -31,6 +35,13 @@ export function SessionPage() {
   const [picked, setPicked] = useState<number[]>([])
   const [now, setNow] = useState(() => Date.now())
   const history = useLiveQuery(async () => (data?.session ? getDB().sessions.where('exerciseIds').anyOf(data.session.exerciseIds).toArray() : []), [data?.session.exerciseIds.join()])
+  // Sesiones de las últimas semanas, para avisar de un salto de volumen (D-75).
+  const sessionDate = data?.session.date
+  const recent = useLiveQuery(async () => {
+    if (!sessionDate) return []
+    const monday = weekStart(sessionDate)
+    return getDB().sessions.where('date').between(addDays(monday, -28), addDays(monday, 6), true, true).toArray()
+  }, [sessionDate])
   useWakeLock(data?.session.status === 'in_progress')
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 30_000)
@@ -43,6 +54,9 @@ export function SessionPage() {
   const planned = new Map(plan?.items.map((i) => [i.exerciseId, i]) ?? [])
   const inProgress = session.status === 'in_progress'
   const comeback = comebackFor(session.comebackDays)
+  // Avisos de patrón (D-75), solo mientras se entrena.
+  const failed = inProgress ? failureToday(session, exercises) : []
+  const spikes = inProgress && recent ? volumeSpikes(recent, session, exercises).slice(0, 2) : []
 
   const prog = sessionProgress(session, plan)
   const rows = session.items.map((it, idx) => {
@@ -83,6 +97,16 @@ export function SessionPage() {
           Vuelta tras {comeback.days} días: ~{Math.round(comeback.loadFactor * 100)} % de la carga, menos series y {comeback.rir} en reserva.{session.deload ? ' Es semana de deload: se usa la reducción más fuerte.' : ''}
         </p>
       )}
+      {failed.length >= FAILURE_SESSION_MIN && (
+        <RiskNote id={`fail-session:${session.id}`}>
+          Ya llevás {failed.length} ejercicios compuestos al fallo hoy ({failed.map((id) => (exercises.get(id)?.name ?? id).replace(/\s*\(.*\)\s*$/, '')).join(' y ')}). Para los que siguen, si querés, dejá 1 o 2 en reserva.
+        </RiskNote>
+      )}
+      {spikes.map((sp) => (
+        <RiskNote key={sp.muscle} id={`spike:${weekStart(session.date)}:${sp.muscle}`}>
+          Salto grande de volumen: {MUSCLE_LABELS[sp.muscle]} lleva {num(sp.sets)} series esta semana, {sp.pct} % más que tu promedio de las últimas semanas ({num(sp.baseline)}).
+        </RiskNote>
+      ))}
       {inProgress && !session.deload && session.comebackDays == null && readinessLevel(session.readiness) === 'low' && (
         <p role="status" className="rounded-2xl bg-amber-500/10 p-3 text-sm text-amber-100 ring-1 ring-amber-500/30">
           Sueño y energía bajos hoy: mantené los pesos y, si querés, dejá cada ejercicio con una serie menos. Es una sugerencia, vos decidís.

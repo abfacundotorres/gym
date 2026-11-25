@@ -14,6 +14,7 @@ import { nextSetDefaults, pendingWarmups, wouldBeRecord, type SetDraft } from '.
 import { findPRs } from '../../engine/prs'
 import { SetBadges } from '../../ui/SetBadges'
 import { sessionSets } from '../../engine/comeback'
+import { FAILURE_SESSION_MIN, FAILURE_STREAK_MIN, failureStreak, failureToday, isCompound } from '../../engine/risk'
 import type { Comeback } from '../../engine/comeback'
 import { reducedSets } from '../../engine/readiness'
 import type { Exercise } from '../../engine/types'
@@ -27,6 +28,7 @@ import { Chip } from '../../ui/Stepper'
 import { SetEditor } from './SetEditor'
 import { WarmupPanel } from './WarmupPanel'
 import { SupersetPage } from './SupersetPage'
+import { RiskNote } from './RiskNote'
 import { todaysRecommendation } from './recommendation'
 import { useSessionData } from './useSessionData'
 
@@ -119,6 +121,23 @@ function ExerciseScreen() {
   const doneA = done.filter((x) => x.type === 'A').length
   const complete = plannedSets > 0 && doneW.length >= plannedSets
   const inProgress = session.status === 'in_progress'
+
+  // Avisos de patrón (D-75): antes de la primera serie de trabajo, que es cuando se puede decidir cuánto dejar en reserva.
+  const notStarted = inProgress && !item.sets.some((x) => x.type === 'W')
+  const streak = notStarted && !isCardio ? failureStreak(previous) : 0
+  const failed = exercises ? failureToday(session, exercises) : []
+  const riskNotes = (
+    <>
+      {streak >= FAILURE_STREAK_MIN && (
+        <RiskNote id={`fail-streak:${session.id}:${ex.id}`}>
+          Las últimas {streak} veces terminaste este ejercicio al fallo (RIR 0). Probá dejar 1 o 2 en reserva y mirá cómo responde.
+        </RiskNote>
+      )}
+      {notStarted && isCompound(ex) && failed.length >= FAILURE_SESSION_MIN && (
+        <RiskNote id={`fail-session-ex:${session.id}:${ex.id}`}>Hoy ya llevás {failed.length} compuestos al fallo. En este, si querés, dejá 1 o 2 en reserva.</RiskNote>
+      )}
+    </>
+  )
 
   return (
     <section className="space-y-3">
@@ -226,6 +245,7 @@ function ExerciseScreen() {
       {ex.safetyNote && <SafetyNote sessionId={session.id} ex={ex} />}
       {ex.note && <p className="text-xs text-slate-400">{ex.note}</p>}
 
+      {riskNotes}
       {!isCardio && (
         <TodayCard rec={rec} ex={ex} deload={deload} comeback={comeback} kgPerBrick={settings.kgPerBrick} last={last} famRef={famRef} family={ctx.family} />
       )}

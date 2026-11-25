@@ -433,3 +433,13 @@ misma semana se usa la reducción más fuerte de las dos (carga y series); si la
 la segunda parte de la última sesión normal antes de la pausa (con pausas de 42 días o más conviene bajar a mano); y la app solo ve fechas, no sabe si la pausa fue por lesión o por vacaciones (para una lesión sigue
 estando la marca de molestia o dolor por ejercicio, D-52).
 
+**D-75. Avisos de patrón durante la sesión.** Tres avisos cortos, neutros y descartables ("Entendido", se guarda en `meta` con la clave `risk:<aviso>`), solo mientras se entrena. **Son reglas simples sobre lo que
+ya registrás, no un diagnóstico ni una predicción de lesiones**: la evidencia para predecir lesiones a partir de un registro de entrenamiento es floja, y los umbrales son pautas mías (están en `engine/risk.ts`).
+(1) **Compuestos al fallo en la misma sesión:** con 2 o más ejercicios compuestos con alguna serie de trabajo a RIR 0 (`FAILURE_SESSION_MIN`), la lista de la sesión lo dice, y en cada compuesto que todavía no empezaste
+recuerda que podés dejar 1 o 2 en reserva. "Compuesto" = tiene músculos secundarios (`isCompound`); es una aproximación a "pesado", no hay un dato mejor en el catálogo. (2) **Racha en el mismo ejercicio:** 3 o más
+veces seguidas terminado al fallo (`FAILURE_STREAK_MIN`), mirando las sesiones anteriores de esa misma variante sin deload ni vuelta; una vez sin dato de RIR corta la racha (no se presume fallo); se muestra antes de la
+primera serie de trabajo. (3) **Salto de volumen:** esta semana (con lo que va de la sesión en curso) supera en 50 % o más y en 4 o más series el promedio semanal de las últimas 4 semanas, por músculo (mismo cálculo de la
+pantalla Volumen: primarios 1, secundarios 0,5); el promedio usa solo semanas con sesiones, sin deload ni vuelta tras una pausa y exige al menos 2, y un promedio menor a 4 series no cuenta (un músculo que casi no se
+entrena); no se avisa en una sesión de deload ni de vuelta. Se muestran los dos mayores saltos. **Depende de que cargues el RIR:** sin RIR, los avisos 1 y 2 no se disparan. **Fuera de alcance:** el resumen final, y
+los avisos por zona del cuerpo (siguiente paso).
+
