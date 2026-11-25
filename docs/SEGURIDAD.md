@@ -19,7 +19,8 @@ Auditoría del 09/11/2026 (código y build; no incluye la página publicada).
    almacenamiento (IndexedDB, localStorage) es por origen. Otro sitio publicado en esa cuenta podría leer estos
    datos. Si vas a publicar más sitios, usá otra cuenta/organización o un dominio propio para la app.
 3. **Sin cifrado en reposo.** Los datos no están cifrados en el navegador; los protege el bloqueo del celular.
-   Los backups JSON/CSV quedan como archivos comunes (Descargas).
+   Los backups JSON/CSV quedan como archivos comunes (Descargas). La copia automática previa a migrar (D-82,
+   base `gym-safety`) duplica los datos en el mismo origen, sin cifrar, y se puede borrar desde Ajustes.
 4. **Fixture público.** `src/data/__fixtures__/seed.fixture.json` contiene 6 sesiones reales (pesos y reps) en un
    repo público. Aceptado por el dueño.
 5. **Cadena de despliegue.** Las GitHub Actions están fijadas por tag (`@v4`), no por hash. Son acciones oficiales.

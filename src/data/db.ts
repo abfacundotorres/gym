@@ -21,6 +21,9 @@ export const SETTINGS_KEY = 'app'
 export const META_DATA_QUALITY = 'dataQuality'
 export type MetaDataQuality = KV<DataQuality>
 
+/** Última versión del esquema (la del último `db.version(n)` de abajo). Al agregar una migración, subir este número. */
+export const SCHEMA_VERSION = 3
+
 export function createDB(name = 'gym'): GymDB {
   const db = new Dexie(name) as GymDB
   // Migraciones: agregar db.version(n) nuevas, nunca editar las existentes.

@@ -7,6 +7,7 @@ import { formatDDMM } from '../../engine/dates'
 import { canShareFiles, downloadText, shareTextFile } from '../../lib/download'
 import { fileStamp, formatTimestamp } from '../../lib/format'
 import { Button, Card } from '../../ui/Button'
+import { AutoCopies } from './AutoCopies'
 import { ImportFlow } from './ImportFlow'
 import { VolumeTargets } from './VolumeTargets'
 import { About } from './About'
@@ -75,6 +76,7 @@ export function SettingsPage() {
         {canShareFiles() && <Button className="w-full" onClick={() => void shareJSON()}>Compartir backup (Drive, correo…)</Button>}
         {shareMsg && <p role="status" className="text-sm text-slate-400">{shareMsg}</p>}
         <ImportFlow />
+        <AutoCopies />
       </div>
 
       <div className="space-y-2">
