@@ -470,3 +470,8 @@ corta, media y larga, 50 a 100 %), **avisos** (compuestos al fallo por sesión, 
 planificado, así que la semana de deload sin sesiones **no cuenta como pausa ni corre el mesociclo** (`pausedWeeks`); Hoy lo dice ("Semana sin pesas: descansá") y, si entrenás igual, la sesión sale liviana (−20 %). Con la vuelta tras una pausa o un dolor
 marcado (D-74, D-52) sigue ganando la reducción más fuerte. **No se pueden cambiar** (a propósito, para no llenar la pantalla): los límites de los tramos de pausa (21 y 42 días), las series de la vuelta por tramo, ni qué cuenta como "compuesto".
 
+**D-79. RIR a la vista.** Dos de los tres avisos de patrón (D-75) y parte de la progresión (D-51) dependen del RIR, y antes estaba escondido detrás de "+ RIR" (salvo en la última serie efectiva, que lo pregunta). Ahora, **en toda serie efectiva el
+RIR está siempre a la vista** (0, 1, 2 y 3+, opcional, tocar de nuevo lo quita), tanto al anotar como al editar una serie ya guardada; las aproximaciones y el cardio no lo tienen. No se rellena solo ni se hereda de la serie anterior (no se inventan datos).
+En el **resumen de la sesión**, si quedaron ejercicios trabajados sin RIR en ninguna serie efectiva, una línea lo dice ("RIR cargado en 1 de 2 ejercicios", `rirCoverage`); con todos cargados o sin ejercicios trabajados, no dice nada. El RIR ya se
+veía en el historial por ejercicio y en las series de la sesión (`@2`). **Sin cambios de datos.**
+

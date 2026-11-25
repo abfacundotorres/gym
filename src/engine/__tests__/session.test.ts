@@ -3,9 +3,9 @@ import fixture from '../../data/__fixtures__/seed.fixture.json'
 import { seedSchema } from '../../data/schemas'
 import { seedToData } from '../../data/seedImport'
 import { comparableKg, formatLoad } from '../load'
-import { formatSet, lastExposure, sessionProgress, sessionStats, summaryText } from '../session'
+import { formatSet, lastExposure, rirCoverage, sessionProgress, sessionStats, summaryText } from '../session'
 import { mesocycleWeek } from '../periodization'
-import type { Exercise } from '../types'
+import type { Exercise, SessionItem, SetEntry } from '../types'
 import { volumeByMuscle } from '../volume'
 import { weekStart } from '../dates'
 
@@ -102,5 +102,30 @@ describe('avance de la sesión', () => {
     expect(dl.items[0]!.target).toBeLessThan(3)
     const swapped = sessionProgress(session([{ exerciseId: 'a2', swappedFrom: 'a', sets: w(1) }]), plan as never)
     expect(swapped.items[0]!.target).toBe(3)
+  })
+})
+
+describe('cobertura del RIR en la sesión (D-79)', () => {
+  const W = (rir?: number, extra: Partial<SetEntry> = {}): SetEntry => ({ id: `r${Math.random()}`, type: 'W', weight: 20, reps: 10, ...(rir != null ? { rir } : {}), ...extra })
+  const A = (rir?: number): SetEntry => W(rir, { type: 'A' })
+  const item = (exerciseId: string, sets: SetEntry[], extra: Partial<SessionItem> = {}): SessionItem => ({ exerciseId, sets, ...extra })
+  const cov = (items: SessionItem[], exercises?: Map<string, Exercise>) => rirCoverage({ items }, exercises)
+
+  it('cuenta los ejercicios trabajados y los que tienen RIR en alguna serie efectiva', () => {
+    expect(cov([item('a', [W(2), W()]), item('b', [W(), W()]), item('c', [W(0)])])).toEqual({ withRir: 2, total: 3 })
+    expect(cov([])).toEqual({ withRir: 0, total: 0 })
+  })
+  it('el RIR 0 cuenta como cargado (no es "sin dato")', () => {
+    expect(cov([item('a', [W(0)])])).toEqual({ withRir: 1, total: 1 })
+  })
+  it('las aproximaciones no cuentan, ni como trabajo ni como RIR', () => {
+    expect(cov([item('a', [A(2), W()])])).toEqual({ withRir: 0, total: 1 }) // el RIR de la aproximación no vale
+    expect(cov([item('a', [A(), A()])])).toEqual({ withRir: 0, total: 0 }) // solo aproximaciones: no se trabajó
+  })
+  it('sin salteados ni ejercicios vacíos, y el cardio no se cuenta', () => {
+    expect(cov([item('a', [W(1)], { skipped: true }), item('b', [])])).toEqual({ withRir: 0, total: 0 })
+    expect(cov([item('c', [W(undefined, { minutes: 20 })])])).toEqual({ withRir: 0, total: 0 }) // series en minutos
+    const ex = new Map([['stair', { unit: 'minutes' } as Exercise]])
+    expect(cov([item('stair', [W()]), item('a', [W(1)])], ex)).toEqual({ withRir: 1, total: 1 })
   })
 })
