@@ -56,3 +56,40 @@ test('vuelta: tras 45 días la reducción es mayor (80 % y la mitad de las serie
   await importAt(page, '2026-12-20')
   await expect(page.getByText(/~80 % de la carga de la última vez, menos series y 3 en reserva/)).toBeVisible()
 })
+
+test('vuelta: los días mínimos se cambian en Ajustes → Reglas, y "Restablecer" vuelve a los de siempre', async ({ page }) => {
+  await page.clock.install({ time: new Date('2026-11-20T10:00:00') }) // 15 días después de la última sesión del seed
+  await page.goto('./')
+  await page.locator('input[type=file]').setInputFiles(seed)
+  await page.getByRole('button', { name: 'Importar', exact: true }).click()
+
+  await page.goto('./#/ajustes')
+  await page.getByText('Reglas del motor: vuelta, avisos y deload').click()
+  await page.getByRole('button', { name: /^Días sin entrenar para sugerir la vuelta \(por defecto 10\): 10, tocar/ }).click()
+  await page.getByRole('textbox', { name: 'Días sin entrenar para sugerir la vuelta (por defecto 10)' }).fill('20')
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('button', { name: /^Días sin entrenar para sugerir la vuelta \(por defecto 10\): 20, tocar/ })).toBeVisible()
+  // Se guardó: sobrevive a recargar.
+  await page.reload()
+  await page.getByText('Reglas del motor: vuelta, avisos y deload').click()
+  await expect(page.getByRole('button', { name: /^Días sin entrenar para sugerir la vuelta \(por defecto 10\): 20, tocar/ })).toBeVisible()
+
+  // Con 20 días mínimos, los 15 sin entrenar ya no son una pausa.
+  await page.goto('./#/')
+  await page.getByText('Hacer otro día').click()
+  await page.getByRole('button', { name: 'Jueves: Full body' }).click()
+  await page.getByRole('button', { name: 'Empezar' }).click()
+  await expect(page.getByRole('button', { name: 'Omitir y empezar' })).toBeVisible()
+  await expect(page.getByText(/Vuelta tras/)).toHaveCount(0)
+
+  // Restablecer: vuelve la vuelta.
+  await page.goto('./#/ajustes')
+  await page.getByText('Reglas del motor: vuelta, avisos y deload').click()
+  await page.getByRole('button', { name: 'Restablecer las reglas' }).click()
+  await expect(page.getByRole('button', { name: 'Restablecer las reglas' })).toHaveCount(0)
+  await page.goto('./#/')
+  await page.getByText('Hacer otro día').click()
+  await page.getByRole('button', { name: 'Jueves: Full body' }).click()
+  await page.getByRole('button', { name: 'Empezar' }).click()
+  await expect(page.getByRole('button', { name: 'Vuelta tras 15 días' })).toBeVisible()
+})

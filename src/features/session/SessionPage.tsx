@@ -2,13 +2,13 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { getDB } from '../../data/db'
-import { useActiveZones, useExerciseMap, useSettings } from '../../data/hooks'
+import { useActiveZones, useExerciseMap, useRules, useSettings } from '../../data/hooks'
 import { discardSession, finishSession, groupSessionItems } from '../../data/sessionRepo'
 import { resolveZone } from '../../data/zoneRepo'
 import { comebackFor } from '../../engine/comeback'
 import { addDays, formatDDMM, weekStart } from '../../engine/dates'
 import { num } from '../../engine/format'
-import { FAILURE_SESSION_MIN, failureToday, volumeSpikes } from '../../engine/risk'
+import { failureToday, volumeSpikes } from '../../engine/risk'
 import { MUSCLE_LABELS, ZONE_LABELS } from '../../engine/types'
 import { loadingItems, zoneLoad } from '../../engine/zones'
 import { formatLoad } from '../../engine/load'
@@ -31,6 +31,7 @@ export function SessionPage() {
   const exercises = useExerciseMap()
   const settings = useSettings()
   const activeZ = useActiveZones()
+  const rules = useRules()
   const [finishing, setFinishing] = useState(false)
   const [note, setNote] = useState('')
   /** Armando una superserie: se eligen los ejercicios que van juntos (D-66). */
@@ -56,12 +57,12 @@ export function SessionPage() {
   const { session, plan } = data
   const planned = new Map(plan?.items.map((i) => [i.exerciseId, i]) ?? [])
   const inProgress = session.status === 'in_progress'
-  const comeback = comebackFor(session.comebackDays)
+  const comeback = comebackFor(session.comebackDays, rules)
   // Avisos de patrón (D-75), solo mientras se entrena.
   const failed = inProgress ? failureToday(session, exercises) : []
-  const spikes = inProgress && recent ? volumeSpikes(recent, session, exercises).slice(0, 2) : []
+  const spikes = inProgress && recent ? volumeSpikes(recent, session, exercises, rules).slice(0, 2) : []
 
-  const prog = sessionProgress(session, plan)
+  const prog = sessionProgress(session, plan, rules)
   const rows = session.items.map((it, idx) => {
     const p = planned.get(it.exerciseId) ?? (it.swappedFrom ? planned.get(it.swappedFrom) : undefined)
     const { done: w, target, complete } = prog.items[idx]!
@@ -75,7 +76,7 @@ export function SessionPage() {
 
   const currentEx = current ? exercises.get(current.it.exerciseId) : undefined
   const currentRec = current && currentEx && history && currentEx.unit !== 'minutes'
-    ? todaysRecommendation(currentEx, session, current.p, history, settings.kgPerBrick).rec
+    ? todaysRecommendation(currentEx, session, current.p, history, settings.kgPerBrick, rules).rec
     : null
 
   return (
@@ -121,7 +122,7 @@ export function SessionPage() {
           </div>
         )
       })}
-      {failed.length >= FAILURE_SESSION_MIN && (
+      {failed.length >= rules.failureSessionMin && (
         <RiskNote id={`fail-session:${session.id}`}>
           Ya llevás {failed.length} ejercicios compuestos al fallo hoy ({failed.map((id) => (exercises.get(id)?.name ?? id).replace(/\s*\(.*\)\s*$/, '')).join(' y ')}). Para los que siguen, si querés, dejá 1 o 2 en reserva.
         </RiskNote>

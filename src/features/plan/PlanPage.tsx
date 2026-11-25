@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { getDB } from '../../data/db'
-import { useExerciseMap } from '../../data/hooks'
+import { useExerciseMap, useRules } from '../../data/hooks'
 import { createVariant } from '../../data/exerciseRepo'
 import { createFirstMesocycle, deloadThisWeek, saveMesocycle, setPlanAlt, setPlanItemSets } from '../../data/planRepo'
 import { formatDDMM, toISODate, weekStart } from '../../engine/dates'
@@ -26,9 +26,10 @@ export function PlanPage() {
     sessions: await db.sessions.toArray(),
   }))
   const [editing, setEditing] = useState(false)
+  const rules = useRules()
   if (!data || !exercises) return null
   const { meso } = data
-  const paused = meso ? pausedWeeks(meso, data.sessions, today) : []
+  const paused = meso ? pausedWeeks(meso, data.sessions, today, rules) : []
   const week = meso ? mesocycleWeek(meso, today, paused) : null
 
   return (

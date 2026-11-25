@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { getDB } from '../../data/db'
-import { useActiveZones, useExerciseMap, useSettings } from '../../data/hooks'
+import { useActiveZones, useExerciseMap, useRules, useSettings } from '../../data/hooks'
 import { addSet, deleteSet, setItemNote, setItemPain, setSkipped, swapExercise, updateSet } from '../../data/sessionRepo'
 import { familyReference, planVariants, variantLabel, variantOptions } from '../../engine/variants'
 import { formatDDMM } from '../../engine/dates'
@@ -14,7 +14,7 @@ import { nextSetDefaults, pendingWarmups, wouldBeRecord, type SetDraft } from '.
 import { findPRs } from '../../engine/prs'
 import { SetBadges } from '../../ui/SetBadges'
 import { sessionSets } from '../../engine/comeback'
-import { FAILURE_SESSION_MIN, FAILURE_STREAK_MIN, failureStreak, failureToday, isCompound } from '../../engine/risk'
+import { failureStreak, failureToday, isCompound } from '../../engine/risk'
 import type { Comeback } from '../../engine/comeback'
 import { reducedSets } from '../../engine/readiness'
 import { ZONE_LABELS, type Exercise } from '../../engine/types'
@@ -53,6 +53,7 @@ function ExerciseScreen() {
   const db = getDB()
   const data = useSessionData(id)
   const settings = useSettings()
+  const rules = useRules()
   const exercises = useExerciseMap()
   const activeZ = useActiveZones()
   /** Cantidad de series efectivas con la que se pidió una extra: al guardarla, vuelve la tarjeta de "completo". */
@@ -80,7 +81,7 @@ function ExerciseScreen() {
   const item = session.items[idx]!
   const ex = ctx.ex
   const planItem = plan?.items.find((p) => p.exerciseId === item.exerciseId || p.exerciseId === item.swappedFrom)
-  const { deload, comeback, fewer, plannedSets, previous, rec } = todaysRecommendation(ex, session, planItem, ctx.history, settings.kgPerBrick)
+  const { deload, comeback, fewer, plannedSets, previous, rec } = todaysRecommendation(ex, session, planItem, ctx.history, settings.kgPerBrick, rules)
   const last = lastExposure(ctx.history, ex.id, session.date, session.id)
   const lastW = last?.item.sets.filter((s) => s.type === 'W') ?? []
   const targets = rec.targets
@@ -119,7 +120,7 @@ function ExerciseScreen() {
 
   const notDone = (it: (typeof session.items)[number]) => {
     const pi = plan?.items.find((p) => p.exerciseId === it.exerciseId || p.exerciseId === it.swappedFrom)
-    const target = pi ? sessionSets(session, pi.sets) : 0
+    const target = pi ? sessionSets(session, pi.sets, rules) : 0
     return !it.skipped && !(target > 0 && it.sets.filter((x) => x.type === 'W').length >= target)
   }
   const doneA = done.filter((x) => x.type === 'A').length
@@ -166,12 +167,12 @@ function ExerciseScreen() {
           </div>
         )
       })}
-      {streak >= FAILURE_STREAK_MIN && (
+      {streak >= rules.failureStreakMin && (
         <RiskNote id={`fail-streak:${session.id}:${ex.id}`}>
           Las últimas {streak} veces terminaste este ejercicio al fallo (RIR 0). Probá dejar 1 o 2 en reserva y mirá cómo responde.
         </RiskNote>
       )}
-      {notStarted && isCompound(ex) && failed.length >= FAILURE_SESSION_MIN && (
+      {notStarted && isCompound(ex) && failed.length >= rules.failureSessionMin && (
         <RiskNote id={`fail-session-ex:${session.id}:${ex.id}`}>Hoy ya llevás {failed.length} compuestos al fallo. En este, si querés, dejá 1 o 2 en reserva.</RiskNote>
       )}
     </>

@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { needsBackupReminder } from '../../data/backup'
 import { getDB, SETTINGS_KEY } from '../../data/db'
+import { useRules } from '../../data/hooks'
 import { activeSession, discardSession, finishStaleSession, startSession } from '../../data/sessionRepo'
 import { comebackFor, daysOff, type Comeback } from '../../engine/comeback'
 import { addDays, formatDDMM, toISODate, weekStart, weekdayOf, WEEKDAYS_ES } from '../../engine/dates'
@@ -10,6 +11,7 @@ import { deloadSuggestion, mesocycleEnd, mesocycleWeek, pausedWeeks, type Deload
 import { deloadThisWeek, dismissDeloadSuggestion, META_DELOAD_DISMISSED, toggleSkipped } from '../../data/planRepo'
 import { num } from '../../engine/format'
 import { PHASE_LABEL } from '../../engine/phase'
+import type { Rules } from '../../engine/rules'
 import { sessionProgress } from '../../engine/session'
 import type { Exercise, PlanDay, Readiness, Session } from '../../engine/types'
 import { Button, Card } from '../../ui/Button'
@@ -26,6 +28,7 @@ export function TodayPage() {
   const [readinessFor, setReadinessFor] = useState<PlanDay | null>(null)
   const [burnedOut, setBurnedOut] = useState(false)
   const [showAll, setShowAll] = useState(false)
+  const rules = useRules()
 
   const data = useLiveQuery(async () => {
     const monday = weekStart(today)
@@ -67,7 +70,7 @@ export function TodayPage() {
 
   const scheduled = data.planDays.find((p) => p.weekday === wd)
   const plan = data.planDays.find((p) => p.id === pickedId) ?? scheduled
-  const paused = data.meso ? pausedWeeks(data.meso, data.allSessions, today) : []
+  const paused = data.meso ? pausedWeeks(data.meso, data.allSessions, today, rules) : []
   const week = data.meso ? mesocycleWeek(data.meso, today, paused) : null
   const mesoEnded = !!data.meso && !week && today >= mesocycleEnd(data.meso, paused)
   const finished = data.allSessions.filter((s) => s.status === 'finished')
@@ -88,7 +91,7 @@ export function TodayPage() {
   const mesoProgress = week ? Math.min(1, (week.week - 1 + Math.min(1, doneThisWeek / Math.max(1, data.planDays.length))) / week.total) : 0
 
   // Vuelta tras una pausa (D-74): se ofrece al empezar y se puede desactivar.
-  const comeback = comebackFor(daysOff(data.allSessions, today))
+  const comeback = comebackFor(daysOff(data.allSessions, today), rules)
 
   async function begin(p: PlanDay, readiness?: Readiness, short = false, comebackDays?: number) {
     const s = await startSession(db, p, today, week ? data!.meso!.id : null, readiness, Date.now(), !!week?.isDeload, short, comebackDays)
@@ -139,7 +142,9 @@ export function TodayPage() {
       )}
       {week?.isDeload && (
         <p className="rounded-xl bg-sky-500/10 p-3 text-sm text-sky-200 ring-1 ring-sky-500/30">
-          Semana de deload: la mitad de las series, −10 % de carga, sin rest-pause ni drops.
+          {rules.deloadMode === 'rest'
+            ? 'Semana sin pesas: descansá. Si querés entrenar igual, la sesión sale liviana: la mitad de las series y −20 % de carga.'
+            : `Semana de deload: la mitad de las series, −${rules.deloadMode === 'light' ? 20 : 10} % de carga, sin rest-pause ni drops.`}
         </p>
       )}
       {showSuggestion && suggestion && (
@@ -159,6 +164,7 @@ export function TodayPage() {
 
       {data.active ? (
         <ActiveSessionCard
+          rules={rules}
           session={data.active}
           plan={data.planDays.find((p) => p.id === data.active!.planDayId)}
           exMap={data.exMap}
@@ -240,8 +246,8 @@ export function TodayPage() {
   )
 }
 
-function ActiveSessionCard({ session, plan, exMap, stale, onContinue, onFinish, onDiscard }: { session: Session; plan: PlanDay | undefined; exMap: Map<string, Exercise>; stale: boolean; onContinue: (idx: number | null) => void; onFinish: () => void; onDiscard: () => void }) {
-  const prog = sessionProgress(session, plan)
+function ActiveSessionCard({ rules, session, plan, exMap, stale, onContinue, onFinish, onDiscard }: { rules: Rules; session: Session; plan: PlanDay | undefined; exMap: Map<string, Exercise>; stale: boolean; onContinue: (idx: number | null) => void; onFinish: () => void; onDiscard: () => void }) {
+  const prog = sessionProgress(session, plan, rules)
   const next = prog.currentIndex != null ? exMap.get(session.items[prog.currentIndex]!.exerciseId)?.name : undefined
   return (
     <Card className="space-y-3 ring-2 ring-accent/60">

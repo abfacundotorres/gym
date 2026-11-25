@@ -1,6 +1,7 @@
 import { addDays, weekStart, type ISODate } from './dates'
 import type { ExerciseExposure } from './history'
 import { weekVolume } from './periodization'
+import { DEFAULT_RULES, type Rules } from './rules'
 import type { Exercise, Muscle, Session, SessionItem } from './types'
 
 /**
@@ -9,12 +10,12 @@ import type { Exercise, Muscle, Session, SessionItem } from './types'
  */
 
 /** Ejercicios compuestos al fallo en una misma sesión desde los que se avisa. */
-export const FAILURE_SESSION_MIN = 2
+export const FAILURE_SESSION_MIN = DEFAULT_RULES.failureSessionMin
 /** Veces seguidas al fallo en el mismo ejercicio desde las que se avisa. */
-export const FAILURE_STREAK_MIN = 3
+export const FAILURE_STREAK_MIN = DEFAULT_RULES.failureStreakMin
 /** Salto de volumen semanal: esta semana contra el promedio de las semanas anteriores. */
-export const SPIKE_RATIO = 1.5
-export const SPIKE_MIN_EXTRA = 4
+export const SPIKE_RATIO = 1 + DEFAULT_RULES.spikePct / 100
+export const SPIKE_MIN_EXTRA = DEFAULT_RULES.spikeMinExtra
 export const SPIKE_MIN_BASELINE = 4
 export const SPIKE_BASE_WEEKS = 4
 export const SPIKE_MIN_WEEKS = 2
@@ -53,7 +54,7 @@ export interface VolumeSpike { muscle: Muscle; sets: number; baseline: number; p
  * las últimas semanas. El promedio usa hasta 4 semanas anteriores con sesiones y sin deload ni vuelta tras una pausa, y se exigen
  * al menos 2: así una pausa o un deload no vuelven "normal" un volumen bajo. En deload o vuelta no se avisa. Mayor salto primero.
  */
-export function volumeSpikes(sessions: Session[], current: Session, exercises: Map<string, Exercise>): VolumeSpike[] {
+export function volumeSpikes(sessions: Session[], current: Session, exercises: Map<string, Exercise>, rules: Pick<Rules, 'spikePct' | 'spikeMinExtra'> = DEFAULT_RULES): VolumeSpike[] {
   if (current.deload || current.comebackDays != null) return []
   const monday = weekStart(current.date)
   const others = sessions.filter((s) => s.id !== current.id && s.status === 'finished')
@@ -69,7 +70,7 @@ export function volumeSpikes(sessions: Session[], current: Session, exercises: M
   const out: VolumeSpike[] = []
   for (const [muscle, v] of Object.entries(now) as [Muscle, { total: number }][]) {
     const baseline = before.reduce((acc, w) => acc + (w[muscle]?.total ?? 0), 0) / base.length
-    if (baseline >= SPIKE_MIN_BASELINE && v.total >= baseline * SPIKE_RATIO && v.total - baseline >= SPIKE_MIN_EXTRA) {
+    if (baseline >= SPIKE_MIN_BASELINE && v.total >= baseline * (1 + rules.spikePct / 100) && v.total - baseline >= rules.spikeMinExtra) {
       out.push({ muscle, sets: v.total, baseline: Math.round(baseline * 10) / 10, pct: Math.round((v.total / baseline - 1) * 100) })
     }
   }

@@ -95,6 +95,7 @@ sin problema; con "Mezclar" no toca los pesos que ya tenés y con "Reemplazar to
 ### Settings
 `{ kgPerBrick, restSecOverrides: {exerciseId: seg}, volumeTarget: {Muscle: [min, max]}, theme: 'dark'|'light', lastBackupAt: number|null, warmupRestSec?: number }`
 - `warmupRestSec`: descanso del temporizador tras una aproximación, 0 a 600 s; si falta, 45 (D-71).
+- `rules` (opcional, D-78): las reglas del motor que se cambiaron, solo esas: `{ comebackMinDays?: 7-21, comebackLoadPct?: [corta, media, larga] (50-100), failureSessionMin?: 2-5, failureStreakMin?: 2-6, spikePct?: 20-200, spikeMinExtra?: 1-10, deloadMode?: 'standard'|'light'|'rest' }`. Los que faltan valen lo de siempre; un valor fuera de rango se rechaza al importar.
 
 ## CSV de series (`gym-series-AAAA-MM-DD.csv`)
 

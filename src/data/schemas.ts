@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { DELOAD_MODES, RULE_LIMITS } from '../engine/rules'
 import { MUSCLES, SET_FLAGS, UNITS, ZONES } from '../engine/types'
 
 const muscle = z.enum(MUSCLES)
@@ -192,6 +193,8 @@ const bodyweight = z.object({ id: z.string(), date: isoDate, kg: z.number().min(
 
 const dayMark = z.object({ id: z.string(), date: isoDate, kind: z.literal('skipped'), planDayId: z.string() })
 
+const pct = z.number().int().min(RULE_LIMITS.comebackLoadPct[0]).max(RULE_LIMITS.comebackLoadPct[1])
+
 const settings = z.object({
   kgPerBrick: z.number().positive(),
   restSecOverrides: z.record(z.string(), z.number().nonnegative()),
@@ -199,6 +202,18 @@ const settings = z.object({
   theme: z.enum(['dark', 'light']),
   lastBackupAt: z.number().nullable(),
   warmupRestSec: z.number().int().min(0).max(600).optional(),
+  /** Opcional (D-78): reglas del motor que se cambiaron. */
+  rules: z
+    .object({
+      comebackMinDays: z.number().int().min(RULE_LIMITS.comebackMinDays[0]).max(RULE_LIMITS.comebackMinDays[1]).optional(),
+      comebackLoadPct: z.tuple([pct, pct, pct]).optional(),
+      failureSessionMin: z.number().int().min(RULE_LIMITS.failureSessionMin[0]).max(RULE_LIMITS.failureSessionMin[1]).optional(),
+      failureStreakMin: z.number().int().min(RULE_LIMITS.failureStreakMin[0]).max(RULE_LIMITS.failureStreakMin[1]).optional(),
+      spikePct: z.number().int().min(RULE_LIMITS.spikePct[0]).max(RULE_LIMITS.spikePct[1]).optional(),
+      spikeMinExtra: z.number().int().min(RULE_LIMITS.spikeMinExtra[0]).max(RULE_LIMITS.spikeMinExtra[1]).optional(),
+      deloadMode: z.enum(DELOAD_MODES as [string, ...string[]]).optional(),
+    })
+    .optional(),
 })
 
 const dataQuality = z.object({ source: z.string(), notes: z.array(z.string()), importedAt: z.number() })

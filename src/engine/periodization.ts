@@ -3,6 +3,7 @@ import { comparableKg } from './load'
 import { exposuresOf } from './history'
 import { promoteVariant } from './nextBlock'
 import { phaseVolumeTarget } from './phase'
+import { DEFAULT_RULES, type Rules } from './rules'
 import { findPRs, type PR } from './prs'
 import { trendOf, type Trend } from './stagnation'
 import type { Exercise, Mesocycle, Muscle, Phase, PlanDay, Session, Settings } from './types'
@@ -17,9 +18,10 @@ const pausedBefore = (paused: ISODate[], monday: ISODate) => paused.filter((p) =
 
 /**
  * Semanas pasadas del mesociclo sin ninguna sesión terminada (D-50): no cuentan, el mesociclo se corre.
- * Solo mira semanas ya cerradas (la actual no) y deja de contar cuando el mesociclo ya habría terminado.
+ * Solo mira semanas ya cerradas (la actual no) y deja de contar cuando el mesociclo ya habría terminado. Con el deload en modo
+ * "semana sin pesas" (D-78), la semana de deload sin sesiones no cuenta como pausa.
  */
-export function pausedWeeks(meso: Mesocycle, sessions: Pick<Session, 'date' | 'status'>[], today: ISODate): ISODate[] {
+export function pausedWeeks(meso: Mesocycle, sessions: Pick<Session, 'date' | 'status'>[], today: ISODate, rules: Pick<Rules, 'deloadMode'> = DEFAULT_RULES): ISODate[] {
   const withSession = new Set(sessions.filter((s) => s.status === 'finished').map((s) => weekStart(s.date)))
   const current = weekStart(today)
   const out: ISODate[] = []
@@ -31,7 +33,8 @@ export function pausedWeeks(meso: Mesocycle, sessions: Pick<Session, 'date' | 's
     if (withSession.has(w)) {
       if (inDeload) activeDeload++
       else active++
-    } else out.push(w)
+    } else if (inDeload && rules.deloadMode === 'rest') activeDeload++ // semana sin pesas (D-78): es el descanso planificado, no una falta
+    else out.push(w)
   }
   return out
 }
