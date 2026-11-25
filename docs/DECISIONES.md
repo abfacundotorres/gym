@@ -454,3 +454,11 @@ ejercicios de hoy que la cargan (mucho y algo) y "Ya pasó", y "Carga <zona>" en
 sigue estando la marca por ejercicio, D-52), no diagnostica ni predice, y no propone cambios al plan (eso queda para el siguiente paso). Una variante que se sugiere solo aparece si sus zonas difieren de las del ejercicio actual,
 es decir, casi siempre después de corregirlas a mano.
 
+**D-77. Propuestas al plan por una molestia, y volver atrás.** Con una zona activa, Plan → "Molestias" propone cambios al plan que se aplican con un toque (uno por uno o "Aplicar todas"); también se llega desde el enlace "Propuestas para el plan"
+de Hoy. Por cada ejercicio del plan que carga la zona (D-76) y por día del plan (`zoneProposals`): (a) si hay una **variante de su familia que la carga menos**, pasar a esa (cualquiera de la familia, las opciones del plan primero; la anterior queda como
+alternativa, igual que al rotar en la revisión, D-33); (b) si no hay y la carga **mucho**, **una serie menos** (nunca menos de 2, y no se repite donde ya se aplicó); (c) si la carga solo algo y no hay variante, no se propone nada (alcanza con el aviso).
+Un ejercicio tiene a lo sumo una propuesta por día: la de la zona más urgente (dolor primero). **Una molestia es temporal, así que los cambios se anotan en ella** (`ZoneIssue.planChanges`): cuando pasa ("Ya pasó"), el Plan ofrece **"Volver el plan a como estaba"** o
+**"Dejar así"** (se conserva el plan y se olvida el registro). Deshacer respeta lo que se cambió después: unas series que editaste a mano o una variante que ya no es la titular **no se tocan**, y los cambios encadenados se deshacen del último al primero.
+Solo se aplican y se anotan los cambios que todavía modifican el plan (una propuesta desactualizada no hace nada). **Limitaciones a propósito:** no cambia la sesión en curso ni las sugerencias de carga, no toca el plan del bloque siguiente (D-73) y la elección de
+qué proponer es una regla simple mía (variante o una serie menos), no un programa de rehabilitación. Con muchos ejercicios que cargan la zona salen varias propuestas; "Aplicar todas" las aplica juntas.
+

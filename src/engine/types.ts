@@ -24,6 +24,11 @@ export const ZONE_LABELS: Record<Zone, string> = {
 
 export type PainLevel = 'molestia' | 'dolor'
 
+/** Cambio hecho al plan por una molestia (D-77), con lo necesario para deshacerlo cuando pase. */
+export type PlanAdjustment =
+  | { kind: 'swap'; planDayId: string; from: string; to: string }
+  | { kind: 'sets'; planDayId: string; exerciseId: string; from: number; to: number }
+
 /** Molestia de una zona, anotada suelta o desde un ejercicio. Activa mientras no tenga `resolvedOn`. */
 export interface ZoneIssue {
   id: string
@@ -35,6 +40,8 @@ export interface ZoneIssue {
   /** Ejercicio y sesión desde donde se marcó, si vino de ahí. */
   exerciseId?: string
   sessionId?: string
+  /** Cambios al plan aplicados por esta molestia que todavía no se deshicieron ni se dejaron (D-77). */
+  planChanges?: PlanAdjustment[]
 }
 
 export const UNITS = ['per_side', 'per_hand', 'total', 'bricks', 'minutes'] as const

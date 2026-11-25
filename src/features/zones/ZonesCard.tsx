@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router'
 import { getDB } from '../../data/db'
 import { useActiveZones } from '../../data/hooks'
 import { markZone, resolveZone } from '../../data/zoneRepo'
@@ -32,6 +33,7 @@ export function ZonesCard({ today }: { today: ISODate }) {
               </li>
             ))}
           </ul>
+          <Link to="/plan" className="flex min-h-11 items-center border-t border-line text-sm text-accent">Propuestas para el plan →</Link>
         </Card>
       )}
       {open ? (

@@ -110,5 +110,6 @@ Se convierte con `src/data/seedImport.ts`, aplicando las correcciones de `docs/D
 ### ZoneIssue (D-76)
 `{ id, zone: Zone, severity: 'molestia'|'dolor', startedOn: ISO date, resolvedOn?: ISO date, note?: string, exerciseId?: string, sessionId?: string }`
 - Activa mientras no tenga `resolvedOn` ("Ya pasó" la cierra; el registro queda). `exerciseId` y `sessionId` solo si se marcó desde un ejercicio.
+- `planChanges?` (D-77): los cambios al plan hechos por esta molestia, para poder deshacerlos: `{ kind: 'swap', planDayId, from, to }` (la variante `to` pasó a ser la titular) o `{ kind: 'sets', planDayId, exerciseId, from, to }`. Se borra al deshacerlos o al elegir "Dejar así".
 - Una zona tiene a lo sumo una molestia activa. Un backup anterior no trae la colección y se lee igual; al importar, "Reemplazar todo" con un archivo sin ella las borra y "Mezclar" no las toca.
 

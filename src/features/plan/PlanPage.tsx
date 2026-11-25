@@ -13,6 +13,7 @@ import { variantLabel } from '../../engine/variants'
 import type { Exercise, Mesocycle, PlanItem, Unit } from '../../engine/types'
 import { Button, Card, LINK_BUTTON } from '../../ui/Button'
 import { Chip, Stepper } from '../../ui/Stepper'
+import { ZonePlanSection } from '../zones/ZonePlanSection'
 import { PhasePicker } from './PhasePicker'
 
 export function PlanPage() {
@@ -82,6 +83,8 @@ export function PlanPage() {
           </Card>
         )}
       </div>
+
+      <ZonePlanSection planDays={data.planDays} exercises={exercises} />
 
       {data.planDays.map((d) => (
         <div key={d.id} className="space-y-2">

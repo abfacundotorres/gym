@@ -10,6 +10,10 @@ for (const [width, height] of [[375, 667], [320, 568]] as const) {
     await page.goto('./')
     await page.locator('input[type=file]').setInputFiles(seed)
     await page.getByRole('button', { name: 'Importar', exact: true }).click()
+    // Con una molestia activa, para medir también los avisos y propuestas de zona (D-76, D-77).
+    await page.getByRole('button', { name: 'Anotar una molestia' }).click()
+    await page.getByRole('group', { name: 'Zona', exact: true }).getByRole('button', { name: 'Cuello', exact: true }).click()
+    await page.getByRole('button', { name: 'Guardar', exact: true }).click()
     // Siempre el mismo día (el jueves): "el de hoy" cambia con el calendario y los domingos o días libres ni existe.
     await page.getByText('Hacer otro día').click()
     await page.getByRole('button', { name: 'Jueves: Full body' }).click()
@@ -24,7 +28,7 @@ for (const [width, height] of [[375, 667], [320, 568]] as const) {
     await expect(page.getByRole('heading', { name: 'Superserie' })).toBeVisible()
     const grupo = await page.evaluate(() => location.hash)
 
-    const routes = ['#/', session, `${session}/1`, grupo, '#/historial', '#/historial?ver=ejercicios', '#/historial/ej/incline_db_press', '#/volumen', '#/plan', '#/peso', '#/ejercicios', '#/ajustes']
+    const routes = ['#/', session, `${session}/1`, grupo, '#/historial', '#/historial?ver=ejercicios', '#/historial/ej/incline_db_press', '#/volumen', '#/plan', '#/peso', '#/ejercicios', '#/ejercicios/pulldown_neutral', '#/ajustes']
     const problems: string[] = []
     for (const hash of routes) {
       await page.goto(`./${hash}`)

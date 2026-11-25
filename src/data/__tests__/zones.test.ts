@@ -4,7 +4,8 @@ import { afterEach, describe, expect, it } from 'vitest'
 import fixture from '../__fixtures__/seed.fixture.json'
 import { applyImport, exportBackup, parseImportText, previewImport } from '../backup'
 import { createDB, type GymDB } from '../db'
-import { markZone, resolveZone } from '../zoneRepo'
+import type { PlanAdjustment, PlanDay } from '../../engine/types'
+import { applyZoneAdjustments, keepZoneChanges, markZone, resolveZone, revertZoneChanges } from '../zoneRepo'
 
 let db: GymDB
 let n = 0
@@ -149,5 +150,105 @@ describe('las zonas en el backup', () => {
     expect(await db.zoneIssues.count()).toBe(1)
     await applyImport(db, sinZonas, 'replace')
     expect(await db.zoneIssues.count()).toBe(0)
+  })
+})
+
+describe('cambios al plan por una molestia (D-77)', () => {
+  const plan = (): PlanDay[] => [
+    { id: 'a', name: 'A', weekday: 1, items: [{ exerciseId: 'lateral_raise_db', sets: 4, alt: [] }, { exerciseId: 'pulldown_supine_close', sets: 3, alt: ['pulldown_neutral'] }] },
+    { id: 'b', name: 'B', weekday: 3, items: [{ exerciseId: 'lateral_raise_db', sets: 3, alt: [] }] },
+  ]
+  const sets: PlanAdjustment = { kind: 'sets', planDayId: 'a', exerciseId: 'lateral_raise_db', from: 4, to: 3 }
+  const swap: PlanAdjustment = { kind: 'swap', planDayId: 'a', from: 'pulldown_supine_close', to: 'pulldown_neutral' }
+  const setup = async () => {
+    fresh()
+    await db.planDays.bulkPut(plan())
+    return markZone(db, { zone: 'neck', severity: 'molestia', startedOn: '2026-11-20' })
+  }
+  const planNow = async () => (await db.planDays.orderBy('weekday').toArray())
+
+  it('aplica al plan y lo anota en la molestia activa de la zona', async () => {
+    const issue = await setup()
+    expect(await applyZoneAdjustments(db, 'neck', [sets, swap])).toBe(true)
+    const p = await planNow()
+    expect(p[0]!.items[0]!.sets).toBe(3)
+    expect(p[0]!.items[1]).toEqual({ exerciseId: 'pulldown_neutral', sets: 3, alt: ['pulldown_supine_close'] })
+    expect(p[1]).toEqual(plan()[1]) // el otro día no se toca
+    expect((await db.zoneIssues.get(issue.id))!.planChanges).toEqual([sets, swap])
+  })
+  it('se acumulan al aplicar de a poco, y volver a aplicar lo mismo no duplica', async () => {
+    const issue = await setup()
+    await applyZoneAdjustments(db, 'neck', [sets])
+    await applyZoneAdjustments(db, 'neck', [swap])
+    expect(await applyZoneAdjustments(db, 'neck', [sets])).toBe(false) // ya no coincide: no hace nada
+    expect((await db.zoneIssues.get(issue.id))!.planChanges).toEqual([sets, swap])
+  })
+  it('sin molestia activa en esa zona, o con cambios que ya no aplican, no toca nada', async () => {
+    const issue = await setup()
+    expect(await applyZoneAdjustments(db, 'knee', [sets])).toBe(false) // otra zona
+    expect(await applyZoneAdjustments(db, 'neck', [])).toBe(false)
+    expect(await applyZoneAdjustments(db, 'neck', [{ ...sets, from: 9, to: 8 }])).toBe(false) // desactualizado
+    await resolveZone(db, 'neck', '2026-11-27')
+    expect(await applyZoneAdjustments(db, 'neck', [sets])).toBe(false) // ya pasó
+    expect(await planNow()).toEqual(plan())
+    expect((await db.zoneIssues.get(issue.id))!.planChanges).toBeUndefined()
+  })
+  it('volver el plan a como estaba: lo deshace y borra los cambios del registro', async () => {
+    const issue = await setup()
+    await applyZoneAdjustments(db, 'neck', [sets, swap])
+    await resolveZone(db, 'neck', '2026-11-27') // ya pasó: el registro conserva los cambios para poder deshacerlos
+    expect((await db.zoneIssues.get(issue.id))!.planChanges).toEqual([sets, swap])
+    await revertZoneChanges(db, issue.id)
+    expect(await planNow()).toEqual(plan())
+    expect('planChanges' in (await db.zoneIssues.get(issue.id))!).toBe(false)
+    await revertZoneChanges(db, issue.id) // otra vez: nada
+    expect(await planNow()).toEqual(plan())
+  })
+  it('lo que se cambió a mano después no se pisa al deshacer', async () => {
+    const issue = await setup()
+    await applyZoneAdjustments(db, 'neck', [sets, swap])
+    await db.planDays.update('a', { items: [{ exerciseId: 'lateral_raise_db', sets: 6, alt: [] }, { exerciseId: 'pulldown_neutral', sets: 3, alt: ['pulldown_supine_close'] }] })
+    await revertZoneChanges(db, issue.id)
+    const p = await planNow()
+    expect(p[0]!.items[0]!.sets).toBe(6) // lo subiste vos
+    expect(p[0]!.items[1]!.exerciseId).toBe('pulldown_supine_close') // la variante sí vuelve
+  })
+  it('dejar así: el plan queda como está y se olvidan los cambios', async () => {
+    const issue = await setup()
+    await applyZoneAdjustments(db, 'neck', [sets])
+    await keepZoneChanges(db, issue.id)
+    expect((await planNow())[0]!.items[0]!.sets).toBe(3)
+    expect('planChanges' in (await db.zoneIssues.get(issue.id))!).toBe(false)
+  })
+  it('anotar de nuevo la zona y cerrarla conservan los cambios pendientes de deshacer', async () => {
+    const issue = await setup()
+    await applyZoneAdjustments(db, 'neck', [sets])
+    await markZone(db, { zone: 'neck', severity: 'dolor', startedOn: '2026-11-22' })
+    expect((await db.zoneIssues.get(issue.id))!.planChanges).toEqual([sets])
+  })
+  it('se conservan en el backup, y uno mal formado se rechaza', async () => {
+    const issue = await setup()
+    await applyZoneAdjustments(db, 'neck', [sets, swap])
+    const backup = await exportBackup(db)
+    const parsed = parseImportText(JSON.stringify(backup), 0)
+    if (!parsed.ok) throw new Error(parsed.error)
+    const other = createDB(`zones-${n++}`)
+    try {
+      await applyImport(other, parsed.data, 'replace')
+      expect((await other.zoneIssues.get(issue.id))!.planChanges).toEqual([sets, swap])
+    } finally {
+      await other.delete()
+    }
+    type Mut = { data: { zoneIssues: { planChanges: Record<string, unknown>[] }[] } }
+    const mutations: ((b: Mut) => void)[] = [
+      (b) => { b.data.zoneIssues[0]!.planChanges[0]!.kind = 'borrar' },
+      (b) => { b.data.zoneIssues[0]!.planChanges[0]!.to = 0 },
+      (b) => { delete b.data.zoneIssues[0]!.planChanges[1]!.to },
+    ]
+    for (const mutate of mutations) {
+      const bad = JSON.parse(JSON.stringify(backup)) as Mut
+      mutate(bad)
+      expect(parseImportText(JSON.stringify(bad), 0).ok).toBe(false)
+    }
   })
 })

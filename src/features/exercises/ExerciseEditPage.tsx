@@ -128,7 +128,7 @@ function Form({ initial, used, families }: { initial: Exercise; used: number; fa
       <Card className="space-y-2">
         <p className="text-sm font-medium">Nueva variante de la familia</p>
         <p className="text-xs text-slate-400">Copia esta configuración con otro nombre. Empieza sin historial.</p>
-        <input value={variantName} onChange={(e) => setVariantName(e.target.value)} placeholder="Ej.: Jalón con agarre en V" className="h-12 w-full rounded-xl bg-bg px-3 ring-1 ring-line" />
+        <input aria-label="Nombre de la nueva variante" value={variantName} onChange={(e) => setVariantName(e.target.value)} placeholder="Ej.: Jalón con agarre en V" className="h-12 w-full rounded-xl bg-bg px-3 ring-1 ring-line" />
         <Button className="w-full" disabled={!variantName.trim()} onClick={async () => { const v = await createVariant(getDB(), ex, variantName.trim()); navigate(`/ejercicios/${v.id}`) }}>
           Crear variante
         </Button>
