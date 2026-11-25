@@ -24,7 +24,10 @@ export function HistoryPage() {
   const tab = params.get('ver') === 'ejercicios' ? 'ejercicios' : 'fechas'
   return (
     <section className="space-y-4">
-      <h1 className="title text-3xl">Historial</h1>
+      <div className="flex items-baseline justify-between">
+        <h1 className="title text-3xl">Historial</h1>
+        <Link to="/resumen" className="flex min-h-11 items-center pl-2 text-sm text-slate-300">Resumen →</Link>
+      </div>
       <div className="flex gap-2" role="tablist">
         <Chip active={tab === 'fechas'} onClick={() => setParams({}, { replace: true })}>Por fecha</Chip>
         <Chip active={tab === 'ejercicios'} onClick={() => setParams({ ver: 'ejercicios' }, { replace: true })}>Por ejercicio</Chip>

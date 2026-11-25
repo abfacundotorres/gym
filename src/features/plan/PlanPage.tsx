@@ -37,6 +37,7 @@ export function PlanPage() {
       <div className="flex items-baseline justify-between">
         <h1 className="title text-3xl">Plan</h1>
         <div className="flex items-center gap-1">
+          <Link to="/resumen" className="flex min-h-11 items-center px-2 text-sm text-slate-300">Resumen →</Link>
           <Link to="/peso" className="flex min-h-11 items-center px-2 text-sm text-slate-300">Peso →</Link>
           <Link to="/ejercicios" className="flex min-h-11 items-center pl-2 text-sm text-slate-300">Ejercicios →</Link>
         </div>
