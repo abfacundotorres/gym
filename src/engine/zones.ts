@@ -1,5 +1,6 @@
 import type { ISODate } from './dates'
-import type { Exercise, Muscle, PainLevel, Zone, ZoneIssue } from './types'
+import { promoteVariant } from './nextBlock'
+import type { Exercise, Muscle, PainLevel, PlanAdjustment, PlanDay, Zone, ZoneIssue } from './types'
 import { ZONES } from './types'
 
 /**
@@ -85,4 +86,89 @@ export function lighterVariants(
     .filter((c) => c.id !== ex.id && c.family === ex.family && !c.archived && rank(zoneLoad(c, zone)) < current)
     .map((c) => ({ exercise: c, load: zoneLoad(c, zone) }))
     .sort((a, b) => order(a.exercise.id) - order(b.exercise.id) || rank(a.load) - rank(b.load) || a.exercise.name.localeCompare(b.exercise.name))
+}
+
+// ---------- Propuestas al plan (D-77) ----------
+
+export interface ZoneProposal {
+  zone: Zone
+  adjustment: PlanAdjustment
+  /** Ejercicio del plan sobre el que se propone (el titular de hoy). */
+  exerciseId: string
+  load: ZoneLoad
+}
+
+/**
+ * Cambios al plan para cuidar las zonas con molestia activa. Por cada ejercicio del plan que carga la zona: si hay una variante de
+ * su familia que la carga menos, pasar a esa (la de las opciones del plan primero); si no y la carga mucho, una serie menos (nunca
+ * por debajo de 2). Si la carga solo algo y no hay variante, no se propone nada (alcanza con el aviso). Un ejercicio tiene a lo sumo
+ * una propuesta por día del plan (la de la zona más urgente: dolor primero) y no se vuelve a proponer una serie menos donde ya se aplicó una.
+ */
+export function zoneProposals(planDays: PlanDay[], exercises: Map<string, Exercise>, active: ActiveZone[], applied: PlanAdjustment[] = []): ZoneProposal[] {
+  const family = [...exercises.values()]
+  const out: ZoneProposal[] = []
+  for (const day of planDays) {
+    for (const item of day.items) {
+      const ex = exercises.get(item.exerciseId)
+      if (!ex) continue
+      for (const z of active) {
+        const load = zoneLoad(ex, z.zone)
+        if (!load) continue
+        const lighter = lighterVariants(ex, z.zone, family, [item.exerciseId, ...item.alt])[0]
+        if (lighter) {
+          out.push({ zone: z.zone, exerciseId: item.exerciseId, load, adjustment: { kind: 'swap', planDayId: day.id, from: item.exerciseId, to: lighter.exercise.id } })
+        } else if (load === 'high' && item.sets > 2 && !applied.some((a) => a.kind === 'sets' && a.planDayId === day.id && a.exerciseId === item.exerciseId)) {
+          out.push({ zone: z.zone, exerciseId: item.exerciseId, load, adjustment: { kind: 'sets', planDayId: day.id, exerciseId: item.exerciseId, from: item.sets, to: item.sets - 1 } })
+        } else continue
+        break // una propuesta por ejercicio y día: la de la zona más urgente
+      }
+    }
+  }
+  return out
+}
+
+const mapDays = (planDays: PlanDay[], dayId: string, f: (items: PlanDay['items']) => PlanDay['items']): PlanDay[] =>
+  planDays.map((d) => (d.id === dayId ? { ...d, items: f(d.items) } : d))
+
+/** Aplica los cambios al plan (puro). Un cambio cuyo ejercicio ya no está como se esperaba no hace nada. */
+export function applyAdjustments(planDays: PlanDay[], adjustments: PlanAdjustment[]): PlanDay[] {
+  let out = planDays
+  for (const a of adjustments) {
+    out = mapDays(out, a.planDayId, (items) =>
+      items.map((it) => {
+        if (a.kind === 'swap') return it.exerciseId === a.from ? promoteVariant(it, a.to) : it
+        return it.exerciseId === a.exerciseId && it.sets === a.from ? { ...it, sets: a.to } : it
+      }),
+    )
+  }
+  return out
+}
+
+/**
+ * Deshace los cambios, del último al primero. Solo si el plan sigue como lo dejó el cambio: una variante que ya no es la titular,
+ * o unas series que cambiaste después, no se tocan (lo que editaste vos manda).
+ */
+export function revertAdjustments(planDays: PlanDay[], adjustments: PlanAdjustment[]): PlanDay[] {
+  let out = planDays
+  for (const a of [...adjustments].reverse()) {
+    out = mapDays(out, a.planDayId, (items) =>
+      items.map((it) => {
+        if (a.kind === 'swap') return it.exerciseId === a.to && it.alt.includes(a.from) ? promoteVariant(it, a.from) : it
+        return it.exerciseId === a.exerciseId && it.sets === a.to ? { ...it, sets: a.from } : it
+      }),
+    )
+  }
+  return out
+}
+
+/** De los cambios, los que de verdad modifican el plan (aplicados en orden): un cambio viejo sobre algo que ya cambió no cuenta ni se anota. */
+export function effectiveAdjustments(planDays: PlanDay[], adjustments: PlanAdjustment[]): PlanAdjustment[] {
+  const out: PlanAdjustment[] = []
+  let cur = planDays
+  for (const a of adjustments) {
+    const next = applyAdjustments(cur, [a])
+    if (JSON.stringify(next.find((d) => d.id === a.planDayId)) !== JSON.stringify(cur.find((d) => d.id === a.planDayId))) out.push(a)
+    cur = next
+  }
+  return out
 }

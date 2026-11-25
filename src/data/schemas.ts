@@ -170,6 +170,11 @@ const session = z.object({
   exerciseIds: z.array(z.string()),
 })
 
+const planAdjustment = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('swap'), planDayId: z.string(), from: z.string(), to: z.string() }),
+  z.object({ kind: z.literal('sets'), planDayId: z.string(), exerciseId: z.string(), from: z.number().int().positive(), to: z.number().int().positive() }),
+])
+
 const zoneIssue = z.object({
   id: z.string(),
   zone: z.enum(ZONES),
@@ -179,6 +184,8 @@ const zoneIssue = z.object({
   note: z.string().optional(),
   exerciseId: z.string().optional(),
   sessionId: z.string().optional(),
+  /** Opcional (D-77): cambios al plan hechos por esta molestia, para poder deshacerlos. */
+  planChanges: z.array(planAdjustment).optional(),
 })
 
 const bodyweight = z.object({ id: z.string(), date: isoDate, kg: z.number().min(20).max(400) })
