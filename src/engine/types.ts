@@ -117,6 +117,8 @@ export interface Session {
   readiness?: Readiness
   /** La sesión se hizo en semana de deload (se fija al empezar). */
   deload?: boolean
+  /** Sesión de vuelta tras una pausa (D-74): los días sin entrenar al empezar. Menos series y carga; no es base de progresión. */
+  comebackDays?: number
   /** Se empezó con "poco tiempo hoy": sin ejercicios opcionales (D-53). */
   short?: boolean
   note: string

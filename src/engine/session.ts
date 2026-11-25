@@ -4,7 +4,7 @@ import { averageRest } from './rest'
 import { UNIT_SHORT } from './load'
 import type { Exercise, PlanDay, Session, SessionItem, SetEntry } from './types'
 import { effectiveSets } from './volume'
-import { deloadSets } from './periodization'
+import { sessionSets } from './comeback'
 
 export interface Exposure { date: ISODate; sessionId: string; item: SessionItem }
 
@@ -49,7 +49,7 @@ export interface SessionProgress {
 
 /** Avance de la sesión: series efectivas hechas contra las planificadas por ejercicio (deload incluido) y cuál sigue. */
 export function sessionProgress(session: Session, plan: PlanDay | undefined): SessionProgress {
-  const planned = new Map(plan?.items.map((i) => [i.exerciseId, session.deload ? deloadSets(i.sets) : i.sets]) ?? [])
+  const planned = new Map(plan?.items.map((i) => [i.exerciseId, sessionSets(session, i.sets)]) ?? [])
   const items = session.items.map((it): ItemProgress => {
     const target = planned.get(it.exerciseId) ?? (it.swappedFrom ? planned.get(it.swappedFrom) : undefined) ?? 0
     const done = it.sets.filter((s) => s.type === 'W').length
@@ -73,7 +73,7 @@ export interface SessionStats {
 }
 
 export function sessionStats(session: Session, plan: PlanDay | undefined): SessionStats {
-  const planned = new Map(plan?.items.filter((i) => !i.optional).map((i) => [i.exerciseId, session.deload ? deloadSets(i.sets) : i.sets]) ?? [])
+  const planned = new Map(plan?.items.filter((i) => !i.optional).map((i) => [i.exerciseId, sessionSets(session, i.sets)]) ?? [])
   const plannedFor = (it: SessionItem) => planned.get(it.exerciseId) ?? (it.swappedFrom ? planned.get(it.swappedFrom) : undefined)
   let doneSets = 0
   for (const it of session.items) doneSets += effectiveSets(it)
@@ -89,7 +89,7 @@ export function sessionStats(session: Session, plan: PlanDay | undefined): Sessi
 /** Resumen compacto para pegar en un chat. */
 export function summaryText(session: Session, plan: PlanDay | undefined, exercises: Map<string, Exercise>): string {
   const lines: string[] = []
-  lines.push(`${plan?.name ?? session.planDayId} — ${formatDDMM(session.date)}${session.deload ? ' (deload)' : ''}`)
+  lines.push(`${plan?.name ?? session.planDayId} — ${formatDDMM(session.date)}${session.deload ? ' (deload)' : session.comebackDays != null ? ' (vuelta)' : ''}`)
   if (session.readiness) lines.push(`Sueño ${session.readiness.sleep}/5 · Energía ${session.readiness.energy}/5`)
   for (const it of session.items) {
     const ex = exercises.get(it.exerciseId)

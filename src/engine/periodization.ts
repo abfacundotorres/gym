@@ -72,12 +72,12 @@ export function deloadSets(planned: number): number {
   return Math.min(planned, Math.max(2, Math.ceil(planned / 2)))
 }
 
-/** Carga de deload: −10 % de la carga comparable, redondeado al incremento, en la unidad del ejercicio. */
-export function deloadWeight(ex: Pick<Exercise, 'unit' | 'barKg' | 'sledKg' | 'increment'>, weight: number | null, kgPerBrick: number): number | null {
+/** Carga de deload: −10 % (o `factor`) de la carga comparable, redondeado al incremento, en la unidad del ejercicio. */
+export function deloadWeight(ex: Pick<Exercise, 'unit' | 'barKg' | 'sledKg' | 'increment'>, weight: number | null, kgPerBrick: number, factor = 0.9): number | null {
   if (weight == null) return null
   const kg = comparableKg(ex, weight, kgPerBrick)
   if (kg == null) return weight
-  const target = kg * 0.9
+  const target = kg * factor
   let w: number
   if (ex.unit === 'per_side') w = (target - (ex.barKg ?? ex.sledKg ?? 0)) / 2
   else if (ex.unit === 'bricks') w = target / kgPerBrick

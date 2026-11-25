@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router'
 import { needsBackupReminder } from '../../data/backup'
 import { getDB, SETTINGS_KEY } from '../../data/db'
 import { activeSession, discardSession, finishStaleSession, startSession } from '../../data/sessionRepo'
+import { comebackFor, daysOff, type Comeback } from '../../engine/comeback'
 import { addDays, formatDDMM, toISODate, weekStart, weekdayOf, WEEKDAYS_ES } from '../../engine/dates'
 import { deloadSuggestion, mesocycleEnd, mesocycleWeek, pausedWeeks, type DeloadReason } from '../../engine/periodization'
 import { deloadThisWeek, dismissDeloadSuggestion, META_DELOAD_DISMISSED, toggleSkipped } from '../../data/planRepo'
@@ -85,8 +86,11 @@ export function TodayPage() {
   const doneThisWeek = data.thisWeek.filter((x) => x.status === 'finished').length
   const mesoProgress = week ? Math.min(1, (week.week - 1 + Math.min(1, doneThisWeek / Math.max(1, data.planDays.length))) / week.total) : 0
 
-  async function begin(p: PlanDay, readiness?: Readiness, short = false) {
-    const s = await startSession(db, p, today, week ? data!.meso!.id : null, readiness, Date.now(), !!week?.isDeload, short)
+  // Vuelta tras una pausa (D-74): se ofrece al empezar y se puede desactivar.
+  const comeback = comebackFor(daysOff(data.allSessions, today))
+
+  async function begin(p: PlanDay, readiness?: Readiness, short = false, comebackDays?: number) {
+    const s = await startSession(db, p, today, week ? data!.meso!.id : null, readiness, Date.now(), !!week?.isDeload, short, comebackDays)
     navigate(`/sesion/${s.id}`)
   }
 
@@ -161,7 +165,7 @@ export function TodayPage() {
           onDiscard={() => confirm('¿Descartar la sesión? Se borran todas las series registradas.') && void discardSession(db, data.active!.id)}
         />
       ) : readinessFor ? (
-        <ReadinessCheck onDone={(r, short) => void begin(readinessFor, r, short)} />
+        <ReadinessCheck comeback={comeback} onDone={(r, short, back) => void begin(readinessFor, r, short, back ? comeback?.days : undefined)} />
       ) : (
         <>
           {plan ? (
@@ -312,18 +316,29 @@ function ScaleRow({ label, value, set }: { label: string; value: number | null; 
   )
 }
 
-function ReadinessCheck({ onDone }: { onDone: (r?: Readiness, short?: boolean) => void }) {
+function ReadinessCheck({ comeback, onDone }: { comeback: Comeback | null; onDone: (r?: Readiness, short?: boolean, back?: boolean) => void }) {
   const [sleep, setSleep] = useState<number | null>(null)
   const [short, setShort] = useState(false)
+  const [back, setBack] = useState(true)
   return (
     <Card className="space-y-4">
+      {comeback && (
+        <div className="space-y-1">
+          <Chip active={back} onClick={() => setBack(!back)}>Vuelta tras {comeback.days} días</Chip>
+          <p className="text-xs text-slate-400">
+            {back
+              ? `Hoy: ~${Math.round(comeback.loadFactor * 100)} % de la carga de la última vez, menos series y ${comeback.rir} en reserva. Esta sesión no cuenta como base de progresión.`
+              : 'Hoy entrenás como siempre, con las sugerencias normales.'}
+          </p>
+        </div>
+      )}
       <div className="space-y-1">
         <Chip active={short} onClick={() => setShort(!short)}>Poco tiempo hoy</Chip>
         {short && <p className="text-xs text-slate-400">Sin ejercicios opcionales y con la sugerencia de una serie menos por ejercicio.</p>}
       </div>
       <ScaleRow label="¿Cómo dormiste?" value={sleep} set={setSleep} />
-      <ScaleRow label="¿Energía?" value={null} set={(energy) => sleep != null && onDone({ sleep, energy }, short)} />
-      <Button variant="ghost" className="w-full" onClick={() => onDone(undefined, short)}>Omitir y empezar</Button>
+      <ScaleRow label="¿Energía?" value={null} set={(energy) => sleep != null && onDone({ sleep, energy }, short, back)} />
+      <Button variant="ghost" className="w-full" onClick={() => onDone(undefined, short, back)}>Omitir y empezar</Button>
     </Card>
   )
 }

@@ -20,6 +20,7 @@ export async function startSession(
   now = Date.now(),
   deload = false,
   short = false,
+  comebackDays?: number,
 ): Promise<Session> {
   const items = newSessionItems(plan, short)
   const s: Session = {
@@ -37,6 +38,7 @@ export async function startSession(
     ...(readiness ? { readiness } : {}),
     ...(deload ? { deload: true } : {}),
     ...(short ? { short: true } : {}),
+    ...(comebackDays != null ? { comebackDays } : {}),
   }
   await db.sessions.add(s)
   return s

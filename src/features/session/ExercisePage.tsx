@@ -13,7 +13,8 @@ import type { Recommendation } from '../../engine/progression'
 import { nextSetDefaults, pendingWarmups, wouldBeRecord, type SetDraft } from '../../engine/entry'
 import { findPRs } from '../../engine/prs'
 import { SetBadges } from '../../ui/SetBadges'
-import { deloadSets } from '../../engine/periodization'
+import { sessionSets } from '../../engine/comeback'
+import type { Comeback } from '../../engine/comeback'
 import { reducedSets } from '../../engine/readiness'
 import type { Exercise } from '../../engine/types'
 import { haptic } from '../../lib/haptics'
@@ -73,7 +74,7 @@ function ExerciseScreen() {
   const item = session.items[idx]!
   const ex = ctx.ex
   const planItem = plan?.items.find((p) => p.exerciseId === item.exerciseId || p.exerciseId === item.swappedFrom)
-  const { deload, fewer, plannedSets, previous, rec } = todaysRecommendation(ex, session, planItem, ctx.history, settings.kgPerBrick)
+  const { deload, comeback, fewer, plannedSets, previous, rec } = todaysRecommendation(ex, session, planItem, ctx.history, settings.kgPerBrick)
   const last = lastExposure(ctx.history, ex.id, session.date, session.id)
   const lastW = last?.item.sets.filter((s) => s.type === 'W') ?? []
   const targets = rec.targets
@@ -112,7 +113,7 @@ function ExerciseScreen() {
 
   const notDone = (it: (typeof session.items)[number]) => {
     const pi = plan?.items.find((p) => p.exerciseId === it.exerciseId || p.exerciseId === it.swappedFrom)
-    const target = pi ? (session.deload ? deloadSets(pi.sets) : pi.sets) : 0
+    const target = pi ? sessionSets(session, pi.sets) : 0
     return !it.skipped && !(target > 0 && it.sets.filter((x) => x.type === 'W').length >= target)
   }
   const doneA = done.filter((x) => x.type === 'A').length
@@ -226,7 +227,7 @@ function ExerciseScreen() {
       {ex.note && <p className="text-xs text-slate-400">{ex.note}</p>}
 
       {!isCardio && (
-        <TodayCard rec={rec} ex={ex} deload={deload} kgPerBrick={settings.kgPerBrick} last={last} famRef={famRef} family={ctx.family} />
+        <TodayCard rec={rec} ex={ex} deload={deload} comeback={comeback} kgPerBrick={settings.kgPerBrick} last={last} famRef={famRef} family={ctx.family} />
       )}
       {isCardio && last && (
         <div className="rounded-2xl bg-surface p-3 text-sm ring-1 ring-line">
@@ -409,21 +410,25 @@ function ItemNote({ initial, onSave }: { initial: string; onSave: (n: string) =>
 
 /** Recomendación de hoy en grande + última vez, en una sola tarjeta. */
 function TodayCard({
-  rec, ex, deload, kgPerBrick, last, famRef, family,
+  rec, ex, deload, comeback, kgPerBrick, last, famRef, family,
 }: {
   rec: Recommendation
   ex: Exercise
   deload: boolean
+  comeback: Comeback | null
   kgPerBrick: number
   last: ReturnType<typeof lastExposure>
   famRef: ReturnType<typeof familyReference>
   family: Exercise[]
 }) {
+  const reduced = deload || comeback != null // carga y series reducidas (deload o vuelta tras una pausa)
   const painAdjusted = !!rec.pain && rec.status === 'same'
-  const numeric = rec.weight != null && rec.targets.length > 0 && (deload || rec.status === 'increase' || rec.status === 'same')
+  const numeric = rec.weight != null && rec.targets.length > 0 && (reduced || rec.status === 'increase' || rec.status === 'same')
   const label = deload
     ? 'Deload'
-    : painAdjusted
+    : comeback
+      ? 'Vuelta'
+      : painAdjusted
       ? rec.pain === 'dolor' ? 'Hubo dolor · bajá' : 'Hubo molestia · mantené'
       : rec.held
         ? 'Hoy · mantené el peso'
@@ -431,7 +436,7 @@ function TodayCard({
           ? 'Hoy · subí'
           : rec.status === 'same' ? 'Hoy · mismo peso' : 'Hoy'
   const big = numeric ? `${formatLoad(ex, rec.weight, kgPerBrick)} × ${rec.targets.join('·')}` : null
-  const tone = deload
+  const tone = reduced
     ? 'bg-sky-500/10 ring-sky-500/30'
     : rec.status === 'increase' || rec.status === 'ready_big_jump'
       ? 'bg-gradient-to-br from-accent/15 to-surface ring-accent/40'
@@ -439,13 +444,18 @@ function TodayCard({
   const note = 'mt-1.5 text-xs text-slate-400'
   return (
     <div className={`rounded-2xl p-3.5 ring-1 ${tone}`} role="status">
-      <p className={`eyebrow ${deload ? 'text-sky-300' : 'text-accent'}`}>{label}</p>
+      <p className={`eyebrow ${reduced ? 'text-sky-300' : 'text-accent'}`}>{label}</p>
       {big ? (
         <p className={`digits mt-1 ${big.length > 22 ? 'text-3xl' : 'text-[1.7rem] min-[360px]:text-4xl'} leading-[1.05]`}>{big}</p>
       ) : (
-        <p className="mt-1.5 text-lg font-semibold leading-snug">{deload ? 'Elegí el peso' : rec.message}</p>
+        <p className="mt-1.5 text-lg font-semibold leading-snug">{reduced ? 'Elegí el peso' : rec.message}</p>
       )}
       {deload && <p className={note}>Sin rest-pause ni drops.</p>}
+      {comeback && (
+        <p className={note}>
+          Hace {comeback.days} días que no entrenás: ~{Math.round(comeback.loadFactor * 100)} % de la carga de la última vez y menos series. Dejá {comeback.rir} en reserva.{deload ? ' Con el deload se usa la reducción más fuerte.' : ''}
+        </p>
+      )}
       {rec.pain && <p className={note}>{rec.pain === 'dolor' ? 'Si el dolor sigue, probá otra variante (Ocupado → alternativa) o consultá a un profesional.' : 'Si vuelve a molestar, probá otra variante (Ocupado → alternativa).'}</p>}
       {rec.note === 'rir_defer' && <p className={note}>Llegaste al tope con 0 reps en reserva: repetí y buscá terminar con 1 en reserva. Si lo repetís, la próxima subís.</p>}
       {rec.note === 'rir_fast' && <p className={note}>Te sobraron 3 o más en la última serie: probá sumar hasta 2 reps.</p>}
